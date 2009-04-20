@@ -34,8 +34,10 @@ my @steps = (['updateMinimumEvalueExponent'],
              ['uniqueSimSeqsQueryId'],
              ['ust_qids_ix'],
 	     ['betterHit', ['drop table BestInterTaxonScore']],
+             ['better_hit_ix'],
 	     ['inParalog', ['drop table BetterHit']],
 	     ['bestHit', ['drop table BestQueryTaxonScore']],
+             ['best_hit_ix'],
 	     ['ortholog', ['drop table BestHit']],
 	     ['orthologAvg'],
 	     ['orthologAvgIndex'],
@@ -304,6 +306,13 @@ where s.query_taxon_id = s.subject_taxon_id
   
   if ($debug==1) {print LOGFILE "\n\n$sql"};
   runSql($sql, "create BetterHit table", 'betterHit', '30 min');
+
+ $sql = "
+create index better_hit_ix on BetterHit(query_id,subject_id)
+";
+
+  if ($debug==1) {print LOGFILE "\n\n$sql"};
+  runSql($sql, "create better_hit_ix index on BetterHit", 'better_hit_ix', '3 min');
 }
 
 sub  inParalog{
@@ -349,6 +358,13 @@ where s.query_id = cutoff.query_id
   
   if ($debug==1) {print LOGFILE "\n\n$sql"};
   runSql($sql, "create BestHit", 'bestHit', '45 min');
+
+ $sql = "
+create index best_hit_ix on BestHit(query_id,subject_id)
+";
+
+  if ($debug==1) {print LOGFILE "\n\n$sql"};
+  runSql($sql, "create best_hit_ix index on BestHit", 'best_hit_ix', '3 min');
 }
 
 sub ortholog {
