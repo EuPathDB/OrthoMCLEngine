@@ -39,9 +39,10 @@ my @steps = (['updateMinimumEvalueExponent'],
 	     ['bestHit', ['drop table BestQueryTaxonScore']],
              ['best_hit_ix'],
 	     ['ortholog', ['drop table BestHit']],
+	     ['orthologTaxon', [ 'drop table OrthologTemp']
 	     ['orthologAvg'],
 	     ['orthologAvgIndex'],
-	     ['orthologsNormalization', ['drop table OrthologAvgScore', 'drop table OrthologTemp']],
+	     ['orthologsNormalization', ['drop table OrthologAvgScore', 'drop table OrthologTemp2'],
 	     ['inParalogAvg'],
 	     ['inParalogAvgIndex'],
 	     ['inParalogsNormalization', ['drop table InParalogAvgScore', 'drop table InParalogTemp']],
@@ -51,9 +52,10 @@ my @steps = (['updateMinimumEvalueExponent'],
 	     ['in2b_ix'],
 	     ['coOrthologCandidate', ['drop table Ortholog2Way', 'drop table InParalog2Way']],
 	     ['coOrtholog', ['drop table CoOrthologCandidate']],
+	     ['coOrthologTaxon', [ 'drop table CoOrthologTemp']
 	     ['coOrthologAvg'],
 	     ['coOrthologAvgIndex'],
-	     ['coOrthologsNormalization', ['drop table CoOrthologAvgScore', 'drop table CoOrthologTemp']],
+	     ['coOrthologsNormalization', ['drop table CoOrthologAvgScore', 'drop table CoOrthologTaxon']],
 	     ['cleanall', ['truncate table InParalog', 'truncate table Ortholog', 'truncate table CoOrtholog']],
 	    );
 
@@ -387,6 +389,31 @@ where bh1.query_id < bh1.subject_id
     
   if ($debug==1) {print LOGFILE "\n\n$sql"};
   runSql($sql, "create OrthologTemp table", 'ortholog', '10 min');
+
+}
+
+sub orthologTaxon {
+  my ($co) = @_;
+
+  my $coCaps = $co? "Co" : "";
+  $co = $co? "coO" : "o";
+
+$sql = "create table ${coCaps}OrthologTaxon as
+select case
+         when taxon_id_a < taxon_id_b
+         then taxon_id_a
+         else taxon_id_b
+        end as smaller_tax_id,
+        case
+          when taxon_id_a < taxon_id_b
+          then taxon_id_b
+          else taxon_id_a
+        end as bigger_tax_id,
+        unnormalized_score
+      from ${coCaps}OrthologTemp"
+  if ($debug==1) {print LOGFILE "\n\n$sql"};
+  runSql($sql, "create ${coCaps}OrthologTaxon table", '${co}rthologTaxon', '10 min');
+
 }
 
 sub normalizeOrthologs {
@@ -402,19 +429,8 @@ sub normalizeOrthologsSub {
   my $sql = "
 create table ${coCaps}OrthologAvgScore as
 select smaller_tax_id, bigger_tax_id, avg(unnormalized_score) avg_score
-from (select case
-         when taxon_id_a < taxon_id_b
-         then taxon_id_a
-         else taxon_id_b
-        end as smaller_tax_id,
-        case
-          when taxon_id_a < taxon_id_b
-          then taxon_id_b
-          else taxon_id_a
-        end as bigger_tax_id,
-        unnormalized_score
-      from ${coCaps}OrthologTemp) derivedTable1 
-      group by smaller_tax_id, bigger_tax_id
+from ${coCaps}OrthologTaxon
+group by smaller_tax_id, bigger_tax_id
 "; 
   
   if ($debug==1) {print LOGFILE "\n\n$sql"};
