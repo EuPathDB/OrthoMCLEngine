@@ -1,0 +1,46 @@
+#!/usr/bin/perl
+
+use strict;;
+use DBI;;
+
+my %config;
+
+open (CONFIG,"<orthoConfig.txt");
+
+while (<CONFIG>) {
+    chomp;                  # no newline
+    s/#.*//;                # no comments
+    s/^\s+//;               # no leading white
+    s/\s+$//;               # no trailing white
+    next unless length;     # anything left?
+    my ($var, $value) = split(/\s*=\s*/, $_, 2);
+    $config{$var} = $value;
+}
+
+close (CONFIG);
+
+my $dbLogin=$config{"dbLogin"};
+my $dbPassword=$config{"dbPassword"};
+my $startTime;
+my $finishTime;
+my $result;
+
+open (LOGFILE, ">bulkLoad_all.log");
+
+$startTime = `date`;
+
+print LOGFILE " \n$startTime";
+
+print "Populating SimilarSequences table...";
+$result=`mysql -u $dbLogin --password=$dbPassword 2>&1 <bulkLoader.sql`;
+   if (!$result){
+      print"\nData load successful.";
+      }
+       else{
+            print "\nFAILED: $result";
+           }
+
+$finishTime = `date`;
+
+print LOGFILE "\n$finishTime";
+close LOGFILE;
