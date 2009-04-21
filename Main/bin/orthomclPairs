@@ -390,6 +390,8 @@ where bh1.query_id < bh1.subject_id
   if ($debug==1) {print LOGFILE "\n\n$sql"};
   runSql($sql, "create OrthologTemp table", 'ortholog', '10 min');
 
+  orthologTaxon('');
+
 }
 
 sub orthologTaxon {
@@ -614,10 +616,11 @@ where ab.query_id = candidate.sequence_id_a
   and ba.evalue_exp <= $evalueExpThreshold
   and ba.percent_match >= $percentMatchThreshold
 ";
-  
+
     if ($debug==1) {print LOGFILE "\n\n$sql"};
    runSql($sql, "create CoOrthologTemp table", 'coOrtholog', '30 min');
 
+  orthologTaxon('co');
 }
 
 close LOGFILE;
