@@ -19,7 +19,7 @@ SimilarSequences
 =cut
 
 my $debug=1;
-open (LOGFILE, ">sqlFromScript.log"); 
+open (LOGFILE, ">sqlFromScript.log");
 
 my $configFile = $ARGV[0];
 my $clean = $ARGV[1];
@@ -447,8 +447,8 @@ group by smaller_tax_id, bigger_tax_id
   insert into $orthologTable (sequence_id_a, sequence_id_b, taxon_id_a, taxon_id_b, unnormalized_score, normalized_score)
   select ot.sequence_id_a, ot.sequence_id_b, ot.taxon_id_a, ot.taxon_id_b, ot.unnormalized_score, ot.unnormalized_score/a.avg_score
   from ${coCaps}OrthologTemp ot, ${coCaps}OrthologAvgScore a
-  where (ot.taxon_id_a = a.smaller_tax_id and ot.taxon_id_b = a.bigger_tax_id)
-   or (ot.taxon_id_b = a.smaller_tax_id and ot.taxon_id_a = a.bigger_tax_id)
+where least(ot.taxon_id_a, ot.taxon_id_b) = a.smaller_tax_id
+    and greatest(ot.taxon_id_a, ot.taxon_id_b) = a.bigger_tax_id
 ";
 
   
