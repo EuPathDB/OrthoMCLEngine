@@ -398,7 +398,7 @@ sub orthologTaxon {
   my $coCaps = $co? "Co" : "";
   $co = $co? "coO" : "o";
 
-$sql = "create table ${coCaps}OrthologTaxon as
+my $sql = "create table ${coCaps}OrthologTaxon as
 select case
          when taxon_id_a < taxon_id_b
          then taxon_id_a
@@ -410,9 +410,9 @@ select case
           else taxon_id_a
         end as bigger_tax_id,
         unnormalized_score
-      from ${coCaps}OrthologTemp"
+      from ${coCaps}OrthologTemp";
   if ($debug==1) {print LOGFILE "\n\n$sql"};
-  runSql($sql, "create ${coCaps}OrthologTaxon table", '${co}rthologTaxon', '10 min');
+  runSql($sql, "create ${coCaps}OrthologTaxon table", "${co}rthologTaxon", '10 min');
 
 }
 
