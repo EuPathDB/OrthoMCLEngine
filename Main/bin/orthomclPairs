@@ -43,7 +43,9 @@ my @steps = (['updateMinimumEvalueExponent'],
 	     ['orthologAvg'],
 	     ['orthologAvgIndex'],
 	     ['orthologsNormalization', ['drop table OrthologAvgScore', 'drop table OrthologTemp2']],
-	     ['inParalogAvg'],
+	     ['inParalogAllAvg'],
+	     ['inParalogHaveOrthologAvg'],
+	     ['inParalogAvg',['drop table InParalogAllAvg', 'drop table InParalogHaveOrthologAvg']],
 	     ['inParalogAvgIndex'],
 	     ['inParalogsNormalization', ['drop table InParalogAvgScore', 'drop table InParalogTemp']],
 	     ['ortholog2way'],
@@ -336,6 +338,38 @@ where bh1.query_id < bh1.subject_id
 ";
   if ($debug==1) {print LOGFILE "\n\n$sql"};
    runSql($sql, "create InParalogTemp table", 'inParalog', '5 min');
+
+  $sql = "
+create table InParalogTaxon as
+select avg(i2.unnormalized_score) average, i2.taxon_id
+from InParalogTemp i2
+group by i2.taxon_id
+";
+
+  if ($debug==1) {print LOGFILE "\n\n$sql"};
+   runSql($sql, "create InParalogTaxon table", 'inParalogTaxon', '5 min');
+
+  $sql = "
+create table InParalogOrthologTaxon as
+         select avg(i2.unnormalized_score) average, i2.taxon_id
+         from InParalogTemp i2
+         where (i2.sequence_id_a in
+                 (select sequence_id_a from Ortholog
+                  union
+                  select sequence_id_b from Ortholog)
+               )
+            or (i2.sequence_id_b in 
+                 (select sequence_id_a from Ortholog
+                  union 
+                  select sequence_id_b from Ortholog)
+               )
+         group by i2.taxon_id
+";
+
+  if ($debug==1) {print LOGFILE "\n\n$sql"};
+   runSql($sql, "create InParalogOrthologTaxon table", 'inParalogOrthologTaxon', '5 min');
+
+
 }
 
 sub bestHit {
@@ -464,33 +498,13 @@ sub normalizeInParalogs {
   my $sql = "
 create table InParalogAvgScore as
      select case
-            when haveOrthologsAvg.average is NULL
-              then allInParalogsAvg.average
-              else haveOrthologsAvg.average
+            when orth.average is NULL
+              then all.average
+              else orty.average
             end as avg_score,
-            allInParalogsAvg.taxon_id
-     from
-       (
-         select avg(i2.unnormalized_score) average, i2.taxon_id
-         from InParalogTemp i2
-         group by i2.taxon_id
-       ) allInParalogsAvg LEFT OUTER JOIN
-       (
-         select avg(i2.unnormalized_score) average, i2.taxon_id
-         from InParalogTemp i2
-         where (i2.sequence_id_a in
-                 (select sequence_id_a from $orthologTable
-                  union
-                  select sequence_id_b from $orthologTable)
-               )
-            or (i2.sequence_id_b in 
-                 (select sequence_id_a from $orthologTable
-                  union 
-                  select sequence_id_b from $orthologTable)
-               )
-         group by i2.taxon_id
-       ) haveOrthologsAvg
-       ON allInParalogsAvg.taxon_id = haveOrthologsAvg.taxon_id
+            all.taxon_id
+       from InParalogAllAvg all LEFT OUTER JOIN InParalogHaveOrthologAvg orth
+       ON all.taxon_id = orth.taxon_id
 ";
       
    if ($debug==1) {print LOGFILE "\n\n$sql"};
