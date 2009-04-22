@@ -51,6 +51,9 @@ CREATE TABLE orthomcl.Ortholog (
  NORMALIZED_SCORE        DOUBLE    
 );
 
+CREATE INDEX orthomcl.ortholog_seq_a_ix on orthomcl.ortholog(sequence_id_a);
+CREATE INDEX orthomcl.ortholog_seq_b_ix on orthomcl.ortholog(sequence_id_b);
+
 
 -------------------------------------------------------------
  
