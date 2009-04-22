@@ -1,36 +1,165 @@
 #!/usr/bin/perl
 
-use strict;;
-use DBI;;
+use strict;
+use DBI;
 
-my %config;
+my $configFile = $ARGV[0];
+my $config = parseConfigFile($configFile);
 
-open (CONFIG,"<orthoConfig.txt");
+my $oracleNoLog;
 
-while (<CONFIG>) {
-    chomp;                  # no newline
-    s/#.*//;                # no comments
-    s/^\s+//;               # no leading white
-    s/\s+$//;               # no trailing white
-    next unless length;     # anything left?
-    my ($var, $value) = split(/\s*=\s*/, $_, 2);
-    $config{$var} = $value;
+if (getConfig("dbVendor") eq 'oracle') {
+  require DBD::Oracle;
+   $oracleNoLog = "NOLOGGING";
 } 
+ else {
+  require DBD::mysql;
+}
 
-close (CONFIG);
+my $dbh = DBI->connect(getConfig("dbConnectString"), getConfig("dbLogin"),
+                       getConfig("dbPassword")) or die DBI::errstr;
 
-my $dbLogin=$config{"dbLogin"};
-my $dbPassword=$config{"dbPassword"};
+if (getConfig("dbVendor") eq 'mysql') {
+   getConfig("mysqlDatabase");
+   mysqlDbSelect();
+}
 
-# Create orthomcl schema
-my $result; 
-print "Creating OrthoMCL schema...."; 
-$result = `mysql -u $dbLogin --password=$dbPassword  2>&1 <createOrthoPlasmoSchema.sql`;
-     if (!$result){
-       print "\nSuccessful";
-        }
-       else{
-          print "\nFAILED: $result";
-          }
+createSimilarSequencesTable();
+createInParalogTable();
+createOrthologTable();
+createCoOrthologTable();
+createInterTaxonMatchView();
 
 
+sub parseConfigFile {
+  my ($configFile) = @_;
+
+  open(F, $configFile) || die "Can't open config file '$configFile'\n";
+
+  my $config;
+  while(<F>) {
+    chomp;
+    next if /^\#/;
+    /^(\w+)\=(.+)/ || die "illegal line in config file '$_'\n";
+    my $key=$1;
+    my $val=$2;
+    $config->{$key} = $val;
+    $val = '********' if $key eq 'dbPassword';
+    print STDERR localtime() . " configuration: $key=$val\n";
+  }
+  return $config;
+}
+
+
+sub getConfig {
+  my ($prop) = @_;
+  die "can't find property $prop in config file" unless $config->{$prop};
+  return $config->{$prop};
+}
+
+
+sub createSimilarSequencesTable {
+ my $sql = "
+CREATE TABLE SimilarSequences (
+ QUERY_ID                 VARCHAR(15),
+ SUBJECT_ID               VARCHAR(15),
+ QUERY_TAXON_ID           VARCHAR(15),
+ SUBJECT_TAXON_ID         VARCHAR(15),
+ EVALUE_MANT              BIGINT(20),
+ EVALUE_EXP               BIGINT(20),
+ PERCENT_IDENTITY         FLOAT,
+ PERCENT_MATCH            FLOAT  
+)
+";
+  runSql($sql);
+
+ $sql = "
+CREATE INDEX ss_qtaxexp_ix ON SimilarSequences(query_id, subject_taxon_id, evalue_exp, evalue_mant, query_taxon_id, subject_id)
+";
+  runSql($sql);
+  
+ $sql = "
+CREATE INDEX ss_seqs_ix ON SimilarSequences(query_id, subject_id, evalue_exp, evalue_mant)
+";
+  runSql($sql);
+}
+
+sub createInParalogTable {
+ my $sql = "
+CREATE TABLE InParalog (
+ SEQUENCE_ID_A           VARCHAR(15),
+ SEQUENCE_ID_B           VARCHAR(15),
+ TAXON_ID                VARCHAR(15),
+ UNNORMALIZED_SCORE      DOUBLE,
+ NORMALIZED_SCORE        DOUBLE    
+)
+";
+  runSql($sql);
+}
+
+
+sub createOrthologTable {
+ my $sql = " 
+CREATE TABLE Ortholog (
+ SEQUENCE_ID_A           VARCHAR(15),
+ SEQUENCE_ID_B           VARCHAR(15),
+ TAXON_ID_A              VARCHAR(15),
+ TAXON_ID_B              VARCHAR(15),
+ UNNORMALIZED_SCORE      DOUBLE,
+ NORMALIZED_SCORE        DOUBLE    
+)
+";
+  runSql($sql);
+
+$sql = "
+CREATE INDEX ortholog_seq_a_ix on Ortholog(sequence_id_a)
+";
+  runSql($sql);
+
+$sql = "
+CREATE INDEX ortholog_seq_b_ix on Ortholog(sequence_id_b)
+";
+  runSql($sql);
+}
+
+
+sub createCoOrthologTable {
+ my $sql = "
+CREATE TABLE CoOrtholog (
+ SEQUENCE_ID_A           VARCHAR(15),
+ SEQUENCE_ID_B           VARCHAR(15),
+ TAXON_ID_A              VARCHAR(15),
+ TAXON_ID_B              VARCHAR(15),
+ UNNORMALIZED_SCORE      DOUBLE,
+ NORMALIZED_SCORE        DOUBLE    
+)
+";
+  runSql($sql);
+}
+
+sub createInterTaxonMatchView {
+ my $sql = "
+CREATE OR REPLACE VIEW InterTaxonMatch 
+	AS SELECT ss.query_id, ss.subject_id, ss.subject_taxon_id, 
+	ss.evalue_mant, ss.evalue_exp 
+	FROM SimilarSequences ss 
+	WHERE ss.subject_taxon_id != ss.query_taxon_id
+";
+ runSql($sql);
+}
+
+
+sub mysqlDbSelect {
+ my $mysqlDatabase = getConfig("mysqlDatabase");
+ my $sql = "
+USE $mysqlDatabase
+";
+  runSql($sql);
+}
+ 
+
+sub runSql() {
+ my $sql = $_[0]; 
+  my $stmt = $dbh->prepare($sql) or die DBI::errstr;
+      $stmt->execute() or die DBI::errstr;
+}
