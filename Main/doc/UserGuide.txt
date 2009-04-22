@@ -14,7 +14,7 @@ The output is a set of files:
      inparalogs.txt
   groups.txt
 
-The files in the pairs/ directory contain the pairwise relationships between proteins, and their scores.  They are categorized into orthologs, co-orthologs and inparalogs as described in the OrthoMCL Algorithm.  The groups.txt file contains the groups created by clustering the pairs with the MCL program.
+The files in the pairs/ directory contain the pairwise relationships between proteins, and their scores.  They are categorized into orthologs, co-orthologs and inparalogs as described in the OrthoMCL Algorithm document.  The groups.txt file contains the groups created by clustering the pairs with the MCL program.
 
 There are three overall stages:
   - all-v-all BLAST
@@ -128,6 +128,7 @@ Input:
 Output:
   - goodProteins.fasta
   - rejectProteins.fasta
+  - a report of suspicious proteomes (> 10% rejects)
 
 Use the orthomclFilterFasta program for this step. It should run in a few minutes
  
