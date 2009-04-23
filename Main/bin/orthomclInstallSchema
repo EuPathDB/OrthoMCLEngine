@@ -12,10 +12,11 @@ my $sqlLog = $ARGV[1];
  open (LOGFILE, ">$sqlLog");
  }
 
+
+my $dbVendor = getConfig("dbVendor");
 my $oracleNoLog;
 
-
-if (getConfig("dbVendor") eq 'oracle') {
+if ($dbVendor eq 'oracle') {
   require DBD::Oracle;
    $oracleNoLog = "NOLOGGING";
 } 
@@ -26,10 +27,15 @@ if (getConfig("dbVendor") eq 'oracle') {
 my $dbh = DBI->connect(getConfig("dbConnectString"), getConfig("dbLogin"),
                        getConfig("dbPassword")) or die DBI::errstr;
 
-if (getConfig("dbVendor") eq 'mysql') {
+
+
+if ($dbVendor eq 'mysql') {
    getConfig("mysqlDatabase");
    mysqlDbSelect();
 }
+
+my $intType = ($dbVendor eq 'oracle') ? 'NUMBER' : 'INT';
+
 
 createSimilarSequencesTable();
 createInParalogTable();
@@ -38,16 +44,17 @@ createCoOrthologTable();
 createInterTaxonMatchView();
 
 
+
 sub createSimilarSequencesTable {
  my $sst = getConfig("similarSequencesTable");
  my $sql = "
-CREATE TABLE $sst (
- QUERY_ID                 VARCHAR(15),
- SUBJECT_ID               VARCHAR(15),
- QUERY_TAXON_ID           VARCHAR(15),
- SUBJECT_TAXON_ID         VARCHAR(15),
- EVALUE_MANT              BIGINT(20),
- EVALUE_EXP               BIGINT(20),
+CREATE TABLE $sst $oracleNoLog (
+ QUERY_ID                 $intType,
+ SUBJECT_ID               $intType,
+ QUERY_TAXON_ID           $intType,
+ SUBJECT_TAXON_ID         $intType,
+ EVALUE_MANT              $intType,
+ EVALUE_EXP               FLOAT,
  PERCENT_IDENTITY         FLOAT,
  PERCENT_MATCH            FLOAT  
 )
@@ -55,12 +62,17 @@ CREATE TABLE $sst (
   runSql($sql);
 
  $sql = "
-CREATE INDEX ss_qtaxexp_ix ON $sst(query_id, subject_taxon_id, evalue_exp, evalue_mant, query_taxon_id, subject_id)
+CREATE INDEX ss_qtaxexp_ix 
+ON $sst(query_id, subject_taxon_id, 
+evalue_exp, evalue_mant, 
+query_taxon_id, subject_id)
 ";
   runSql($sql);
   
  $sql = "
-CREATE INDEX ss_seqs_ix ON $sst(query_id, subject_id, evalue_exp, evalue_mant)
+CREATE INDEX ss_seqs_ix 
+ON $sst(query_id, subject_id, 
+evalue_exp, evalue_mant)
 ";
   runSql($sql);
 }
@@ -68,54 +80,54 @@ CREATE INDEX ss_seqs_ix ON $sst(query_id, subject_id, evalue_exp, evalue_mant)
 sub createInParalogTable {
  my $ipt = getConfig("inParalogTable");
  my $sql = "
-CREATE TABLE $ipt (
- SEQUENCE_ID_A           VARCHAR(15),
- SEQUENCE_ID_B           VARCHAR(15),
- TAXON_ID                VARCHAR(15),
- UNNORMALIZED_SCORE      DOUBLE,
- NORMALIZED_SCORE        DOUBLE    
+CREATE TABLE $ipt $oracleNoLog (
+ SEQUENCE_ID_A           $intType,
+ SEQUENCE_ID_B           $intType,
+ TAXON_ID                $intType,
+ UNNORMALIZED_SCORE      FLOAT,
+ NORMALIZED_SCORE        FLOAT    
 )
 ";
   runSql($sql);
 }
 
 
-sub createOrthologTable {
+sub createOrthologTable  {
  my $olt = getConfig("orthologTable");
  my $sql = " 
-CREATE TABLE $olt (
- SEQUENCE_ID_A           VARCHAR(15),
- SEQUENCE_ID_B           VARCHAR(15),
- TAXON_ID_A              VARCHAR(15),
- TAXON_ID_B              VARCHAR(15),
- UNNORMALIZED_SCORE      DOUBLE,
- NORMALIZED_SCORE        DOUBLE    
+CREATE TABLE $olt $oracleNoLog  (
+ SEQUENCE_ID_A           $intType,
+ SEQUENCE_ID_B           $intType,
+ TAXON_ID_A              $intType,
+ TAXON_ID_B              $intType,
+ UNNORMALIZED_SCORE      FLOAT,
+ NORMALIZED_SCORE        FLOAT    
 )
 ";
   runSql($sql);
 
 $sql = "
-CREATE INDEX ortholog_seq_a_ix on $olt(sequence_id_a)
+CREATE INDEX ortholog_seq_a_ix ON $olt(sequence_id_a)
 ";
   runSql($sql);
 
 $sql = "
-CREATE INDEX ortholog_seq_b_ix on $olt(sequence_id_b)
+CREATE INDEX ortholog_seq_b_ix ON $olt(sequence_id_b)
 ";
   runSql($sql);
 }
 
 
-sub createCoOrthologTable {
+sub createCoOrthologTable  {
  my $cot = getConfig("coOrthologTable");
  my $sql = "
-CREATE TABLE $cot (
- SEQUENCE_ID_A           VARCHAR(15),
- SEQUENCE_ID_B           VARCHAR(15),
- TAXON_ID_A              VARCHAR(15),
- TAXON_ID_B              VARCHAR(15),
- UNNORMALIZED_SCORE      DOUBLE,
- NORMALIZED_SCORE        DOUBLE    
+CREATE TABLE $cot $oracleNoLog (
+ SEQUENCE_ID_A           $intType,
+ SEQUENCE_ID_B           $intType,
+ TAXON_ID_A              $intType,
+ TAXON_ID_B              $intType,
+ UNNORMALIZED_SCORE      FLOAT,
+ NORMALIZED_SCORE        FLOAT    
 )
 ";
   runSql($sql);
