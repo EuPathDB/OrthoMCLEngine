@@ -4,9 +4,11 @@ use strict;
 use DBI;
 
 my $configFile = $ARGV[0];
+&usage() unless $configFile;
 my $config = parseConfigFile($configFile);
 
 my $oracleNoLog;
+
 
 if (getConfig("dbVendor") eq 'oracle') {
   require DBD::Oracle;
@@ -158,8 +160,37 @@ USE $mysqlDatabase
 }
  
 
-sub runSql() {
+sub runSql {
  my $sql = $_[0]; 
   my $stmt = $dbh->prepare($sql) or die DBI::errstr;
       $stmt->execute() or die DBI::errstr;
+}
+
+
+sub usage {
+ print "
+Create OrthoMCL schema in an Oracle or Mysql database.
+
+usage: orthomclInstallSchema config_file 
+
+where:
+  config_file : see below
+
+NOTE: the database login in the config file must have update/insert/truncate privileges on the tables specified in the config file.
+
+Sample Config File:
+
+dbVendor=oracle  (or mysql)
+dbConnectString=dbi:Oracle:orthomcl
+dbLogin=my_db_login
+dbPassword=my_db_password
+mysqlDatabase=my_mysql_database
+similarSequencesTable=SimilarSequences
+orthologTable=Ortholog
+inParalogTable=InParalog
+coOrthologTable=CoOrtholog
+interTaxonMatchView=InterTaxonMatch
+percentMatchCutoff=50
+evalueExponentCutoff=-5
+";
 }
