@@ -38,6 +38,101 @@ createCoOrthologTable();
 createInterTaxonMatchView();
 
 
+sub createSimilarSequencesTable {
+ my $sst = getConfig("similarSequencesTable");
+ my $sql = "
+CREATE TABLE $sst (
+ QUERY_ID                 VARCHAR(15),
+ SUBJECT_ID               VARCHAR(15),
+ QUERY_TAXON_ID           VARCHAR(15),
+ SUBJECT_TAXON_ID         VARCHAR(15),
+ EVALUE_MANT              BIGINT(20),
+ EVALUE_EXP               BIGINT(20),
+ PERCENT_IDENTITY         FLOAT,
+ PERCENT_MATCH            FLOAT  
+)
+";
+  runSql($sql);
+
+ $sql = "
+CREATE INDEX ss_qtaxexp_ix ON $sst(query_id, subject_taxon_id, evalue_exp, evalue_mant, query_taxon_id, subject_id)
+";
+  runSql($sql);
+  
+ $sql = "
+CREATE INDEX ss_seqs_ix ON $sst(query_id, subject_id, evalue_exp, evalue_mant)
+";
+  runSql($sql);
+}
+
+sub createInParalogTable {
+ my $ipt = getConfig("inParalogTable");
+ my $sql = "
+CREATE TABLE $ipt (
+ SEQUENCE_ID_A           VARCHAR(15),
+ SEQUENCE_ID_B           VARCHAR(15),
+ TAXON_ID                VARCHAR(15),
+ UNNORMALIZED_SCORE      DOUBLE,
+ NORMALIZED_SCORE        DOUBLE    
+)
+";
+  runSql($sql);
+}
+
+
+sub createOrthologTable {
+ my $olt = getConfig("orthologTable");
+ my $sql = " 
+CREATE TABLE $olt (
+ SEQUENCE_ID_A           VARCHAR(15),
+ SEQUENCE_ID_B           VARCHAR(15),
+ TAXON_ID_A              VARCHAR(15),
+ TAXON_ID_B              VARCHAR(15),
+ UNNORMALIZED_SCORE      DOUBLE,
+ NORMALIZED_SCORE        DOUBLE    
+)
+";
+  runSql($sql);
+
+$sql = "
+CREATE INDEX ortholog_seq_a_ix on $olt(sequence_id_a)
+";
+  runSql($sql);
+
+$sql = "
+CREATE INDEX ortholog_seq_b_ix on $olt(sequence_id_b)
+";
+  runSql($sql);
+}
+
+
+sub createCoOrthologTable {
+ my $cot = getConfig("coOrthologTable");
+ my $sql = "
+CREATE TABLE $cot (
+ SEQUENCE_ID_A           VARCHAR(15),
+ SEQUENCE_ID_B           VARCHAR(15),
+ TAXON_ID_A              VARCHAR(15),
+ TAXON_ID_B              VARCHAR(15),
+ UNNORMALIZED_SCORE      DOUBLE,
+ NORMALIZED_SCORE        DOUBLE    
+)
+";
+  runSql($sql);
+}
+
+sub createInterTaxonMatchView {
+ my $itv = getConfig("interTaxonMatchView");
+ my $sql = "
+CREATE OR REPLACE VIEW $itv 
+	AS SELECT ss.query_id, ss.subject_id, ss.subject_taxon_id, 
+	ss.evalue_mant, ss.evalue_exp 
+	FROM SimilarSequences ss 
+	WHERE ss.subject_taxon_id != ss.query_taxon_id
+";
+ runSql($sql);
+}
+
 sub parseConfigFile {
   my ($configFile) = @_;
 
@@ -63,98 +158,6 @@ sub getConfig {
   die "can't find property $prop in config file" unless $config->{$prop};
   return $config->{$prop};
 }
-
-
-sub createSimilarSequencesTable {
- my $sql = "
-CREATE TABLE SimilarSequences (
- QUERY_ID                 VARCHAR(15),
- SUBJECT_ID               VARCHAR(15),
- QUERY_TAXON_ID           VARCHAR(15),
- SUBJECT_TAXON_ID         VARCHAR(15),
- EVALUE_MANT              BIGINT(20),
- EVALUE_EXP               BIGINT(20),
- PERCENT_IDENTITY         FLOAT,
- PERCENT_MATCH            FLOAT  
-)
-";
-  runSql($sql);
-
- $sql = "
-CREATE INDEX ss_qtaxexp_ix ON SimilarSequences(query_id, subject_taxon_id, evalue_exp, evalue_mant, query_taxon_id, subject_id)
-";
-  runSql($sql);
-  
- $sql = "
-CREATE INDEX ss_seqs_ix ON SimilarSequences(query_id, subject_id, evalue_exp, evalue_mant)
-";
-  runSql($sql);
-}
-
-sub createInParalogTable {
- my $sql = "
-CREATE TABLE InParalog (
- SEQUENCE_ID_A           VARCHAR(15),
- SEQUENCE_ID_B           VARCHAR(15),
- TAXON_ID                VARCHAR(15),
- UNNORMALIZED_SCORE      DOUBLE,
- NORMALIZED_SCORE        DOUBLE    
-)
-";
-  runSql($sql);
-}
-
-
-sub createOrthologTable {
- my $sql = " 
-CREATE TABLE Ortholog (
- SEQUENCE_ID_A           VARCHAR(15),
- SEQUENCE_ID_B           VARCHAR(15),
- TAXON_ID_A              VARCHAR(15),
- TAXON_ID_B              VARCHAR(15),
- UNNORMALIZED_SCORE      DOUBLE,
- NORMALIZED_SCORE        DOUBLE    
-)
-";
-  runSql($sql);
-
-$sql = "
-CREATE INDEX ortholog_seq_a_ix on Ortholog(sequence_id_a)
-";
-  runSql($sql);
-
-$sql = "
-CREATE INDEX ortholog_seq_b_ix on Ortholog(sequence_id_b)
-";
-  runSql($sql);
-}
-
-
-sub createCoOrthologTable {
- my $sql = "
-CREATE TABLE CoOrtholog (
- SEQUENCE_ID_A           VARCHAR(15),
- SEQUENCE_ID_B           VARCHAR(15),
- TAXON_ID_A              VARCHAR(15),
- TAXON_ID_B              VARCHAR(15),
- UNNORMALIZED_SCORE      DOUBLE,
- NORMALIZED_SCORE        DOUBLE    
-)
-";
-  runSql($sql);
-}
-
-sub createInterTaxonMatchView {
- my $sql = "
-CREATE OR REPLACE VIEW InterTaxonMatch 
-	AS SELECT ss.query_id, ss.subject_id, ss.subject_taxon_id, 
-	ss.evalue_mant, ss.evalue_exp 
-	FROM SimilarSequences ss 
-	WHERE ss.subject_taxon_id != ss.query_taxon_id
-";
- runSql($sql);
-}
-
 
 sub mysqlDbSelect {
  my $mysqlDatabase = getConfig("mysqlDatabase");
