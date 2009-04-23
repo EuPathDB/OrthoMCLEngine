@@ -7,6 +7,11 @@ my $configFile = $ARGV[0];
 &usage() unless $configFile;
 my $config = parseConfigFile($configFile);
 
+my $sqlLog = $ARGV[1];
+ if ($sqlLog) {
+ open (LOGFILE, ">$sqlLog");
+ }
+
 my $oracleNoLog;
 
 
@@ -162,19 +167,30 @@ USE $mysqlDatabase
 
 sub runSql {
  my $sql = $_[0]; 
+ if ($sqlLog) { 
+     logSql($sql);
+    }
   my $stmt = $dbh->prepare($sql) or die DBI::errstr;
       $stmt->execute() or die DBI::errstr;
 }
 
 
+sub logSql {
+  my $sql = $_[0];
+  print LOGFILE "\n$sql";
+}
+
 sub usage {
  print "
 Create OrthoMCL schema in an Oracle or Mysql database.
 
-usage: orthomclInstallSchema config_file 
+usage: orthomclInstallSchema config_file sql_log_file
 
 where:
   config_file : see below
+  sql_log_file : optional dump of sql from script
+
+EXAMPLE: ./orthomclInstallSchema orthoConfig.txt sqlLog.txt
 
 NOTE: the database login in the config file must have update/insert/truncate privileges on the tables specified in the config file.
 
@@ -192,5 +208,10 @@ coOrthologTable=CoOrtholog
 interTaxonMatchView=InterTaxonMatch
 percentMatchCutoff=50
 evalueExponentCutoff=-5
+
 ";
+}
+
+if ($sqlLog) {
+close LOGFILE;
 }
