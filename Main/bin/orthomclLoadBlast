@@ -9,6 +9,14 @@ my $config = parseConfigFile($configFile);
 
 my $blastFile = $ARGV[1];
 
+my $sqlLog = $ARGV[2];
+ if ($sqlLog) {
+ open (LOGFILE, ">$sqlLog");
+ }
+
+my $mysqlDatabase = getConfig("mysqlDatabase");
+my $sst = getConfig("similarSequencesTable");
+
 if (getConfig("dbVendor") eq 'oracle') {
   require DBD::Oracle;
 }
@@ -23,7 +31,7 @@ my $dbVendor = getConfig("dbVendor");
 
 if ($dbVendor eq 'mysql') {
     mysqlDbSelect();
-    loadBlastDataMySql($blastFile);
+    loadBlastDataMySQL($blastFile);
 }
    elsif ($dbVendor eq 'oracle') {
        loadBlastDataOracle($blastFile);
@@ -31,14 +39,13 @@ if ($dbVendor eq 'mysql') {
 
 
 sub loadBlastDataMySQL {
- my $mysqlDatabase = getConfig("mysqlDatabase");
  my $sql = "
  LOAD DATA
- LOCAL INFILE $blastFile
- REPLACE INTO TABLE orthomcl.SimilarSequences
- FIELDS TERMINATED BY '\t'
+ LOCAL INFILE \"$blastFile\"
+ REPLACE INTO TABLE $mysqlDatabase.$sst
+ FIELDS TERMINATED BY '\\t'
 ";
-  runSql();
+  runSql($sql);
 }
 
 
@@ -69,7 +76,6 @@ sub getConfig {
 }
 
 sub mysqlDbSelect {
- my $mysqlDatabase = getConfig("mysqlDatabase");
  my $sql = "
 USE $mysqlDatabase
 ";
@@ -79,10 +85,12 @@ USE $mysqlDatabase
 
 sub runSql {
  my $sql = $_[0];
+ if ($sqlLog) {
+     logSql($sql);
+    }
   my $stmt = $dbh->prepare($sql) or die DBI::errstr;
       $stmt->execute() or die DBI::errstr;
 }
-
 
 sub logSql {
   my $sql = $_[0];
@@ -120,3 +128,8 @@ percentMatchCutoff=50
 evalueExponentCutoff=-5
 ";
 }
+if ($sqlLog) {
+close LOGFILE;
+}
+
+
