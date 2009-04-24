@@ -1,46 +1,122 @@
 #!/usr/bin/perl
 
-use strict;;
-use DBI;;
+use strict;
+use DBI;
 
-my %config;
+my $configFile = $ARGV[0];
+usage() unless $configFile;
+my $config = parseConfigFile($configFile);
 
-open (CONFIG,"<orthoConfig.txt");
+my $blastFile = $ARGV[1];
 
-while (<CONFIG>) {
-    chomp;                  # no newline
-    s/#.*//;                # no comments
-    s/^\s+//;               # no leading white
-    s/\s+$//;               # no trailing white
-    next unless length;     # anything left?
-    my ($var, $value) = split(/\s*=\s*/, $_, 2);
-    $config{$var} = $value;
+if (getConfig("dbVendor") eq 'oracle') {
+  require DBD::Oracle;
+}
+ else {
+  require DBD::mysql;
 }
 
-close (CONFIG);
+my $dbh = DBI->connect(getConfig("dbConnectString"), getConfig("dbLogin"),
+                       getConfig("dbPassword")) or die DBI::errstr;
 
-my $dbLogin=$config{"dbLogin"};
-my $dbPassword=$config{"dbPassword"};
-my $startTime;
-my $finishTime;
-my $result;
+my $dbVendor = getConfig("dbVendor");
 
-open (LOGFILE, ">bulkLoad_all.log");
+if ($dbVendor eq 'mysql') {
+    mysqlDbSelect();
+    loadBlastDataMySql($blastFile);
+}
+   elsif ($dbVendor eq 'oracle') {
+       loadBlastDataOracle($blastFile);
+   }
 
-$startTime = `date`;
 
-print LOGFILE " \n$startTime";
+sub loadBlastDataMySQL {
+ my $mysqlDatabase = getConfig("mysqlDatabase");
+ my $sql = "
+ LOAD DATA
+ LOCAL INFILE $blastFile
+ REPLACE INTO TABLE orthomcl.SimilarSequences
+ FIELDS TERMINATED BY '\t'
+";
+  runSql();
+}
 
-print "Populating SimilarSequences table...";
-$result=`mysql -u $dbLogin --password=$dbPassword 2>&1 <bulkLoader.sql`;
-   if (!$result){
-      print"\nData load successful.";
-      }
-       else{
-            print "\nFAILED: $result";
-           }
 
-$finishTime = `date`;
+sub parseConfigFile {
+  my ($configFile) = @_;
 
-print LOGFILE "\n$finishTime";
-close LOGFILE;
+  open(F, $configFile) || die "Can't open config file '$configFile'\n";
+
+  my $config;
+  while(<F>) {
+    chomp;
+    next if /^\#/;
+    /^(\w+)\=(.+)/ || die "illegal line in config file '$_'\n";
+    my $key=$1;
+    my $val=$2;
+    $config->{$key} = $val;
+    $val = '********' if $key eq 'dbPassword';
+    print STDERR localtime() . " configuration: $key=$val\n";
+  }
+  return $config;
+}
+
+
+sub getConfig {
+  my ($prop) = @_;
+  die "can't find property $prop in config file" unless $config->{$prop};
+  return $config->{$prop};
+}
+
+sub mysqlDbSelect {
+ my $mysqlDatabase = getConfig("mysqlDatabase");
+ my $sql = "
+USE $mysqlDatabase
+";
+  runSql($sql);
+}
+
+
+sub runSql {
+ my $sql = $_[0];
+  my $stmt = $dbh->prepare($sql) or die DBI::errstr;
+      $stmt->execute() or die DBI::errstr;
+}
+
+
+sub logSql {
+  my $sql = $_[0];
+  print LOGFILE "\n$sql";
+}
+
+
+sub usage {
+ print "
+Load Blast results into an Oracle or Mysql database.
+
+usage: orthomclBulkLoad config_file blast_file
+
+where:
+  config_file : see below
+  blast_file : blast output from orthoclParseBlast 
+
+EXAMPLE: ./orthomclLoadBlast orthoConfig.txt blast_results_file.txt
+
+NOTE: the database login in the config file must have update/insert/truncate privileges on the tables specified in the config file.
+
+Sample Config File:
+
+dbVendor=oracle  (or mysql)
+dbConnectString=dbi:Oracle:orthomcl
+dbLogin=my_db_login
+dbPassword=my_db_password
+mysqlDatabase=my_mysql_database
+similarSequencesTable=SimilarSequences
+orthologTable=Ortholog
+inParalogTable=InParalog
+coOrthologTable=CoOrtholog
+interTaxonMatchView=InterTaxonMatch
+percentMatchCutoff=50
+evalueExponentCutoff=-5
+";
+}
