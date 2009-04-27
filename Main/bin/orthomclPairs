@@ -520,13 +520,13 @@ create table InParalogOrthologTaxonAvg as
   $sql = "
 create table InParalogAvgScore as
      select case
-            when orth.average is NULL
-              then all.average
-              else orth.average
+            when orth_i.average is NULL
+              then all_i.average
+              else orth_i.average
             end as avg_score,
-            all.taxon_id
-       from InParalogTaxonAvg all LEFT OUTER JOIN InParalogOrthologTaxonAvg orth
-       ON all.taxon_id = orth.taxon_id
+            all_i.taxon_id
+       from InParalogTaxonAvg all_i LEFT OUTER JOIN InParalogOrthologTaxonAvg orth_i
+       ON all_i.taxon_id = orth_i.taxon_id
 ";
 
    if ($debug==1) {print LOGFILE "\n\n$sql"};
