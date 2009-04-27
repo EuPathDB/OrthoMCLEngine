@@ -36,6 +36,8 @@ my @steps = (['updateMinimumEvalueExponent'],
 	     ['betterHit', ['drop table BestInterTaxonScore']],
              ['better_hit_ix'],
 	     ['inParalog', ['drop table BetterHit']],
+	     ['inParalogTaxon'],
+	     ['inParalogOrthologTaxon'],
 	     ['bestHit', ['drop table BestQueryTaxonScore']],
              ['best_hit_ix'],
 	     ['ortholog', ['drop table BestHit']],
@@ -43,9 +45,11 @@ my @steps = (['updateMinimumEvalueExponent'],
 	     ['orthologAvg'],
 	     ['orthologAvgIndex'],
 	     ['orthologsNormalization', ['drop table OrthologAvgScore', 'drop table OrthologTemp2']],
-	     ['inParalogAllAvg'],
-	     ['inParalogHaveOrthologAvg'],
-	     ['inParalogAvg',['drop table InParalogAllAvg', 'drop table InParalogHaveOrthologAvg']],
+ 	     ['inParalogTaxonAvg'],
+             ['orthologUniqueId'],
+             ['orthologUniqueIdIndex'],
+             ['inParalogOrthologTaxonAvg', ['drop table OrthologUniqueId']],
+	     ['inParalogAvg',['drop table InParalogTaxonAvg', 'drop table InParalogOrthologTaxonAvg']],
 	     ['inParalogAvgIndex'],
 	     ['inParalogsNormalization', ['drop table InParalogAvgScore', 'drop table InParalogTemp']],
 	     ['ortholog2way'],
@@ -99,8 +103,6 @@ my $dbh = DBI->connect(getConfig("dbConnectString"), getConfig("dbLogin"),
 		       getConfig("dbPassword")) or die DBI::errstr;
 
 
-uniqueSimSeqsQueryId();
-
 commonTempTables();
 
 inparalogs();
@@ -146,6 +148,7 @@ sub inparalogs {
   print STDERR localtime() . " Constructing inParalog tables\n"
     unless $clean eq 'only' || $clean eq 'all';
   bestInterTaxonScore();
+  uniqueSimSeqsQueryId();
   betterHit();
   inParalog();
 }
@@ -254,7 +257,7 @@ create index bis_uids_ix on BestInterTaxonScore(query_id)
 }
 
 
-sub uniqueSimSeqsQueryId{
+sub uniqueSimSeqsQueryId {
   
    my $sql = "
 create table UniqueSimSeqsQueryId as
@@ -262,7 +265,6 @@ select distinct query_id from SimilarSequences
 ";
   if ($debug==1) {print LOGFILE "\n\n" . localtime() . $sql};
   runSql($sql, "create UniqueSimSeqsQueryId", 'uniqueSimSeqsQueryId', '3 secs');
-  print LOGFILE "\n\n" . localtime() . $sql; 
 
  $sql = "
 create index ust_qids_ix on UniqueSimSeqsQueryId(query_id)
@@ -338,37 +340,6 @@ where bh1.query_id < bh1.subject_id
 ";
   if ($debug==1) {print LOGFILE "\n\n$sql"};
    runSql($sql, "create InParalogTemp table", 'inParalog', '5 min');
-
-  $sql = "
-create table InParalogTaxon as
-select avg(i2.unnormalized_score) average, i2.taxon_id
-from InParalogTemp i2
-group by i2.taxon_id
-";
-
-  if ($debug==1) {print LOGFILE "\n\n$sql"};
-   runSql($sql, "create InParalogTaxon table", 'inParalogTaxon', '5 min');
-
-  $sql = "
-create table InParalogOrthologTaxon as
-         select avg(i2.unnormalized_score) average, i2.taxon_id
-         from InParalogTemp i2
-         where (i2.sequence_id_a in
-                 (select sequence_id_a from Ortholog
-                  union
-                  select sequence_id_b from Ortholog)
-               )
-            or (i2.sequence_id_b in 
-                 (select sequence_id_a from Ortholog
-                  union 
-                  select sequence_id_b from Ortholog)
-               )
-         group by i2.taxon_id
-";
-
-  if ($debug==1) {print LOGFILE "\n\n$sql"};
-   runSql($sql, "create InParalogOrthologTaxon table", 'inParalogOrthologTaxon', '5 min');
-
 
 }
 
@@ -495,7 +466,54 @@ sub normalizeInParalogs {
   my $inParalogTable = getConfig("inParalogTable");
   my $orthologTable = getConfig("orthologTable");
 
+  ################################################################
   my $sql = "
+create table InParalogTaxonAvg as
+select avg(i.unnormalized_score) average, i.taxon_id
+from InParalogTemp i
+group by i.taxon_id
+";
+
+  if ($debug==1) {print LOGFILE "\n\n$sql"};
+  runSql($sql, "create InParalogTaxonAvg table", 'inParalogTaxonAvg', '5 min');
+
+  ################################################################
+
+  $sql = "
+create table OrthologUniqueId as
+select distinct sequence_id_a as sequence_id from $orthologTable
+union
+select distinct sequence_id_b as sequence_id from $orthologTable
+";
+
+  if ($debug==1) {print LOGFILE "\n\n$sql"};
+  runSql($sql, "create OrthologUniqueId table", 'orthologUniqueIds', '5 min');
+
+  ################################################################
+
+  $sql = "create index ortholog_unique_id_ix on OrthologUniqueId(sequence_id)";
+
+
+  if ($debug==1) {print LOGFILE "\n\n$sql"};
+  runSql($sql, "create ortholog_unique_id_ix index", 'orthologUniqueIdIndex', '1 min');
+
+  ################################################################
+
+  $sql = "
+create table InParalogOrthologTaxonAvg as
+         select avg(i.unnormalized_score) average, i.taxon_id
+         from InParalogTemp i, UniqueOrthologId o
+         where i.sequence_id_a = o.sequence_id
+            or i.sequence_id_b = o.sequence_id
+         group by i.taxon_id
+";
+
+  if ($debug==1) {print LOGFILE "\n\n$sql"};
+  runSql($sql, "create InParalogOrthologTaxonAvg table", 'inParalogOrthologTaxonAvg', '5 min');
+
+  ################################################################
+
+  $sql = "
 create table InParalogAvgScore as
      select case
             when orth.average is NULL
@@ -503,19 +521,22 @@ create table InParalogAvgScore as
               else orty.average
             end as avg_score,
             all.taxon_id
-       from InParalogAllAvg all LEFT OUTER JOIN InParalogHaveOrthologAvg orth
+       from InParalogTaxonAvg all LEFT OUTER JOIN InParalogOrthologTaxonAvg orth
        ON all.taxon_id = orth.taxon_id
 ";
-      
+
    if ($debug==1) {print LOGFILE "\n\n$sql"};
    runSql($sql, "create InParalogAvgScore table", 'inParalogAvg', '1 min');
 
+  ################################################################
 
-  $sql = "create index InParalogAvg_ix on InParalogAvgScore(taxon_id,avg_score)";
+  $sql = "create index inparalog_avg_ix on InParalogAvgScore(taxon_id,avg_score)";
 
-  
-   if ($debug==1) {print LOGFILE "\n\n$sql"};
+
+  if ($debug==1) {print LOGFILE "\n\n$sql"};
   runSql($sql, "create InParalogAvgScore index", 'inParalogAvgIndex', '1 min');
+
+  ################################################################
 
   $sql = "
   insert into $inParalogTable (sequence_id_a, sequence_id_b, taxon_id, unnormalized_score, normalized_score)
@@ -526,6 +547,8 @@ create table InParalogAvgScore as
 
    if ($debug==1) {print LOGFILE "\n\n$sql"};
   runSql($sql, "populate $inParalogTable table, including normalized_score", 'inParalogsNormalization', '0');
+
+  ################################################################
 
 }
 
