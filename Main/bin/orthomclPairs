@@ -481,30 +481,34 @@ group by i.taxon_id
 
   $sql = "
 create table OrthologUniqueId as
-select distinct sequence_id_a as sequence_id from $orthologTable
+select distinct(sequence_id) from (
+select sequence_id_a as sequence_id from $orthologTable
 union
-select distinct sequence_id_b as sequence_id from $orthologTable
+select sequence_id_b as sequence_id from $orthologTable) i
 ";
 
   if ($debug==1) {print LOGFILE "\n\n$sql"};
-  runSql($sql, "create OrthologUniqueId table", 'orthologUniqueIds', '5 min');
+  runSql($sql, "create OrthologUniqueId table", 'orthologUniqueId', '5 min');
 
   ################################################################
 
-  $sql = "create index ortholog_unique_id_ix on OrthologUniqueId(sequence_id)";
+  $sql = "create unique index ortholog_unique_id_ix on OrthologUniqueId(sequence_id)";
 
 
   if ($debug==1) {print LOGFILE "\n\n$sql"};
-  runSql($sql, "create ortholog_unique_id_ix index", 'orthologUniqueIdIndex', '1 min');
+  runSql($sql, "create unique ortholog_unique_id_ix index", 'orthologUniqueIdIndex', '1 min');
 
   ################################################################
 
   $sql = "
 create table InParalogOrthologTaxonAvg as
-         select avg(i.unnormalized_score) average, i.taxon_id
-         from InParalogTemp i, UniqueOrthologId o
-         where i.sequence_id_a = o.sequence_id
-            or i.sequence_id_b = o.sequence_id
+
+ select avg(i.unnormalized_score) average, i.taxon_id
+         from InParalogTemp i
+         where i.sequence_id_a in
+                 (select sequence_id from OrthologUniqueId)
+            or i.sequence_id_b in
+                 (select sequence_id from OrthologUniqueId)
          group by i.taxon_id
 ";
 
@@ -518,7 +522,7 @@ create table InParalogAvgScore as
      select case
             when orth.average is NULL
               then all.average
-              else orty.average
+              else orth.average
             end as avg_score,
             all.taxon_id
        from InParalogTaxonAvg all LEFT OUTER JOIN InParalogOrthologTaxonAvg orth
@@ -694,6 +698,7 @@ sub runSql {
   }
 
   clean($tag) unless ($clean eq 'no');
+  exit(1);
 }
 
 sub clean {
