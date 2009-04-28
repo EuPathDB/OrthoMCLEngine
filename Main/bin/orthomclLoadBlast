@@ -3,6 +3,9 @@
 use strict;
 use DBI;
 
+my $dbLogin = getConfig("dbLogin");
+my $dbPassword = getConfig("dbPassword");
+
 my $configFile = $ARGV[0];
 usage() unless $configFile;
 my $config = parseConfigFile($configFile);
@@ -16,6 +19,28 @@ my $sqlLog = $ARGV[2];
 
 my $mysqlDatabase = getConfig("mysqlDatabase");
 my $sst = getConfig("similarSequencesTable");
+
+my $sqlHeader = "
+LOAD DATA
+INFILE *
+INTO TABLE $dbLogin.$sst
+FIELDS TERMINATED BY \"\\t \" OPTIONALLY ENCLOSED BY '\"'
+TRAILING NULLCOLS
+(  query_id,
+    subject_id,
+    query_taxon_id,
+    subject_taxon_id,
+    evalue_mant,
+    evalue_exp,
+    percent_identity,
+    percent_match
+)
+";
+
+my $blastResults = do { local( @ARGV, $/ ) = $blastFile ; <> } ;
+open(BLASTFILE, ">$blastFile");
+print BLASTFILE $sqlHeader;
+print BLASTFILE $blastResults;
 
 if (getConfig("dbVendor") eq 'oracle') {
   require DBD::Oracle;
@@ -46,6 +71,14 @@ sub loadBlastDataMySQL {
  FIELDS TERMINATED BY '\\t'
 ";
   runSql($sql);
+}
+
+
+sub loadBlastDataOracle {
+ my $sql = "
+HOST sqlldr $dbLogin//$dbPassword control=$blastFile
+";
+  run($sql);
 }
 
 
@@ -131,5 +164,6 @@ evalueExponentCutoff=-5
 if ($sqlLog) {
 close LOGFILE;
 }
+close BLASTFILE;
 
 
