@@ -56,10 +56,11 @@ my @steps = (['updateMinimumEvalueExponent'],
 	     ['in2a_ix'],
 	     ['in2b_ix'],
 	     ['ortholog2way'],
-             ['InParalogOrthologInParalog'],
+             ['inParalogOrthologInParalog'],
              ['inParalogOrtholog'],
 	     ['coOrthologCandidate', ['drop table Ortholog2Way', 'drop table InParalog2Way', 'drop table InParalogOrthologInParalog', 'drop table InParalogOrtholog']],
-	     ['coOrtholog', ['drop table CoOrthologCandidate']],
+	     ['coOrthologNotOrtholog', ['drop table CoOrthologCandidate']],
+	     ['coOrtholog', ['drop table CoOrthologNotOrtholog']],
 	     ['coOrthologTaxon', [ 'drop table CoOrthologTemp']],
 	     ['coOrthologAvg'],
 	     ['coOrthologAvgIndex'],
@@ -636,7 +637,7 @@ select distinct
        greatest(sequence_id_a, sequence_id_b) as sequence_id_b
 from (select sequence_id_a, sequence_id_b from InParalogOrthologInParalog
       union
-      select sequence_id_a, sequence_id_b from InParalogOrtholog)
+      select sequence_id_a, sequence_id_b from InParalogOrtholog) t
 ";
   
    if ($debug==1) {print LOGFILE "\n\n$sql"};
@@ -651,6 +652,21 @@ sub  coortholog {
   my $percentMatchThreshold = getConfig("percentMatchCutoff");
 
   my $sql = "
+create table CoOrthologNotOrtholog as
+SELECT cc.sequence_id_a, cc.sequence_id_b
+      FROM CoOrthologCandidate cc
+      LEFT OUTER JOIN $orthologTable o
+      ON cc.sequence_id_a = o.sequence_id_a
+      AND cc.sequence_id_b = o.sequence_id_b
+      WHERE o.sequence_id_a IS NULL
+";
+
+    if ($debug==1) {print LOGFILE "\n\n$sql"};
+   runSql($sql, "create CoOrthologNotOrtholog table", 'coOrthologNotOrtholog', '30 min');
+
+##########################################################
+
+  $sql = "
 create table CoOrthologTemp as
 select /*+ use_nl(candidate, ab) use_nl(candidate, ba)  */
        candidate.sequence_id_a, candidate.sequence_id_b,
@@ -662,13 +678,7 @@ select /*+ use_nl(candidate, ab) use_nl(candidate, ba)  */
            (log(10, ab.evalue_mant * ba.evalue_mant)
             + ab.evalue_exp + ba.evalue_exp) / -2
        end as unnormalized_score
-from $sst ab, $sst ba, 
-     (SELECT cc.sequence_id_a, cc.sequence_id_b
-      FROM CoOrthologCandidate cc
-      LEFT OUTER JOIN $orthologTable o
-      ON cc.sequence_id_a = o.sequence_id_a
-      AND cc.sequence_id_b = o.sequence_id_b
-      WHERE o.sequence_id_a IS NULL) candidate 
+from $sst ab, $sst ba, CoOrthologNotOrtholog candidate
 where ab.query_id = candidate.sequence_id_a
   and ab.subject_id = candidate.sequence_id_b
   and ab.evalue_exp <= $evalueExpThreshold
