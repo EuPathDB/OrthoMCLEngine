@@ -2,17 +2,20 @@
 
 use strict;
 
-&usage() unless scalar(@ARGV) == 2;
+&usage() unless scalar(@ARGV) == 3;
 
 my $taxoncode = $ARGV[0];
 my $inputfile = $ARGV[1];
+my $idField = $ARGV[2];
 
 open(IN, $inputfile) || die "Can't open input file '$inputfile'\n";
 open(OUT, ">$taxoncode.fasta") || die "Can't open output file '$taxoncode.fasta'\n";
 
 while(<IN>) {
-  if (/\>\s*(\S)/) {
-    print OUT ">$taxoncode|$1";
+  if (/\>/) {
+    tr/^\>\s*//;
+    my $a = split(/(\s+\|)/);
+    print OUT ">$taxoncode|$a[$idField-1]";
   } else {
     print OUT $_;
   }
@@ -24,19 +27,24 @@ sub usage {
 print "
 Create an OrthoMCL compliant .fasta file, by adjusting definition lines.
 
-orthomclAdjustFasta taxoncode fasta_file
+orthomclAdjustFasta taxoncode fasta_file id_field
 
 where:
   taxoncode:   a three or four letter unique abbreviation for the taxon
   fasta_file:  the input fasta file
+  id_field:    a number indicating what field in the definition line contains
+               the protein ID.  Fields are separated by either ' ' or '|'. Any
+               spaces immediately following the '>' are ignored.  The first
+               field is 1. For example, in the following definition line, the
+               ID (AP_000668.1) is in field 4:  >gi|89106888|ref|AP_000668.1|
 
 Input file requirements:
   (1) .fasta format
-  (2) a unique id is provided for each sequence, and is the first word on the definition line.
+  (2) a unique id is provided for each sequence, and is in the specified field
 
 Output file format:
   (1) .fasta format
-  (2) definition line is of the form: 
+  (2) definition line is of the form:
          >taxoncode|unique_protein_id
 
 The output file is named taxoncode.fasta

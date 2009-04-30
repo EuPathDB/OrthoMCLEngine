@@ -44,17 +44,17 @@ foreach my $file (@files) {
 
   # add file stats to reject count if it qualifies
   if ($rejectSeqCount) {
-    my $pct = $rejectseqCount/$totalcount *100 > 10;
+    my $pct = $rejectSeqCount/$seqCount *100 > 10;
     if ($pct > 10) {
-      push(@rejectRates, [$file, $pct]);
+      push(@$rejectRates, [$file, $pct]);
     }
   }
   close(F);
 }
 
-if (scalar(@rejectRates)) {
+if (scalar(@$rejectRates)) {
   print "\nProteomes with > 10% rejected proteins:\n\n";
-  my @sortedRR = sort {$b->[1] <=> $a->[1]} @rejectRates;
+  my @sortedRR = sort {$b->[1] <=> $a->[1]} @$rejectRates;
   foreach my $reject (@sortedRR) {
     print "$reject->[0]\t$reject->[1]%\n";
   }
