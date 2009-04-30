@@ -13,9 +13,11 @@ open(OUT, ">$taxoncode.fasta") || die "Can't open output file '$taxoncode.fasta'
 
 while(<IN>) {
   if (/\>/) {
-    tr/^\>\s*//;
-    my $a = split(/(\s+\|)/);
-    print OUT ">$taxoncode|$a[$idField-1]";
+    s/^\>\s*//;
+    s/\s+/ /g;
+    s/\s*\|\s*/\|/g;
+    my @a = split(/[\s\|]/);
+    print OUT ">$taxoncode|$a[$idField-1]\n";
   } else {
     print OUT $_;
   }
@@ -40,7 +42,8 @@ where:
 
 Input file requirements:
   (1) .fasta format
-  (2) a unique id is provided for each sequence, and is in the specified field
+  (2) a unique id is provided for each sequence, and is in the field specified
+      by id_field
 
 Output file format:
   (1) .fasta format
