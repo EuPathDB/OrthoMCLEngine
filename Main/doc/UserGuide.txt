@@ -9,12 +9,12 @@ The input to OrthoMCL is a set of proteomes.
 
 The output is a set of files:
   pairs/
-     orthologs.txt
-     coorthologs.txt
-     inparalogs.txt
+     potentialOrthologs.txt
+     potentialCoorthologs.txt
+     potentialInparalogs.txt
   groups.txt
 
-The files in the pairs/ directory contain the pairwise relationships between proteins, and their scores.  They are categorized into orthologs, co-orthologs and inparalogs as described in the OrthoMCL Algorithm document.  The groups.txt file contains the groups created by clustering the pairs with the MCL program.
+The files in the pairs/ directory contain the pairwise relationships between proteins, and their scores.  They are categorized into potential orthologs, co-orthologs and inparalogs as described in the OrthoMCL Algorithm document.  The groups.txt file contains the groups created by clustering the pairs with the MCL program.
 
 There are three overall stages:
   - all-v-all BLAST
@@ -94,7 +94,23 @@ We recommend you save the output of each step so that you can easily redo stuff 
 ========== Step 1: MySql ============
 
 
-========== Step 2: install OrthoMCL programs  ========
+========== Step 2: install and configure OrthoMCL programs  ========
+Input:
+  - orthomclSoftware.tar
+Output:
+  - a directory of executable programs
+  - orthomcl.config file
+
+Use this command to unpack the software:
+  tar -xf orthomclSoftware.tar
+
+The result will be the orthomclSoftware/ directory.
+
+In that directory is a file called orthomcl.config.sample.  Copy that file
+to orthomcl.config, and edit the new file according to the following instructions.
+
+
+
 
 
 ========== Step 3: install schema ========
@@ -107,28 +123,32 @@ We recommend you save the output of each step so that you can easily redo stuff 
 Input: 
   - fasta files as acquired from the genome resource.
 Output:
-  - a directory of orthomcl-compatible fasta files
+  - a directory of orthomcl-compliant fasta files (see Step 6)
 
-This step prepares a set of protein fasta files required by the next step.  There are three requirements for that step:
-  1) a directory which contains all and only the proteome .fasta files
-  1) each .fasta file must have a name in the form 'xxxx.fasta' where xxxx is a three or four letter unique taxon code.  For example: hsa.fasta or eco.fasta
-  2) each protein in those files must have a definition line in the following format:
-     >xxxx|yyyyyyyy
-     where xxxx is the three or four letter taxon code and yyyyyyy is a sequence identifier unique within that taxon.
+Use orthomclAdjustFasta to produce a compliant file from any input file that conforms to the following pattern (for other files, provide your own script to produce complaint fasta files):
+  - has one or more fields that are separated by white space or the '|' character (optionally surrounded by white space)
+  - has the unique ID in the same field of every protein.
 
-Use the orthomclAdjustFasta for this step if your input fasta files are in GenBank style (ie, the first word on the definition line is the unique sequence indentifier).
+First, for any organism that has multiple protein fasta files, combine them all into one single proteome fasta file
 
-If your input fasta files are not in GenBank style, write a simple script to produce orthomcl-compatible fasta files.
+Then, create an empty directory, and change to that directory.  Run orthomclAdjustFasta once for each input proteome fasta file.  It will produce a compliant file in the new directory.  Check each output file to ensure that the proteins all have proper IDs.
 
 
 ======== Step 6: orthomclFilterFasta ===========
 Input: 
-  - a directory of orthomcl-compatible fasta files
+  - a directory of orthomcl-compliant fasta files
   - optionally a gene->protein mapping file
 Output:
   - goodProteins.fasta
   - rejectProteins.fasta
   - a report of suspicious proteomes (> 10% rejects)
+
+The input requirements are:
+  1) a directory which contains all and only the proteome .fasta files, one file per proteome.
+  1) each .fasta file must have a name in the form 'xxxx.fasta' where xxxx is a three or four letter unique taxon code.  For example: hsa.fasta or eco.fasta
+  2) each protein in those files must have a definition line in the following format:
+     >xxxx|yyyyyyyy
+     where xxxx is the three or four letter taxon code and yyyyyyy is a sequence identifier unique within that taxon.
 
 Use the orthomclFilterFasta program for this step. It should run in a few minutes
  
@@ -159,14 +179,14 @@ Output:
 
 This step parses NCBI BLAST -m 8 output into the format that can be loaded into the orthomcl database. 
 
-Use the orthomclBlastParser for this.  It will run in XXXXX.  In addition to formatting, it computes the percent match of each hit, which is tricky (see the perl code if you are a super-power user.)
+Use the orthomclBlastParser program for this.  It will run in XXXXX.  In addition to formatting, it computes the percent match of each hit, which is tricky (see the perl code if you are a super-power user.)
 
 
 ========= Step 9: orthomclLoadBlast  ===========
 Input:
   - similarSequences.txt
 Output:
-  - a loaded SimilarSequences table in the database
+  - SimilarSequences table in the database
 
 This step loads the BLAST results into the orthomcl database. 
 
@@ -174,6 +194,27 @@ Use the orthomclLoadBlast program for this.  It may take many hours to run (15 h
 
 
 ========= Step 10: orthomclPairs =========
+Input:
+  - SimilarSequences table in the database
+Output:
+  - PotentialOrthologs table
+  - PotentialInParalogs table
+  - PotentialCoOrthologs table
 
-This is the computationally major step that finds protein pairs.  It executes the OrthoMCL Algorithm using the relational database.  
+This is a computationally major step that finds protein pairs.  It executes the algorithm described in the OrthoMCL Algorithm document, using a relational database.  The program proceeds through a series of internal steps, each creating an intermediate database table or index.  There are about 20 such tables created. Finally, it populates the output tables.
+
+Use the orthomclPairs program for this step.  On a set of 500M protein similarities, it took XXXX hours to run.
+
+The cleanup= option allows you to control the cleaning up of the intermediary tables.  The 'yes' option drops the intermediary tables once they are no longer needed.  The 'no' option keeps the intermediary tables in the database.  In total, they are expected to be about XXXX percent of the SimilarSequences table. This is useful mostly for power users or developers. They can be removed afterwards with the 'only' or 'all' options.  The latter also removes the final tables, and should only be done after Step 11 below has dumped them to files.
+
+The startAfter= option allows you to pick up where the program left off, if it stops for any reason.  Look in the log to find the last completed step, and use its tag as the value for startAfter=
+
+========== Step 12: mcl ========
+
+
+========== Step 13: orthomclMclToGroups ==========
+
+
+
+    
 
