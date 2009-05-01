@@ -29,10 +29,11 @@ sub usage {
 print "
 Create an OrthoMCL compliant .fasta file, by adjusting definition lines.
 
-orthomclAdjustFasta taxoncode fasta_file id_field
+Usage:
+  orthomclAdjustFasta taxon_code fasta_file id_field
 
 where:
-  taxoncode:   a three or four letter unique abbreviation for the taxon
+  taxon_code:  a three or four letter unique abbreviation for the taxon
   fasta_file:  the input fasta file
   id_field:    a number indicating what field in the definition line contains
                the protein ID.  Fields are separated by either ' ' or '|'. Any
