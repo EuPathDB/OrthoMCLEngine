@@ -12,11 +12,13 @@ opendir(DIR, $inputDir) || "Can't open input directory '$inputDir'\n";
 my @files = readdir(DIR);
 closedir(DIR);
 
-my $rejectRates;
+my $rejectRates = [];
 open(GOOD, ">goodProteins.fasta");
-open(BAD, ">rejectProteins.fasta");
+open(BAD, ">poorProteins.fasta");
 foreach my $file (@files) {
+  next if $file =~ /^\./;
   open(F, "$inputDir/$file") || die "Can't open input file '$file'\n";
+  print STDERR "processing file $file\n";
   my $seqCount;
   my $rejectSeqCount;
   my $currentSeq;
@@ -27,24 +29,26 @@ foreach my $file (@files) {
   while (<F>) {
     chomp;
     # handle prev seq
-    if (/\>/ && $currentSeq) {
-      $seqCount++;
-      $rejectSeqCount += &handleSeq($currentSeq, $currentLen, $currentStopCnt);
-      $currentSeq = "";
-      $currentLen = 0;
-      $currentStopCnt = 0;
+    if (/\>/) {
+      if ($currentSeq) {
+	$seqCount++;
+	$rejectSeqCount += &handleSeq($currentSeq, $currentLen, $currentStopCnt);
+	$currentSeq = "";
+	$currentLen = 0;
+	$currentStopCnt = 0;
+      }
     } else {
       $currentLen += length($_);
       $currentStopCnt += tr/[^A-Za-z]//; # this removes the stop codon from $_
     }
     $currentSeq .= "$_\n";
   }
-  $rejectSeqCount += &handleSeq($currentSeq);
+  $rejectSeqCount += &handleSeq($currentSeq, $currentLen, $currentStopCnt);
   $seqCount++;
 
   # add file stats to reject count if it qualifies
   if ($rejectSeqCount) {
-    my $pct = $rejectSeqCount/$seqCount *100 > 10;
+    my $pct = $rejectSeqCount/$seqCount * 100;
     if ($pct > 10) {
       push(@$rejectRates, [$file, $pct]);
     }
@@ -53,18 +57,18 @@ foreach my $file (@files) {
 }
 
 if (scalar(@$rejectRates)) {
-  print "\nProteomes with > 10% rejected proteins:\n\n";
+  print "\nProteomes with > 10% poor proteins:\n";
   my @sortedRR = sort {$b->[1] <=> $a->[1]} @$rejectRates;
   foreach my $reject (@sortedRR) {
-    print "$reject->[0]\t$reject->[1]%\n";
+    my $intPct = int($reject->[1]);
+    print "  $reject->[0]\t$intPct%\n";
   }
 }
 
 sub handleSeq {
   my ($seq, $len, $stopCnt) = @_;
   my $isBad = 0;
-  my $stopPercent = (($len - $stopCnt)/$len) * 100;
-
+  my $stopPercent = (($len - $stopCnt)/$len)* 100;
 
   if ($len < $minLength || $stopPercent > $maxStopPercent) {
     print BAD $seq;
@@ -79,12 +83,13 @@ sub usage {
   print "
 Create goodProteins.fasta containing all good proteins and rejectProteins.fasta containing all rejects.  Input is a directory containing a set of compliant input .fasta files (as produced by orthomclAdjustFasta).
 
-orthomclFilterFasta inputdir minlength maxpercentstops suspiciouspercent
+Usage:
+  orthomclFilterFasta input_dir min_length max_percent_stops
 
 where:
-  inputdir:           a directory containing a set of .fasta files
-  minlength:          minimum allowed length of proteins.  (suggested: 10)
-  maxpercentstop:     maximum percent stop codons.  (suggested 20)
+  input_dir:           a directory containing a set of .fasta files
+  min_length:          minimum allowed length of proteins.  (suggested: 10)
+  max_percent_stop:    maximum percent stop codons.  (suggested 20)
 ";
   exit(1);
 }
