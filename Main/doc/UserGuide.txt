@@ -99,6 +99,7 @@ Input:
   - orthomclSoftware.tar
 Output:
   - a directory of executable programs
+  - a home directory for your run of orthomcl
   - orthomcl.config file
 
 Use this command to unpack the software:
@@ -106,8 +107,14 @@ Use this command to unpack the software:
 
 The result will be the orthomclSoftware/ directory.
 
-In that directory is a file called orthomcl.config.sample.  Copy that file
-to orthomcl.config, and edit the new file according to the following instructions.
+The directory contains a set of programs and a sample config file.  To run the programs you will need to either:
+  a) include this directory in your PATH
+  b) call the programs using their full directory path
+
+Make a directory to hold the data and results for your run of orthomcl.  In this document we will call that directory "your_orthomcl_dir".
+
+In the orthomclSoftware/ directory is a file called orthomcl.config.sample.  Copy that file
+to your_orthomcl_dir/orthomcl.config, and edit the new file according to the following instructions.
 
 
 
@@ -123,7 +130,7 @@ to orthomcl.config, and edit the new file according to the following instruction
 Input: 
   - fasta files as acquired from the genome resource.
 Output:
-  - a directory of orthomcl-compliant fasta files (see Step 6)
+  - the your_orthomcl_dir/input directory of orthomcl-compliant fasta files (see Step 6)
 
 Use orthomclAdjustFasta to produce a compliant file from any input file that conforms to the following pattern (for other files, provide your own script to produce complaint fasta files):
   - has one or more fields that are separated by white space or the '|' character (optionally surrounded by white space)
@@ -131,26 +138,30 @@ Use orthomclAdjustFasta to produce a compliant file from any input file that con
 
 First, for any organism that has multiple protein fasta files, combine them all into one single proteome fasta file
 
-Then, create an empty directory, and change to that directory.  Run orthomclAdjustFasta once for each input proteome fasta file.  It will produce a compliant file in the new directory.  Check each output file to ensure that the proteins all have proper IDs.
+Then, create an empty your_orthomcl_dir/input directory, and change to that directory.  Run orthomclAdjustFasta once for each input proteome fasta file.  It will produce a compliant file in the new directory.  Check each file to ensure that the proteins all have proper IDs.
 
 
 ======== Step 6: orthomclFilterFasta ===========
 Input: 
-  - a directory of orthomcl-compliant fasta files
+  - the your_orthomcl_dir/input directory
   - optionally a gene->protein mapping file
 Output:
-  - goodProteins.fasta
-  - rejectProteins.fasta
+  - your_orthomcl_dir/goodProteins.fasta
+  - your_orthomcl_dir/poorProteins.fasta
   - a report of suspicious proteomes (> 10% rejects)
 
+This step produces a single goodProteins.fasta file to run BLAST on.  It filters away poor-quality sequences (placing them in poorProteins.fasta).  The filter is based on length and percent stop codons.  You can adjust these values.
+
 The input requirements are:
-  1) a directory which contains all and only the proteome .fasta files, one file per proteome.
+  1) an input/ directory which contains all and only the proteome .fasta files, one file per proteome.
   1) each .fasta file must have a name in the form 'xxxx.fasta' where xxxx is a three or four letter unique taxon code.  For example: hsa.fasta or eco.fasta
   2) each protein in those files must have a definition line in the following format:
      >xxxx|yyyyyyyy
      where xxxx is the three or four letter taxon code and yyyyyyy is a sequence identifier unique within that taxon.
 
-Use the orthomclFilterFasta program for this step. It should run in a few minutes
+Change dir to your_orthomcl_dir and run orthomclFilterFasta, passing it the input/ directory. It should run in a few minutes.
+
+After this step is complete you can delete the input/ directory to save disk space.
  
 
 ========= Step 7: All-v-all BLAST =========
@@ -208,6 +219,9 @@ Use the orthomclPairs program for this step.  On a set of 500M protein similarit
 The cleanup= option allows you to control the cleaning up of the intermediary tables.  The 'yes' option drops the intermediary tables once they are no longer needed.  The 'no' option keeps the intermediary tables in the database.  In total, they are expected to be about XXXX percent of the SimilarSequences table. This is useful mostly for power users or developers. They can be removed afterwards with the 'only' or 'all' options.  The latter also removes the final tables, and should only be done after Step 11 below has dumped them to files.
 
 The startAfter= option allows you to pick up where the program left off, if it stops for any reason.  Look in the log to find the last completed step, and use its tag as the value for startAfter=
+
+========== Step 11: orthomclDumpPairsFiles ========
+
 
 ========== Step 12: mcl ========
 
