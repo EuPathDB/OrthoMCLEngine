@@ -3,7 +3,7 @@ Version ??
 
 =========== Introduction ==========================
 
-Please read the OrthoMCL Algorithm document available here: http://docs.google.com/Doc?id=dd996jxg_1gsqsp6
+For details on the orthomcl algorithm, please read the OrthoMCL Algorithm document available here: http://docs.google.com/Doc?id=dd996jxg_1gsqsp6
 
 The input to OrthoMCL is a set of proteomes.
 
@@ -14,14 +14,15 @@ The output is a set of files:
      potentialInparalogs.txt
   groups.txt
 
-The files in the pairs/ directory contain the pairwise relationships between proteins, and their scores.  They are categorized into potential orthologs, co-orthologs and inparalogs as described in the OrthoMCL Algorithm document.  The groups.txt file contains the groups created by clustering the pairs with the MCL program.
+The files in the pairs/ directory contain pairwise relationships between proteins, and their scores.  They are categorized into potential orthologs, co-orthologs and inparalogs as described in the OrthoMCL Algorithm document.  The groups.txt file contains the groups created by clustering the pairs with the MCL program.
 
 There are three overall stages:
   - all-v-all BLAST
   - the OrthoMCL Pairs program -- makes the pairs/ directory
   - the MCL program -- clusters the pairs to make the groups.txt file
 
-These stages are executed in a series of thirteen steps detailed below.  Most simply involve running a provided program.  They are broken into steps for ease of backtracking and recoverability.
+These stages are executed in a series of thirteen steps detailed below.  Most simply involve running a provided program.  They are broken into steps for ease of backtracking and recoverability.  Most are very simple to run, so don't be discouraged.
+
 
 ========= Requirements ==========
 
@@ -32,13 +33,13 @@ These stages are executed in a series of thirteen steps detailed below.  Most si
 (2) BLAST
   - we recommend NCBI BLAST for two reasons
      a) theoretically: XXXXXXX
-     b) practically: NCBI BLAST provides a tab delimited output which provide parsers for.  See Step 7 below.
-  - for large datasets (e.g. 1M proteins) all-v-all BLAST will likely require a compute cluster. Otherwise, they could run for months. 
+     b) practically: NCBI BLAST supports a tab delimited output which we provide parsers for.  See Step 7 below.
+  - for large datasets (e.g. 1M proteins) all-v-all BLAST will likely require a compute cluster. Otherwise, it could run for weeks or months. 
 
 (3) Relational Database 
-  - The OrthoMCL Pairs algorithm runs in a relational database.  Supported vendors are:
-    - Oracle
-    - MySql
+  - The OrthoMCL Pairs program runs in a relational database.  Supported vendors are:
+     - Oracle
+     - MySql
   - If you don't already have one of these installed, you will need to install MySql which should be doable without significant systems administration support.
 
 (4) Perl
@@ -58,29 +59,29 @@ These stages are executed in a series of thirteen steps detailed below.  Most si
 
 =========== Overview of steps =======================
 
-There are the thirteen steps.  Most are trivial to run, so don't be discouraged.
+This is an overview of the thirteen steps to run orthomcl.  Details are in the next sections. 
 
 All programs except mysql and mcl are provided as part of the OrthoMCL download.  The provided programs all begin with 'orthomcl' and will print help if called with no arguments.
 
 (1) install or get access to a supported relational database.  If using MySql, a specific installation configuration is required, so it may require installing your own MySql, which is straightforward.
 
-(2) install and configure the OrthoMCL suite of programs.  (This is easy.)
+(2) download and install the mcl program according to provided instructions.
 
-(3) run orthomclInstallSchema to install the required schema into the database
+(3) install and configure the OrthoMCL suite of programs.
 
-(4) download and install the mcl program according to provided instructions.
+(4) run orthomclInstallSchema to install the required schema into the database
 
 (5) run orthomclAdjustFasta (or your own simple script) to generate protein fasta files in the required format
 
-(6) run orthomclFilterFasta to filter poor quality proteins, and optionally remove alternative proteins. Creates a single large goodProteins.fasta file (and a rejectProteins.fasta file)
+(6) run orthomclFilterFasta to filter away poor quality proteins, and optionally remove alternative proteins. Creates a single large goodProteins.fasta file (and a poorProteins.fasta file)
 
-(7) run all-v-all NCBI BLAST on goodProteins.fasta (output format is tab delimited text).  This step is entirely your responsibility.
+(7) run all-v-all NCBI BLAST on goodProteins.fasta (output format is tab delimited text).  We do not provide documentation or support for this step.
 
-(8) run orthomclBlastParser on NCBI BLAST tab output to create file of similarities in required format
+(8) run orthomclBlastParser on the NCBI BLAST tab output to create a file of similarities in the required format
 
-(9) run orthomclLoadBlast to bulk load the output of orthomclBlastParser into the SimilarSequences table.
+(9) run orthomclLoadBlast to load the output of orthomclBlastParser into the database.
 
-(10) run the orthomclPairs program to compute pairwise relationships.  (This is the core computational program)
+(10) run the orthomclPairs program to compute pairwise relationships. 
 
 (11) run the orthomclDumpPairsFiles program to dump the pairs/ directory from the database
 
@@ -88,13 +89,16 @@ All programs except mysql and mcl are provided as part of the OrthoMCL download.
 
 (13) run orthomclMclToGroups to convert mcl output to groups.txt
 
-We recommend you save the output of each step so that you can easily redo stuff if things go wrong.
+We recommend you save the output of each step so that you can easily redo it if things go wrong.
 
 
 ========== Step 1: MySql ============
 
 
-========== Step 2: install and configure OrthoMCL programs  ========
+========== Step 2: install mcl ==========
+
+
+========== Step 3: install and configure OrthoMCL programs  ========
 Input:
   - orthomclSoftware.tar
 Output:
@@ -120,10 +124,7 @@ to your_orthomcl_dir/orthomcl.config, and edit the new file according to the fol
 
 
 
-========== Step 3: install schema ========
-
-
-========== Step 4: install mcl ==========
+========== Step 4: install schema ========
 
 
 ========== Step 5: orthomclAdjustFasta ==========
