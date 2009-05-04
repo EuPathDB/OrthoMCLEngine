@@ -3,8 +3,8 @@
 use strict;
 use DBI;
 
+usage() unless (@ARGV >= 1); 
 my $configFile = $ARGV[0];
-&usage() unless $configFile;
 my $config = parseConfigFile($configFile);
 
 my $sqlLog = $ARGV[1];
@@ -48,7 +48,7 @@ createInterTaxonMatchView();
 sub createSimilarSequencesTable {
  my $sst = getConfig("similarSequencesTable");
  my $sql = "
-CREATE TABLE $sst $oracleNoLog (
+CREATE TABLE $sst (
  QUERY_ID                 $intType,
  SUBJECT_ID               $intType,
  QUERY_TAXON_ID           $intType,
@@ -57,7 +57,7 @@ CREATE TABLE $sst $oracleNoLog (
  EVALUE_EXP               FLOAT,
  PERCENT_IDENTITY         FLOAT,
  PERCENT_MATCH            FLOAT  
-)
+)$oracleNoLog
 ";
   runSql($sql);
 
@@ -77,6 +77,7 @@ evalue_exp, evalue_mant)
   runSql($sql);
 }
 
+
 sub createInParalogTable {
  my $ipt = getConfig("inParalogTable");
  my $sql = "
@@ -86,7 +87,7 @@ CREATE TABLE $ipt $oracleNoLog (
  TAXON_ID                $intType,
  UNNORMALIZED_SCORE      FLOAT,
  NORMALIZED_SCORE        FLOAT    
-)
+)$oracleNoLog
 ";
   runSql($sql);
 }
@@ -102,7 +103,7 @@ CREATE TABLE $olt $oracleNoLog  (
  TAXON_ID_B              $intType,
  UNNORMALIZED_SCORE      FLOAT,
  NORMALIZED_SCORE        FLOAT    
-)
+)$oracleNoLog
 ";
   runSql($sql);
 
@@ -128,7 +129,7 @@ CREATE TABLE $cot $oracleNoLog (
  TAXON_ID_B              $intType,
  UNNORMALIZED_SCORE      FLOAT,
  NORMALIZED_SCORE        FLOAT    
-)
+)$oracleNoLog
 ";
   runSql($sql);
 }
