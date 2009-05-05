@@ -9,7 +9,6 @@ my $configFile = $ARGV[0];
 my $logFile = $ARGV[1];
 my $clean = $ARGV[2];
 my $restart = $ARGV[3];
-die "hello";
 
 my $stepCount = 1;
 my @steps = ( # Common
