@@ -6,9 +6,10 @@ use DBI;
 my $debug=0;
 
 my $configFile = $ARGV[0];
-my $clean = $ARGV[1];
-my $logFile = $ARGV[2];
+my $logFile = $ARGV[1];
+my $clean = $ARGV[2];
 my $restart = $ARGV[3];
+die "hello";
 
 my $stepCount = 1;
 my @steps = ( # Common
@@ -63,19 +64,20 @@ for (my $i=0; $i<scalar(@steps); $i++) {
     $cleanHash->{$steps[$i]->[0]} = $steps[$i]->[1] if $steps[$i]->[1];
 }
 
-### Consider atatement to turn logging off for apidb.ortholog,coortholog, and inparalog to increase speed and use fewer resources
-### Ex. Alter table apidb.ortholog s;  Can be reversed with Alter table apidb.ortholog logging;
+open (LOGFILE, ">>$logFile") || die "Can't open log file '$logFile'\n";
+my $oldfh = select(LOGFILE); $| = 1; select($oldfh);  # flush print buffer
+
+
 
 print LOGFILE "\n\n============================================================================================\n";
-print LOGFILE localtime(). " orthomclEdges " . join(' ', @ARGV) . "\n";
+print LOGFILE localtime(). " orthomclPairs " . join(' ', @ARGV) . "\n";
 print LOGFILE "=============================================================================================\n\n";
 
 &usage() unless $configFile;
 &usage() unless $logFile;
 usage() unless $clean =~ /cleanup=(yes|no|only|all)/;
-$clean = $1;
 
-open (LOGFILE, ">>$logFile") || die "Can't open log file '$logFile'\n";
+$clean = $1;
 
 my $skipPast;
 if ($restart) {
@@ -87,8 +89,11 @@ if ($restart) {
 my $config = parseConfigFile($configFile);
 my $sst = getConfig("similarSequencesTable");
 
+my $oracleNoLogging;
+
 if (getConfig("dbVendor") eq 'oracle') {
   require DBD::Oracle;
+  $oracleNoLogging = " NOLOGGING";
 } else {
   require DBD::mysql;
 }
@@ -136,25 +141,25 @@ sub parseConfigFile {
 sub commonTempTables {
   print LOGFILE localtime() . " Constructing common temp tables\n"
     unless $clean eq 'only' || $clean eq 'all';
-  validateInputTables();
 
   my $interTaxonMatch = getConfig("interTaxonMatchView");
-
-  my $sql = "
-select min(evalue_exp)
-from $sst
-where evalue_mant != 0
-";
 
   # a little bit of a hack here.  mysql can't tolerate finding the
   # minEvalueExp in the sql that updates the table
   # so, we do it as a preprocess.
   # must explicitly avoid the preprocess if just cleaning or if skipping
+  my $sql = "
+select min(evalue_exp)
+from $sst
+where evalue_mant != 0
+";
   my $minEvalueExp;
   if ($clean ne 'only' && $clean ne 'all' && !$skipPast) {
+      print LOGFILE localtime() . "   Find min evalue exp  (OrthoMCL-DB V2 took ??? for this step)\n";
       my $stmt = $dbh->prepare("$sql") or die DBI::errstr;
       $stmt->execute() or die DBI::errstr;
       ($minEvalueExp) = $stmt->fetchrow_array();
+      print LOGFILE localtime() . "   done\n";
   }
 
   $sql = "
@@ -162,13 +167,13 @@ update $sst
 set evalue_exp = ${minEvalueExp}-1
 where evalue_exp = 0
 ";
-  runSql($sql, "updating $sst, setting 0 evalue_exp to underflow value ${minEvalueExp}-1",
+  runSql($sql, "updating $sst, setting 0 evalue_exp to underflow value (${minEvalueExp} - 1)",
 	 'updateMinimumEvalueExponent', '23 min');
 
   ##########################################################################
 
   $sql = "
-create table BestQueryTaxonScore as
+create table BestQueryTaxonScore $oracleNoLogging as
 select im.query_id, im.subject_taxon_id, low_exp.evalue_exp, min(im.evalue_mant) as evalue_mant
 from $interTaxonMatch im,
      (select query_id, subject_taxon_id, min(evalue_exp) as evalue_exp
@@ -203,7 +208,7 @@ sub orthologs {
   my $percentMatchThreshold = getConfig("percentMatchCutoff");
 
   my $sql = "
-create table BestHit as
+create table BestHit $oracleNoLogging as
 select s.query_id, s.subject_id,
        s.query_taxon_id, s.subject_taxon_id,
        s.evalue_exp, s.evalue_mant
@@ -231,7 +236,7 @@ create index best_hit_ix on BestHit(query_id,subject_id)
   ######################################################################
 
   $sql = "
-create table OrthologTemp as
+create table OrthologTemp $oracleNoLogging as
 select bh1.query_id as sequence_id_a, bh1.subject_id as sequence_id_b,
        bh1.query_taxon_id as taxon_id_a, bh1.subject_taxon_id as taxon_id_b,
        case -- don't try to calculate log(0) -- use rigged exponents of SimSeq
@@ -272,7 +277,7 @@ sub inparalogs {
   my $percentMatchThreshold = getConfig("percentMatchCutoff");
 
   my $sql = "
-create table BestInterTaxonScore as
+create table BestInterTaxonScore $oracleNoLogging as
 select im.query_id, low_exp.evalue_exp, min(im.evalue_mant) as evalue_mant
 from BestQueryTaxonScore im,
      (select query_id, min(evalue_exp) as evalue_exp
@@ -296,7 +301,7 @@ create index bis_uids_ix on BestInterTaxonScore(query_id)
   ###########################################################################
 
    $sql = "
-create table UniqueSimSeqsQueryId as
+create table UniqueSimSeqsQueryId $oracleNoLogging as
 select distinct query_id from SimilarSequences
 ";
 
@@ -314,7 +319,7 @@ create index ust_qids_ix on UniqueSimSeqsQueryId(query_id)
   ###########################################################################
 
   $sql = "
-create table BetterHit as
+create table BetterHit $oracleNoLogging as
 select s.query_id, s.subject_id,
        s.query_taxon_id as taxon_id,
        s.evalue_exp, s.evalue_mant
@@ -356,7 +361,7 @@ create index better_hit_ix on BetterHit(query_id,subject_id)
   ###########################################################################
 
   $sql = "
-create table InParalogTemp as
+create table InParalogTemp $oracleNoLogging as
 select bh1.query_id as sequence_id_a, bh1.subject_id as sequence_id_b,
        bh1.taxon_id,
        case -- don't try to calculate log(0) -- use rigged exponents of SimSeq
@@ -377,7 +382,7 @@ where bh1.query_id < bh1.subject_id
   ################################################################
 
   $sql = "
-create table InParalogTaxonAvg as
+create table InParalogTaxonAvg $oracleNoLogging as
 select avg(i.unnormalized_score) average, i.taxon_id
 from InParalogTemp i
 group by i.taxon_id
@@ -388,7 +393,7 @@ group by i.taxon_id
   ################################################################
 
   $sql = "
-create table OrthologUniqueId as
+create table OrthologUniqueId $oracleNoLogging as
 select distinct(sequence_id) from (
 select sequence_id_a as sequence_id from $orthologTable
 union
@@ -407,7 +412,7 @@ select sequence_id_b as sequence_id from $orthologTable) i
   ################################################################
 
   $sql = "
-create table InParalogOrthologTaxonAvg as
+create table InParalogOrthologTaxonAvg $oracleNoLogging as
 
  select avg(i.unnormalized_score) average, i.taxon_id
          from InParalogTemp i
@@ -423,7 +428,7 @@ create table InParalogOrthologTaxonAvg as
   ################################################################
 
   $sql = "
-create table InParalogAvgScore as
+create table InParalogAvgScore $oracleNoLogging as
      select case
             when orth_i.average is NULL
               then all_i.average
@@ -471,7 +476,7 @@ sub coorthologs {
   my $percentMatchThreshold = getConfig("percentMatchCutoff");
 
   my $sql = "
-create table InParalog2Way as
+create table InParalog2Way $oracleNoLogging as
 select sequence_id_a, sequence_id_b from $inParalogTable
 union
 select sequence_id_b as sequence_id_a, sequence_id_a as sequence_id_b from $inParalogTable
@@ -498,7 +503,7 @@ create index in2b_ix on InParalog2Way(sequence_id_b, sequence_id_a)
   ######################################################################
 
   $sql = "
-create table Ortholog2Way as
+create table Ortholog2Way $oracleNoLogging as
 -- symmetric closure of Ortholog
 select sequence_id_a, sequence_id_b from $orthologTable
 union
@@ -518,7 +523,7 @@ create index ortholog2way_ix on Ortholog2Way(sequence_id_a, sequence_id_b)
   ######################################################################
 
   $sql = "
-create table InParalogOrthologInParalog as
+create table InParalogOrthologInParalog $oracleNoLogging as
       select ip1.sequence_id_a, ip2.sequence_id_b
       from InParalog2Way ip1, Ortholog2Way o, InParalog2Way ip2
       where ip1.sequence_id_b = o.sequence_id_a
@@ -530,7 +535,7 @@ create table InParalogOrthologInParalog as
   ##################################################################
 
   $sql = "
-create table InParalogOrtholog as
+create table InParalogOrtholog $oracleNoLogging as
       select ip.sequence_id_a, o.sequence_id_b
       from InParalog2Way ip, Ortholog2Way o
       where ip.sequence_id_b = o.sequence_id_a
@@ -541,7 +546,7 @@ create table InParalogOrtholog as
   ##################################################################
 
   $sql = "
-create table CoOrthologCandidate as
+create table CoOrthologCandidate $oracleNoLogging as
 select distinct
        least(sequence_id_a, sequence_id_b) as sequence_id_a,
        greatest(sequence_id_a, sequence_id_b) as sequence_id_b
@@ -555,7 +560,7 @@ from (select sequence_id_a, sequence_id_b from InParalogOrthologInParalog
   ######################################################################
 
   $sql = "
-create table CoOrthologNotOrtholog as
+create table CoOrthologNotOrtholog $oracleNoLogging as
 SELECT cc.sequence_id_a, cc.sequence_id_b
       FROM CoOrthologCandidate cc
       LEFT OUTER JOIN $orthologTable o
@@ -569,7 +574,7 @@ SELECT cc.sequence_id_a, cc.sequence_id_b
   ##########################################################
 
   $sql = "
-create table CoOrthologTemp as
+create table CoOrthologTemp $oracleNoLogging as
 select /*+ use_nl(candidate, ab) use_nl(candidate, ba)  */
        candidate.sequence_id_a, candidate.sequence_id_b,
        ab.query_taxon_id as taxon_id_a, ab.subject_taxon_id as taxon_id_b,
@@ -609,7 +614,7 @@ sub orthologTaxonSub {
   my $coCaps = $co? "Co" : "";
   $co = $co? "coO" : "o";
 
-my $sql = "create table ${coCaps}OrthologTaxon as
+my $sql = "create table ${coCaps}OrthologTaxon $oracleNoLogging as
 select case
          when taxon_id_a < taxon_id_b
          then taxon_id_a
@@ -633,7 +638,7 @@ sub normalizeOrthologsSub {
   $co = $co? "coO" : "o";
 
   my $sql = "
-create table ${coCaps}OrthologAvgScore as
+create table ${coCaps}OrthologAvgScore $oracleNoLogging as
 select smaller_tax_id, bigger_tax_id, avg(unnormalized_score) avg_score
 from ${coCaps}OrthologTaxon
 group by smaller_tax_id, bigger_tax_id
@@ -694,7 +699,6 @@ sub runSql {
   }
 
   clean($tag) unless ($clean eq 'no');
-  exit(1);
 }
 
 sub clean {
@@ -747,9 +751,9 @@ sub usage {
   map { $stepsString .= "  $_->[0]\n" } @steps;
 
   print "
-Find edges for OrthoMCL.
+Find pairs for OrthoMCL.
 
-usage: orthomclEdges config_file cleanup=[yes|no|only|all] <startAfter=TAG>
+usage: orthomclPairs config_file log_file cleanup=[yes|no|only|all] <startAfter=TAG>
 
 where:
   config_file : see below
