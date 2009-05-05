@@ -18,7 +18,7 @@ my $oracleNoLog;
 
 if ($dbVendor eq 'oracle') {
   require DBD::Oracle;
-   $oracleNoLog = "NOLOGGING";
+   $oracleNoLog = " NOLOGGING";
 } 
  else {
   require DBD::mysql;
