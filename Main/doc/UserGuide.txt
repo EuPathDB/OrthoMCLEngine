@@ -273,6 +273,7 @@ Input:
   - database with populated pairs tables
 Output
   - pairs/ directory
+  - orthomclMclInput file
 
 Run the orthomclDumpPairsFiles
 
