@@ -85,7 +85,7 @@ IV. Create a New Database and User Account
  
               mysql> CREATE DATABASE orthomcl;
 	
-	      mysql> GRANT SELECT,INSERT,UPDATE,DELETE,CREATE VIEW,CREATE INDEX, DROP on orthomcl.* TO orthomcl@localhost;
+	      mysql> GRANT SELECT,INSERT,UPDATE,DELETE,CREATE VIEW,CREATE, INDEX, DROP on orthomcl.* TO orthomcl@localhost;
 	
  	      mysql> set password for orthomcl@localhost = password('yourpassword');
 
