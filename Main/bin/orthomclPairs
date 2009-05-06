@@ -3,41 +3,19 @@
 use strict;
 use DBI;
 
-=pod
-SimilarSequences
-| InterTaxonMatch
-| | BestQueryTaxonScore
-| | | BestInterTaxonScore
-| | | | BetterHit
-| | | | | InParalog ***
-| | | | | | InParalog2way--------|
-| | | BestHit                    |
-| | | | Ortholog ***             |
-| | | | | Ortholog2way           |
-| | | | | | CoOrthologCandidate -|
-| | | | | | | CoOrtholog ***
-=cut
-
-my $debug=1;
-open (LOGFILE, ">sqlFromScript.log");
+my $debug=0;
 
 my $configFile = $ARGV[0];
-my $clean = $ARGV[1];
-my $restart = $ARGV[2];
+my $logFile = $ARGV[1];
+my $clean = $ARGV[2];
+my $restart = $ARGV[3];
 
 my $stepCount = 1;
-my @steps = (['updateMinimumEvalueExponent'],
+my @steps = ( # Common
+             ['updateMinimumEvalueExponent'],
 	     ['bestQueryTaxonScore'],
 	     ['qtscore_ix'],
-	     ['bestInterTaxonScore'],
-             ['bis_uids_ix'],
-             ['uniqueSimSeqsQueryId'],
-             ['ust_qids_ix'],
-	     ['betterHit', ['drop table BestInterTaxonScore']],
-             ['better_hit_ix'],
-	     ['inParalog', ['drop table BetterHit']],
-	     ['inParalogTaxon'],
-	     ['inParalogOrthologTaxon'],
+             # Ortholog
 	     ['bestHit', ['drop table BestQueryTaxonScore']],
              ['best_hit_ix'],
 	     ['ortholog', ['drop table BestHit']],
@@ -45,6 +23,14 @@ my @steps = (['updateMinimumEvalueExponent'],
 	     ['orthologAvg'],
 	     ['orthologAvgIndex'],
 	     ['orthologsNormalization', ['drop table OrthologAvgScore', 'drop table OrthologTemp2']],
+             # InParalog
+	     ['bestInterTaxonScore'],
+             ['bis_uids_ix'],
+             ['uniqueSimSeqsQueryId'],
+             ['ust_qids_ix'],
+	     ['betterHit', ['drop table BestInterTaxonScore']],
+             ['better_hit_ix'],
+	     ['inParalog', ['drop table BetterHit']],
  	     ['inParalogTaxonAvg'],
              ['orthologUniqueId'],
              ['orthologUniqueIdIndex'],
@@ -52,10 +38,12 @@ my @steps = (['updateMinimumEvalueExponent'],
 	     ['inParalogAvg',['drop table InParalogTaxonAvg', 'drop table InParalogOrthologTaxonAvg']],
 	     ['inParalogAvgIndex'],
 	     ['inParalogsNormalization', ['drop table InParalogAvgScore', 'drop table InParalogTemp']],
-	     ['inParalog2way'],
+             # CoOrtholog
+	     ['inParalog2Way'],
 	     ['in2a_ix'],
 	     ['in2b_ix'],
-	     ['ortholog2way'],
+	     ['ortholog2Way'],
+	     ['ortholog2WayIndex'],
              ['inParalogOrthologInParalog'],
              ['inParalogOrtholog'],
 	     ['coOrthologCandidate', ['drop table Ortholog2Way', 'drop table InParalog2Way', 'drop table InParalogOrthologInParalog', 'drop table InParalogOrtholog']],
@@ -75,35 +63,43 @@ for (my $i=0; $i<scalar(@steps); $i++) {
     $cleanHash->{$steps[$i]->[0]} = $steps[$i]->[1] if $steps[$i]->[1];
 }
 
-### Consider atatement to turn logging off for apidb.ortholog,coortholog, and inparalog to increase speed and use fewer resources
-### Ex. Alter table apidb.ortholog s;  Can be reversed with Alter table apidb.ortholog logging;
+open (LOGFILE, ">>$logFile") || die "Can't open log file '$logFile'\n";
+my $oldfh = select(LOGFILE); $| = 1; select($oldfh);  # flush print buffer
 
-print STDERR "\n\n============================================================================================\n";
-print STDERR localtime(). " orthomclEdges " . join(' ', @ARGV) . "\n";
-print STDERR "=============================================================================================\n\n";
+
+
+print LOGFILE "\n\n============================================================================================\n";
+print LOGFILE localtime(). " orthomclPairs " . join(' ', @ARGV) . "\n";
+print LOGFILE "=============================================================================================\n\n";
 
 &usage() unless $configFile;
+&usage() unless $logFile;
 usage() unless $clean =~ /cleanup=(yes|no|only|all)/;
+
 $clean = $1;
 
 my $skipPast;
 if ($restart) {
   usage() unless $restart =~ /startAfter=(.*)/;
   $skipPast = $stepsHash->{$1};
-  die "invalid restart arg $restart\n" unless $skipPast;
+  die "invalid restart arg $restart" unless $skipPast;
 }
 
 my $config = parseConfigFile($configFile);
 my $sst = getConfig("similarSequencesTable");
 
-my $
-if (getConfig("dbVendor") eq 'oracle') {
+my $oracleNoLogging;
+
+my $dbVendor = getConfig("dbVendor");
+if ($dbVendor eq 'oracle') {
   require DBD::Oracle;
-} elsif (getConfig("dbVendor") eq 'mysql') {
+  $oracleNoLogging = " NOLOGGING";
+} elsif ($dbVendor eq 'mysql') {
   require DBD::mysql;
 } else {
-    die "config file '$configFile' has invalid value for dbVendor property\n";
+    die "config file '$configFile' has invalid value '$dbVendor' for dbVendor property\n";
 }
+
 
 my $dbh = DBI->connect(getConfig("dbConnectString"), getConfig("dbLogin"),
 		       getConfig("dbPassword")) or die DBI::errstr;
@@ -131,90 +127,57 @@ sub parseConfigFile {
   my $config;
   while(<F>) {
     chomp;
+    s/\s+$//;
     next if /^\#/;
     /^(\w+)\=(.+)/ || die "illegal line in config file '$_'\n";
     my $key=$1;
     my $val=$2;
     $config->{$key} = $val;
     $val = '********' if $key eq 'dbPassword';
-    print STDERR localtime() . " configuration: $key=$val\n";
+    print LOGFILE localtime() . " configuration: $key=$val\n";
   }
   return $config;
 }
 
+################################################################################
+############################### Common tables  #################################
+################################################################################
 sub commonTempTables {
-  print STDERR localtime() . " Constructing common temp tables\n"
+  print LOGFILE localtime() . " Constructing common temp tables\n"
     unless $clean eq 'only' || $clean eq 'all';
-  validateInputTables();
-  updateMinimumEvalueExponent();
-  bestQueryTaxonScore();
-}
 
-sub inparalogs {
-  print STDERR localtime() . " Constructing inParalog tables\n"
-    unless $clean eq 'only' || $clean eq 'all';
-  bestInterTaxonScore();
-  uniqueSimSeqsQueryId();
-  betterHit();
-  inParalog();
-}
+  my $interTaxonMatch = getConfig("interTaxonMatchView");
 
-sub orthologs {
-  print STDERR localtime() . " Constructing ortholog tables\n"
-    unless $clean eq 'only' || $clean eq 'all';
-  bestHit();
-  ortholog();
-  normalizeOrthologs();
-}
-
-sub coorthologs {
-  print STDERR localtime() . " Constructing coOrtholog tables\n"
-    unless $clean eq 'only' || $clean eq 'all';
-  inParalog2way();
-  ortholog2way();
-  coorthologCandidate();
-  coortholog();
-  normalizeCoOrthologs();
-}
-
-sub validateInputTables {
-
-}
-
-sub updateMinimumEvalueExponent {
-
-    my $sql = "
+  # a little bit of a hack here.  mysql can't tolerate finding the
+  # minEvalueExp in the sql that updates the table
+  # so, we do it as a preprocess.
+  # must explicitly avoid the preprocess if just cleaning or if skipping
+  my $sql = "
 select min(evalue_exp)
 from $sst
 where evalue_mant != 0
 ";
-
-    # a little bit of a hack here.  mysql can't tolerate finding the
-    # minEvalueExp in the sql that updates the table
-    # so, we do it as a preprocess.
-    # must explicitly avoid the preprocess if just cleaning or if skipping
-    my $minEvalueExp;
-    if ($clean ne 'only' && $clean ne 'all' && !$skipPast) {
+  my $minEvalueExp;
+  if ($clean ne 'only' && $clean ne 'all' && !$skipPast) {
+      print LOGFILE localtime() . "   Find min evalue exp  (OrthoMCL-DB V2 took ??? for this step)\n";
       my $stmt = $dbh->prepare("$sql") or die DBI::errstr;
       $stmt->execute() or die DBI::errstr;
       ($minEvalueExp) = $stmt->fetchrow_array();
-    }
+      print LOGFILE localtime() . "   done\n";
+  }
 
   $sql = "
 update $sst
 set evalue_exp = ${minEvalueExp}-1
 where evalue_exp = 0
 ";
-  runSql($sql, "updating $sst, setting 0 evalue_exp to underflow value ${minEvalueExp}-1",
+  runSql($sql, "updating $sst, setting 0 evalue_exp to underflow value (${minEvalueExp} - 1)",
 	 'updateMinimumEvalueExponent', '23 min');
-  if ($debug==1) {print LOGFILE "\n\n$sql"};
-}
 
-sub bestQueryTaxonScore {
-  my $interTaxonMatch = getConfig("interTaxonMatchView");
+  ##########################################################################
 
-  my $sql = "
-create table BestQueryTaxonScore as
+  $sql = "
+create table BestQueryTaxonScore $oracleNoLogging as
 select im.query_id, im.subject_taxon_id, low_exp.evalue_exp, min(im.evalue_mant) as evalue_mant
 from $interTaxonMatch im,
      (select query_id, subject_taxon_id, min(evalue_exp) as evalue_exp
@@ -226,21 +189,99 @@ where im.query_id = low_exp.query_id
 group by im.query_id, im.subject_taxon_id, low_exp.evalue_exp
 ";
   
-  if ($debug==1) {print LOGFILE "\n\n$sql"};
   runSql($sql, "create BestQueryTaxonScore", 'bestQueryTaxonScore', '1.5 hours');
+
+  ################################################################################
 
   $sql = "
 create index qtscore_ix on BestQueryTaxonScore(query_id, subject_taxon_id, evalue_exp, evalue_mant)
 ";
   
-  if ($debug==1) {print LOGFILE "\n\n$sql"};
   runSql($sql, "create qtscore_ix index on BestQueryTaxonScore", 'qtscore_ix', '3 min'); 
 }
 
-sub  bestInterTaxonScore{
+
+################################################################################
+############################### Orthologs  #####################################
+################################################################################
+sub orthologs {
+  print LOGFILE localtime() . " Constructing ortholog tables\n"
+    unless $clean eq 'only' || $clean eq 'all';
+
+  my $evalueExpThreshold = getConfig("evalueExponentCutoff");
+  my $percentMatchThreshold = getConfig("percentMatchCutoff");
 
   my $sql = "
-create table BestInterTaxonScore as
+create table BestHit $oracleNoLogging as
+select s.query_id, s.subject_id,
+       s.query_taxon_id, s.subject_taxon_id,
+       s.evalue_exp, s.evalue_mant
+from $sst s, BestQueryTaxonScore cutoff
+where s.query_id = cutoff.query_id
+  and s.subject_taxon_id = cutoff.subject_taxon_id
+  and s.query_taxon_id != s.subject_taxon_id
+  and s.evalue_exp <= $evalueExpThreshold
+  and s.percent_match >= $percentMatchThreshold
+  and (s.evalue_mant < 0.01
+       or s.evalue_exp = cutoff.evalue_exp
+          and s.evalue_mant = cutoff.evalue_mant)
+";
+  
+  runSql($sql, "create BestHit", 'bestHit', '45 min');
+
+  ######################################################################
+
+  $sql = "
+create index best_hit_ix on BestHit(query_id,subject_id)
+";
+
+  runSql($sql, "create best_hit_ix index on BestHit", 'best_hit_ix', '3 min');
+
+  ######################################################################
+
+  $sql = "
+create table OrthologTemp $oracleNoLogging as
+select bh1.query_id as sequence_id_a, bh1.subject_id as sequence_id_b,
+       bh1.query_taxon_id as taxon_id_a, bh1.subject_taxon_id as taxon_id_b,
+       case -- don't try to calculate log(0) -- use rigged exponents of SimSeq
+         when bh1.evalue_mant < 0.01 or bh2.evalue_mant < 0.01
+           then (bh1.evalue_exp + bh2.evalue_exp) / -2
+         else  -- score = ( -log10(evalue1) - log10(evalue2) ) / 2
+           (log(10, bh1.evalue_mant * bh2.evalue_mant)
+            + bh1.evalue_exp + bh2.evalue_exp) / -2
+       end as unnormalized_score
+from BestHit bh1, BestHit bh2
+where bh1.query_id < bh1.subject_id
+  and bh1.query_id = bh2.subject_id
+  and bh1.subject_id = bh2.query_id
+";
+    
+  runSql($sql, "create OrthologTemp table", 'ortholog', '10 min');
+
+  ######################################################################
+
+  orthologTaxonSub('');
+
+  ######################################################################
+
+  normalizeOrthologsSub('', getConfig("orthologTable"));
+}
+
+
+################################################################################
+############################### InParalogs  ####################################
+################################################################################
+sub inparalogs {
+  print LOGFILE localtime() . " Constructing inParalog tables\n"
+    unless $clean eq 'only' || $clean eq 'all';
+
+  my $inParalogTable = getConfig("inParalogTable");
+  my $orthologTable = getConfig("orthologTable");
+  my $evalueExpThreshold = getConfig("evalueExponentCutoff");
+  my $percentMatchThreshold = getConfig("percentMatchCutoff");
+
+  my $sql = "
+create table BestInterTaxonScore $oracleNoLogging as
 select im.query_id, low_exp.evalue_exp, min(im.evalue_mant) as evalue_mant
 from BestQueryTaxonScore im,
      (select query_id, min(evalue_exp) as evalue_exp
@@ -251,43 +292,38 @@ where im.query_id = low_exp.query_id
 group by im.query_id, low_exp.evalue_exp
 ";
 
-  if ($debug==1) {print LOGFILE "\n\n$sql"};
   runSql($sql, "create BestInterTaxonScore", 'bestInterTaxonScore', '2 min');
 
- $sql = "
+  ###########################################################################
+
+  $sql = "
 create index bis_uids_ix on BestInterTaxonScore(query_id)
 ";
 
-  if ($debug==1) {print LOGFILE "\n\n$sql"};
   runSql($sql, "create bis_uids_ix index on BestQueryTaxonScore", 'bis_uids_ix', '3 min');
-}
 
+  ###########################################################################
 
-sub uniqueSimSeqsQueryId {
-  
-   my $sql = "
-create table UniqueSimSeqsQueryId as
+   $sql = "
+create table UniqueSimSeqsQueryId $oracleNoLogging as
 select distinct query_id from SimilarSequences
 ";
-  if ($debug==1) {print LOGFILE "\n\n" . localtime() . $sql};
+
   runSql($sql, "create UniqueSimSeqsQueryId", 'uniqueSimSeqsQueryId', '3 secs');
 
- $sql = "
+  ###########################################################################
+
+  $sql = "
 create index ust_qids_ix on UniqueSimSeqsQueryId(query_id)
 ";
 
-  if ($debug==1) {print LOGFILE "\n\n$sql"};
   runSql($sql, "create ust_qids_ix index on UniqueSimSeqsQueryId", 'ust_qids_ix', '3 min');
-}
 
 
+  ###########################################################################
 
-sub  betterHit{
-  my $evalueExpThreshold = getConfig("evalueExponentCutoff");
-  my $percentMatchThreshold = getConfig("percentMatchCutoff");
-
-  my $sql = "
-create table BetterHit as
+  $sql = "
+create table BetterHit $oracleNoLogging as
 select s.query_id, s.subject_id,
        s.query_taxon_id as taxon_id,
        s.evalue_exp, s.evalue_mant
@@ -316,20 +352,20 @@ where s.query_taxon_id = s.subject_taxon_id
       WHERE bis.query_id IS NULL)
 ";
   
-  if ($debug==1) {print LOGFILE "\n\n$sql"};
   runSql($sql, "create BetterHit table", 'betterHit', '30 min');
 
- $sql = "
+  ###########################################################################
+  
+  $sql = "
 create index better_hit_ix on BetterHit(query_id,subject_id)
 ";
 
-  if ($debug==1) {print LOGFILE "\n\n$sql"};
   runSql($sql, "create better_hit_ix index on BetterHit", 'better_hit_ix', '3 min');
-}
 
-sub  inParalog{
-  my $sql = "
-create table InParalogTemp as
+  ###########################################################################
+
+  $sql = "
+create table InParalogTemp $oracleNoLogging as
 select bh1.query_id as sequence_id_a, bh1.subject_id as sequence_id_b,
        bh1.taxon_id,
        case -- don't try to calculate log(0) -- use rigged exponents of SimSeq
@@ -344,156 +380,30 @@ where bh1.query_id < bh1.subject_id
   and bh1.query_id = bh2.subject_id
   and bh1.subject_id = bh2.query_id
 ";
-  if ($debug==1) {print LOGFILE "\n\n$sql"};
+
    runSql($sql, "create InParalogTemp table", 'inParalog', '5 min');
 
-}
-
-sub bestHit {
-  my $evalueExpThreshold = getConfig("evalueExponentCutoff");
-  my $percentMatchThreshold = getConfig("percentMatchCutoff");
-
-  my $sql = "
-create table BestHit as
-select s.query_id, s.subject_id,
-       s.query_taxon_id, s.subject_taxon_id,
-       s.evalue_exp, s.evalue_mant
-from $sst s, BestQueryTaxonScore cutoff
-where s.query_id = cutoff.query_id
-  and s.subject_taxon_id = cutoff.subject_taxon_id
-  and s.query_taxon_id != s.subject_taxon_id
-  and s.evalue_exp <= $evalueExpThreshold
-  and s.percent_match >= $percentMatchThreshold
-  and (s.evalue_mant < 0.01
-       or s.evalue_exp = cutoff.evalue_exp
-          and s.evalue_mant = cutoff.evalue_mant)
-";
-  
-  if ($debug==1) {print LOGFILE "\n\n$sql"};
-  runSql($sql, "create BestHit", 'bestHit', '45 min');
-
- $sql = "
-create index best_hit_ix on BestHit(query_id,subject_id)
-";
-
-  if ($debug==1) {print LOGFILE "\n\n$sql"};
-  runSql($sql, "create best_hit_ix index on BestHit", 'best_hit_ix', '3 min');
-}
-
-sub ortholog {
-  my $sql = "
-create table OrthologTemp as
-select bh1.query_id as sequence_id_a, bh1.subject_id as sequence_id_b,
-       bh1.query_taxon_id as taxon_id_a, bh1.subject_taxon_id as taxon_id_b,
-       case -- don't try to calculate log(0) -- use rigged exponents of SimSeq
-         when bh1.evalue_mant < 0.01 or bh2.evalue_mant < 0.01
-           then (bh1.evalue_exp + bh2.evalue_exp) / -2
-         else  -- score = ( -log10(evalue1) - log10(evalue2) ) / 2
-           (log(10, bh1.evalue_mant * bh2.evalue_mant)
-            + bh1.evalue_exp + bh2.evalue_exp) / -2
-       end as unnormalized_score
-from BestHit bh1, BestHit bh2
-where bh1.query_id < bh1.subject_id
-  and bh1.query_id = bh2.subject_id
-  and bh1.subject_id = bh2.query_id
-";
-    
-  if ($debug==1) {print LOGFILE "\n\n$sql"};
-  runSql($sql, "create OrthologTemp table", 'ortholog', '10 min');
-
-  orthologTaxon('');
-
-}
-
-sub orthologTaxon {
-  my ($co) = @_;
-
-  my $coCaps = $co? "Co" : "";
-  $co = $co? "coO" : "o";
-
-my $sql = "create table ${coCaps}OrthologTaxon as
-select case
-         when taxon_id_a < taxon_id_b
-         then taxon_id_a
-         else taxon_id_b
-        end as smaller_tax_id,
-        case
-          when taxon_id_a < taxon_id_b
-          then taxon_id_b
-          else taxon_id_a
-        end as bigger_tax_id,
-        unnormalized_score
-      from ${coCaps}OrthologTemp";
-  if ($debug==1) {print LOGFILE "\n\n$sql"};
-  runSql($sql, "create ${coCaps}OrthologTaxon table", "${co}rthologTaxon", '10 min');
-
-}
-
-sub normalizeOrthologs {
-  normalizeOrthologsSub("", getConfig("orthologTable"));
-}
-
-sub normalizeOrthologsSub {
-  my ($co, $orthologTable) = @_;
-
-  my $coCaps = $co? "Co" : "";
-  $co = $co? "coO" : "o";
-
-  my $sql = "
-create table ${coCaps}OrthologAvgScore as
-select smaller_tax_id, bigger_tax_id, avg(unnormalized_score) avg_score
-from ${coCaps}OrthologTaxon
-group by smaller_tax_id, bigger_tax_id
-"; 
-  
-  if ($debug==1) {print LOGFILE "\n\n$sql"};
-  runSql($sql, "create ${coCaps}OrthologAvgScore table", "${co}rthologAvg", '1 min');
-
-  $sql = "create index ${co}orthoAvg_ix on ${coCaps}OrthologAvgScore(smaller_tax_id,bigger_tax_id,avg_score)";
-  
-  if ($debug==1) {print LOGFILE "\n\n$sql"};
-  runSql($sql, "create ${coCaps}OrthologAvgScore index", "${co}rthologAvgIndex", '1 min');
+  ################################################################
 
   $sql = "
-  insert into $orthologTable (sequence_id_a, sequence_id_b, taxon_id_a, taxon_id_b, unnormalized_score, normalized_score)
-  select ot.sequence_id_a, ot.sequence_id_b, ot.taxon_id_a, ot.taxon_id_b, ot.unnormalized_score, ot.unnormalized_score/a.avg_score
-  from ${coCaps}OrthologTemp ot, ${coCaps}OrthologAvgScore a
-where least(ot.taxon_id_a, ot.taxon_id_b) = a.smaller_tax_id
-    and greatest(ot.taxon_id_a, ot.taxon_id_b) = a.bigger_tax_id
-";
-
-  
-  if ($debug==1) {print LOGFILE "\n\n$sql"};
-  runSql($sql, "populate $orthologTable table, including normalized_score", "${co}rthologsNormalization", '0');
-
-}
-
-sub normalizeInParalogs {
-  my $inParalogTable = getConfig("inParalogTable");
-  my $orthologTable = getConfig("orthologTable");
-
-  ################################################################
-  my $sql = "
-create table InParalogTaxonAvg as
+create table InParalogTaxonAvg $oracleNoLogging as
 select avg(i.unnormalized_score) average, i.taxon_id
 from InParalogTemp i
 group by i.taxon_id
 ";
 
-  if ($debug==1) {print LOGFILE "\n\n$sql"};
   runSql($sql, "create InParalogTaxonAvg table", 'inParalogTaxonAvg', '5 min');
 
   ################################################################
 
   $sql = "
-create table OrthologUniqueId as
+create table OrthologUniqueId $oracleNoLogging as
 select distinct(sequence_id) from (
 select sequence_id_a as sequence_id from $orthologTable
 union
 select sequence_id_b as sequence_id from $orthologTable) i
 ";
 
-  if ($debug==1) {print LOGFILE "\n\n$sql"};
   runSql($sql, "create OrthologUniqueId table", 'orthologUniqueId', '5 min');
 
   ################################################################
@@ -501,13 +411,12 @@ select sequence_id_b as sequence_id from $orthologTable) i
   $sql = "create unique index ortholog_unique_id_ix on OrthologUniqueId(sequence_id)";
 
 
-  if ($debug==1) {print LOGFILE "\n\n$sql"};
   runSql($sql, "create unique ortholog_unique_id_ix index", 'orthologUniqueIdIndex', '1 min');
 
   ################################################################
 
   $sql = "
-create table InParalogOrthologTaxonAvg as
+create table InParalogOrthologTaxonAvg $oracleNoLogging as
 
  select avg(i.unnormalized_score) average, i.taxon_id
          from InParalogTemp i
@@ -518,13 +427,12 @@ create table InParalogOrthologTaxonAvg as
          group by i.taxon_id
 ";
 
-  if ($debug==1) {print LOGFILE "\n\n$sql"};
   runSql($sql, "create InParalogOrthologTaxonAvg table", 'inParalogOrthologTaxonAvg', '5 min');
 
   ################################################################
 
   $sql = "
-create table InParalogAvgScore as
+create table InParalogAvgScore $oracleNoLogging as
      select case
             when orth_i.average is NULL
               then all_i.average
@@ -535,7 +443,6 @@ create table InParalogAvgScore as
        ON all_i.taxon_id = orth_i.taxon_id
 ";
 
-   if ($debug==1) {print LOGFILE "\n\n$sql"};
    runSql($sql, "create InParalogAvgScore table", 'inParalogAvg', '1 min');
 
   ################################################################
@@ -543,7 +450,6 @@ create table InParalogAvgScore as
   $sql = "create index inparalog_avg_ix on InParalogAvgScore(taxon_id,avg_score)";
 
 
-  if ($debug==1) {print LOGFILE "\n\n$sql"};
   runSql($sql, "create InParalogAvgScore index", 'inParalogAvgIndex', '1 min');
 
   ################################################################
@@ -555,86 +461,96 @@ create table InParalogAvgScore as
   where it.taxon_id = a.taxon_id
 ";
 
-   if ($debug==1) {print LOGFILE "\n\n$sql"};
   runSql($sql, "populate $inParalogTable table, including normalized_score", 'inParalogsNormalization', '0');
 
   ################################################################
-
 }
 
-sub  ortholog2way {
+################################################################################
+############################### CoOrthologs  ###################################
+################################################################################
+sub coorthologs {
+  print LOGFILE localtime() . " Constructing coOrtholog tables\n"
+    unless $clean eq 'only' || $clean eq 'all';
+
+  my $inParalogTable = getConfig("inParalogTable");
   my $orthologTable = getConfig("orthologTable");
+  my $coOrthologTable = getConfig("coOrthologTable");
+  my $evalueExpThreshold = getConfig("evalueExponentCutoff");
+  my $percentMatchThreshold = getConfig("percentMatchCutoff");
 
   my $sql = "
-create table Ortholog2Way as
+create table InParalog2Way $oracleNoLogging as
+select sequence_id_a, sequence_id_b from $inParalogTable
+union
+select sequence_id_b as sequence_id_a, sequence_id_a as sequence_id_b from $inParalogTable
+";
+  
+    runSql($sql, "create InParalog2Way", 'inParalog2Way', '1.5 hours');
+
+  ######################################################################
+
+  $sql = "
+create index in2a_ix on InParalog2Way(sequence_id_a, sequence_id_b)
+";
+  
+  runSql($sql, "index in2a_ix", 'in2a_ix', '1.5 hours');
+
+  ######################################################################
+
+  $sql = "
+create index in2b_ix on InParalog2Way(sequence_id_b, sequence_id_a)
+";
+  
+  runSql($sql, "index in2b_ix", 'in2b_ix', '1.5 hours');
+
+  ######################################################################
+
+  $sql = "
+create table Ortholog2Way $oracleNoLogging as
 -- symmetric closure of Ortholog
 select sequence_id_a, sequence_id_b from $orthologTable
 union
 select sequence_id_b as sequence_id_a, sequence_id_a as sequence_id_b from $orthologTable
 ";
   
-    if ($debug==1) {print LOGFILE "\n\n$sql"};
-   runSql($sql, "create Ortholog2Way", 'ortholog2way', '1.5 hours');
+   runSql($sql, "create Ortholog2Way", 'ortholog2Way', '1.5 hours');
 
-}
-
-sub  inParalog2way {
-  my $inParalogTable = getConfig("inParalogTable");
-
-  my $sql = "
-create table InParalog2Way as
-select sequence_id_a, sequence_id_b from $inParalogTable
-union
-select sequence_id_b as sequence_id_a, sequence_id_a as sequence_id_b from $inParalogTable
-";
-  
-   if ($debug==1) {print LOGFILE "\n\n$sql"};
-    runSql($sql, "create InParalog2Way", 'inParalog2way', '1.5 hours');
+  ######################################################################
 
   $sql = "
-create index in2a_ix on InParalog2Way(sequence_id_a, sequence_id_b)
+create index ortholog2way_ix on Ortholog2Way(sequence_id_a, sequence_id_b)
 ";
-  
-   if ($debug==1) {print LOGFILE "\n\n$sql"};
-   runSql($sql, "index in2a_ix", 'in2a_ix', '1.5 hours');
+
+  runSql($sql, "index ortholog2way_ix", 'ortholog2WayIndex', '1.5 hours');
+
+  ######################################################################
 
   $sql = "
-create index in2b_ix on InParalog2Way(sequence_id_b, sequence_id_a)
-";
-  
-   if ($debug==1) {print LOGFILE "\n\n$sql"};
-    runSql($sql, "index in2b_ix", 'in2b_ix', '1.5 hours');
-
-}
-
-sub  coorthologCandidate {
-  my $sql = "
-create table InParalogOrthologInParalog as
+create table InParalogOrthologInParalog $oracleNoLogging as
       select ip1.sequence_id_a, ip2.sequence_id_b
       from InParalog2Way ip1, Ortholog2Way o, InParalog2Way ip2
       where ip1.sequence_id_b = o.sequence_id_a
         and o.sequence_id_b = ip2.sequence_id_a
 ";
   
-   if ($debug==1) {print LOGFILE "\n\n$sql"};
    runSql($sql, "create InParalogOrthologInParalog", 'inParalogOrthologInParalog', '10 min');
 
   ##################################################################
 
   $sql = "
-create table InParalogOrtholog as
+create table InParalogOrtholog $oracleNoLogging as
       select ip.sequence_id_a, o.sequence_id_b
       from InParalog2Way ip, Ortholog2Way o
       where ip.sequence_id_b = o.sequence_id_a
 ";
   
-   if ($debug==1) {print LOGFILE "\n\n$sql"};
    runSql($sql, "create InParalogOrtholog", 'inParalogOrtholog', '10 min');
 
   ##################################################################
 
   $sql = "
-create table CoOrthologCandidate as
+create table CoOrthologCandidate $oracleNoLogging as
 select distinct
        least(sequence_id_a, sequence_id_b) as sequence_id_a,
        greatest(sequence_id_a, sequence_id_b) as sequence_id_b
@@ -643,19 +559,12 @@ from (select sequence_id_a, sequence_id_b from InParalogOrthologInParalog
       select sequence_id_a, sequence_id_b from InParalogOrtholog) t
 ";
   
-   if ($debug==1) {print LOGFILE "\n\n$sql"};
    runSql($sql, "create CoOrthologCandidate", 'coOrthologCandidate', '10 min');
 
-}
+  ######################################################################
 
-sub  coortholog {
- my $orthologTable = getConfig("orthologTable");
-  my $coOrthologTable = getConfig("coOrthologTable");
-  my $evalueExpThreshold = getConfig("evalueExponentCutoff");
-  my $percentMatchThreshold = getConfig("percentMatchCutoff");
-
-  my $sql = "
-create table CoOrthologNotOrtholog as
+  $sql = "
+create table CoOrthologNotOrtholog $oracleNoLogging as
 SELECT cc.sequence_id_a, cc.sequence_id_b
       FROM CoOrthologCandidate cc
       LEFT OUTER JOIN $orthologTable o
@@ -664,13 +573,12 @@ SELECT cc.sequence_id_a, cc.sequence_id_b
       WHERE o.sequence_id_a IS NULL
 ";
 
-    if ($debug==1) {print LOGFILE "\n\n$sql"};
    runSql($sql, "create CoOrthologNotOrtholog table", 'coOrthologNotOrtholog', '30 min');
 
-##########################################################
+  ##########################################################
 
   $sql = "
-create table CoOrthologTemp as
+create table CoOrthologTemp $oracleNoLogging as
 select candidate.sequence_id_a, candidate.sequence_id_b,
        ab.query_taxon_id as taxon_id_a, ab.subject_taxon_id as taxon_id_b,
        case  -- in case of 0 evalue, use rigged exponent
@@ -691,33 +599,96 @@ where ab.query_id = candidate.sequence_id_a
   and ba.percent_match >= $percentMatchThreshold
 ";
 
-    if ($debug==1) {print LOGFILE "\n\n$sql"};
-   runSql($sql, "create CoOrthologTemp table", 'coOrtholog', '30 min');
+  runSql($sql, "create CoOrthologTemp table", 'coOrtholog', '30 min');
 
-  orthologTaxon('co');
+  ######################################################################
+
+  orthologTaxonSub('co');
+
+  ######################################################################
+
+  normalizeOrthologsSub("Co", getConfig("coOrthologTable"));
 }
 
-close LOGFILE;
 
-sub normalizeCoOrthologs {
-  normalizeOrthologsSub("Co", getConfig("coOrthologTable"));
+sub orthologTaxonSub {
+  my ($co) = @_;
+
+  my $coCaps = $co? "Co" : "";
+  $co = $co? "coO" : "o";
+
+my $sql = "create table ${coCaps}OrthologTaxon $oracleNoLogging as
+select case
+         when taxon_id_a < taxon_id_b
+         then taxon_id_a
+         else taxon_id_b
+        end as smaller_tax_id,
+        case
+          when taxon_id_a < taxon_id_b
+          then taxon_id_b
+          else taxon_id_a
+        end as bigger_tax_id,
+        unnormalized_score
+      from ${coCaps}OrthologTemp";
+
+  runSql($sql, "create ${coCaps}OrthologTaxon table", "${co}rthologTaxon", '10 min');
+}
+
+sub normalizeOrthologsSub {
+  my ($co, $orthologTable) = @_;
+
+  my $coCaps = $co? "Co" : "";
+  $co = $co? "coO" : "o";
+
+  my $sql = "
+create table ${coCaps}OrthologAvgScore $oracleNoLogging as
+select smaller_tax_id, bigger_tax_id, avg(unnormalized_score) avg_score
+from ${coCaps}OrthologTaxon
+group by smaller_tax_id, bigger_tax_id
+"; 
+
+  runSql($sql, "create ${coCaps}OrthologAvgScore table", "${co}rthologAvg", '1 min');
+
+  ################################################################
+  
+  $sql = "create index ${co}orthoAvg_ix on ${coCaps}OrthologAvgScore(smaller_tax_id,bigger_tax_id,avg_score)";
+  
+  runSql($sql, "create ${coCaps}OrthologAvgScore index", "${co}rthologAvgIndex", '1 min');
+
+  ################################################################
+
+  $sql = "
+  insert into $orthologTable (sequence_id_a, sequence_id_b, taxon_id_a, taxon_id_b, unnormalized_score, normalized_score)
+  select ot.sequence_id_a, ot.sequence_id_b, ot.taxon_id_a, ot.taxon_id_b, ot.unnormalized_score, ot.unnormalized_score/a.avg_score
+  from ${coCaps}OrthologTemp ot, ${coCaps}OrthologAvgScore a
+where least(ot.taxon_id_a, ot.taxon_id_b) = a.smaller_tax_id
+    and greatest(ot.taxon_id_a, ot.taxon_id_b) = a.bigger_tax_id
+";
+  
+  runSql($sql, "populate $orthologTable table, including normalized_score", "${co}rthologsNormalization", '0');
+}
+
+sub normalizeInParalogs {
+
 }
 
 sub runSql {
   my ($sql, $msg, $tag, $sampleTime) = @_;
 
+  print LOGFILE "$sql\n\n" if $debug;
+
   my $stepNumber = $stepsHash->{$tag};
   die "invalid tag '$tag'" unless $stepNumber;
 
   if ($skipPast >= $stepNumber) {
-    print STDERR "... skipping '$tag'...\n\n";
+    print LOGFILE "... skipping '$tag'...\n\n";
     return;
   }
 
   if ($clean ne 'only' && $clean ne 'all') {
       my $t = time();
 
-      print STDERR localtime() . "   $msg  (OrthoMCL-DB V2 took $sampleTime for this step)\n";
+      print LOGFILE localtime() . "   $msg  (OrthoMCL-DB V2 took $sampleTime for this step)\n";
 
       my $stmt = $dbh->prepare($sql) or die DBI::errstr;
       $stmt->execute() or die DBI::errstr;
@@ -727,11 +698,10 @@ sub runSql {
       my $mins = int($tt / 60) % 60;
       if ($hours == 0 && $mins == 0) {$mins = 1};
       my $hoursStr = $hours? "$hours hours and " : "";
-      print STDERR localtime() . "   step '$tag' done ($hoursStr$mins mins)\n\n";
+      print LOGFILE localtime() . "   step '$tag' done ($hoursStr$mins mins)\n\n";
   }
 
   clean($tag) unless ($clean eq 'no');
-  exit(1);
 }
 
 sub clean {
@@ -760,9 +730,9 @@ sub clean {
 	return unless $stmt->fetchrow();
       }
       my $stmt = $dbh->prepare($cleanSql) or die DBI::errstr;
-      print STDERR localtime() . "   cleaning: $cleanSql\n";
+      print LOGFILE localtime() . "   cleaning: $cleanSql\n";
       $stmt->execute() or die DBI::errstr;
-      print STDERR localtime() . "   done\n";
+      print LOGFILE localtime() . "   done\n";
     }
   }
 }
@@ -784,9 +754,9 @@ sub usage {
   map { $stepsString .= "  $_->[0]\n" } @steps;
 
   print "
-Find edges for OrthoMCL.
+Find pairs for OrthoMCL.
 
-usage: orthomclEdges config_file cleanup=[yes|no|only|all] <startAfter=TAG>
+usage: orthomclPairs config_file log_file cleanup=[yes|no|only|all] <startAfter=TAG>
 
 where:
   config_file : see below
@@ -803,9 +773,6 @@ Database Input:
 
 Database Output:
   - Populated InParalog, Ortholog and CoOrtholog tables
-
-Standard Output:
-  - matrix file as expected by MCL.
 
 Standard Error:
   - logging info
