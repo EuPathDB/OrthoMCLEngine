@@ -1,36 +1,19 @@
 #!/usr/bin/perl
 
 use strict;
-use DBI;
 
-usage() unless (@ARGV >= 1); 
+usage() unless (@ARGV >= 1);
 my $configFile = $ARGV[0];
-my $config = parseConfigFile($configFile);
-
 my $sqlLog = $ARGV[1];
- if ($sqlLog) {
- open (LOGFILE, ">$sqlLog");
- }
 
+my $base = OrthomclEngine::Main::Base->new($configFile);
+my $dbh = $base->getDbh();
 
-my $oracleNoLogging;
-
-my $dbVendor = getConfig("dbVendor");
-if ($dbVendor eq 'oracle') {
-  require DBD::Oracle;
-  $oracleNoLogging = " NOLOGGING";
-} elsif ($dbVendor eq 'mysql') {
-  require DBD::mysql;
-} else {
-    die "config file '$configFile' has invalid value '$dbVendor' for dbVendor property\n";
+if ($sqlLog) {
+  open (LOGFILE, ">$sqlLog");
 }
 
-my $dbh = DBI->connect(getConfig("dbConnectString"), getConfig("dbLogin"),
-                       getConfig("dbPassword")) or die DBI::errstr;
-
-
 my $intType = ($dbVendor eq 'oracle') ? 'NUMBER' : 'INT';
-
 
 createSimilarSequencesTable();
 createInParalogTable();
@@ -38,12 +21,14 @@ createOrthologTable();
 createCoOrthologTable();
 createInterTaxonMatchView();
 
-
+##############################################################
 
 sub createSimilarSequencesTable {
- my $sst = getConfig("similarSequencesTable");
- my $sql = "
-CREATE TABLE $sst (
+  my $sst = getConfig("similarSequencesTable");
+  my $oracleNoLogging = $base->getConfig("dbVendor") eq 'oracle'? " NOLOGGING" : "";
+
+  my $sql = "
+CREATE TABLE $sst $oracleNoLogging (
  QUERY_ID                 $intType,
  SUBJECT_ID               $intType,
  QUERY_TAXON_ID           $intType,
@@ -51,22 +36,22 @@ CREATE TABLE $sst (
  EVALUE_MANT              $intType,
  EVALUE_EXP               FLOAT,
  PERCENT_IDENTITY         FLOAT,
- PERCENT_MATCH            FLOAT  
-)$oracleNoLogging
+ PERCENT_MATCH            FLOAT
+)
 ";
   runSql($sql);
 
- $sql = "
-CREATE INDEX ss_qtaxexp_ix 
-ON $sst(query_id, subject_taxon_id, 
-evalue_exp, evalue_mant, 
+  $sql = "
+CREATE INDEX ss_qtaxexp_ix
+ON $sst(query_id, subject_taxon_id,
+evalue_exp, evalue_mant,
 query_taxon_id, subject_id)
 ";
   runSql($sql);
-  
- $sql = "
+
+  $sql = "
 CREATE INDEX ss_seqs_ix 
-ON $sst(query_id, subject_id, 
+ON $sst(query_id, subject_id,
 evalue_exp, evalue_mant)
 ";
   runSql($sql);
@@ -76,13 +61,13 @@ evalue_exp, evalue_mant)
 sub createInParalogTable {
  my $ipt = getConfig("inParalogTable");
  my $sql = "
-CREATE TABLE $ipt $oracleNoLogging (
+CREATE TABLE $ipt (
  SEQUENCE_ID_A           $intType,
  SEQUENCE_ID_B           $intType,
  TAXON_ID                $intType,
  UNNORMALIZED_SCORE      FLOAT,
- NORMALIZED_SCORE        FLOAT    
-)$oracleNoLogging
+ NORMALIZED_SCORE        FLOAT
+)
 ";
   runSql($sql);
 }
@@ -91,14 +76,14 @@ CREATE TABLE $ipt $oracleNoLogging (
 sub createOrthologTable  {
  my $olt = getConfig("orthologTable");
  my $sql = " 
-CREATE TABLE $olt $oracleNoLogging  (
+CREATE TABLE $olt  (
  SEQUENCE_ID_A           $intType,
  SEQUENCE_ID_B           $intType,
  TAXON_ID_A              $intType,
  TAXON_ID_B              $intType,
  UNNORMALIZED_SCORE      FLOAT,
- NORMALIZED_SCORE        FLOAT    
-)$oracleNoLogging
+ NORMALIZED_SCORE        FLOAT
+)
 ";
   runSql($sql);
 
@@ -117,14 +102,14 @@ CREATE INDEX ortholog_seq_b_ix ON $olt(sequence_id_b)
 sub createCoOrthologTable  {
  my $cot = getConfig("coOrthologTable");
  my $sql = "
-CREATE TABLE $cot $oracleNoLogging (
+CREATE TABLE $cot (
  SEQUENCE_ID_A           $intType,
  SEQUENCE_ID_B           $intType,
  TAXON_ID_A              $intType,
  TAXON_ID_B              $intType,
  UNNORMALIZED_SCORE      FLOAT,
- NORMALIZED_SCORE        FLOAT    
-)$oracleNoLogging
+ NORMALIZED_SCORE        FLOAT
+)
 ";
   runSql($sql);
 }
@@ -141,37 +126,9 @@ CREATE OR REPLACE VIEW $itv
  runSql($sql);
 }
 
-sub parseConfigFile {
-  my ($configFile) = @_;
-
-  open(F, $configFile) || die "Can't open config file '$configFile'\n";
-
-  my $config;
-  while(<F>) {
-    chomp;
-    s/\s+$//;
-    next if /^\#/;
-    /^(\w+)\=(.+)/ || die "illegal line in config file '$_'\n";
-    my $key=$1;
-    my $val=$2;
-    $config->{$key} = $val;
-    $val = '********' if $key eq 'dbPassword';
-    print STDERR localtime() . " configuration: $key=$val\n";
-  }
-  return $config;
-}
-
-
-sub getConfig {
-  my ($prop) = @_;
-  die "can't find property $prop in config file" unless $config->{$prop};
-  return $config->{$prop};
-}
-
-
 sub runSql {
- my $sql = $_[0]; 
- if ($sqlLog) { 
+ my $sql = $_[0];
+ if ($sqlLog) {
      logSql($sql);
     }
   my $stmt = $dbh->prepare($sql) or die DBI::errstr;
@@ -204,18 +161,12 @@ dbVendor=oracle  (or mysql)
 dbConnectString=dbi:Oracle:orthomcl
 dbLogin=my_db_login
 dbPassword=my_db_password
-mysqlDatabase=my_mysql_database
-similarSequencesTable=SimilarSequences
+blastResultsTable=BlastResults
 orthologTable=Ortholog
 inParalogTable=InParalog
 coOrthologTable=CoOrtholog
 interTaxonMatchView=InterTaxonMatch
-percentMatchCutoff=50
-evalueExponentCutoff=-5
 
 ";
 }
 
-if ($sqlLog) {
-close LOGFILE;
-}

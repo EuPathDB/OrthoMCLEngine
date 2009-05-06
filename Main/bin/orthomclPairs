@@ -1,7 +1,11 @@
 #!/usr/bin/perl
 
-use strict;
 use DBI;
+use FindBin;
+use lib "$FindBin::Bin/../lib/perl";
+use OrthoMCLEngine::Main::Base;
+use strict;
+
 
 my $debug=0;
 
@@ -63,18 +67,9 @@ for (my $i=0; $i<scalar(@steps); $i++) {
     $cleanHash->{$steps[$i]->[0]} = $steps[$i]->[1] if $steps[$i]->[1];
 }
 
-open (LOGFILE, ">>$logFile") || die "Can't open log file '$logFile'\n";
-my $oldfh = select(LOGFILE); $| = 1; select($oldfh);  # flush print buffer
-
-
-
-print LOGFILE "\n\n============================================================================================\n";
-print LOGFILE localtime(). " orthomclPairs " . join(' ', @ARGV) . "\n";
-print LOGFILE "=============================================================================================\n\n";
-
 &usage() unless $configFile;
 &usage() unless $logFile;
-usage() unless $clean =~ /cleanup=(yes|no|only|all)/;
+&usage() unless $clean =~ /cleanup=(yes|no|only|all)/;
 
 $clean = $1;
 
@@ -85,25 +80,19 @@ if ($restart) {
   die "invalid restart arg $restart" unless $skipPast;
 }
 
-my $config = parseConfigFile($configFile);
-my $sst = getConfig("similarSequencesTable");
+open (LOGFILE, ">>$logFile") || die "Can't open log file '$logFile'\n";
+my $oldfh = select(LOGFILE); $| = 1; select($oldfh);  # flush print buffer
 
-my $oracleNoLogging;
+print LOGFILE "\n\n============================================================================================\n";
+print LOGFILE localtime(). " orthomclPairs " . join(' ', @ARGV) . "\n";
+print LOGFILE "=============================================================================================\n\n";
 
-my $dbVendor = getConfig("dbVendor");
-if ($dbVendor eq 'oracle') {
-  require DBD::Oracle;
-  $oracleNoLogging = " NOLOGGING";
-} elsif ($dbVendor eq 'mysql') {
-  require DBD::mysql;
-} else {
-    die "config file '$configFile' has invalid value '$dbVendor' for dbVendor property\n";
-}
+my $base = OrthoMCLEngine::Main::Base->new($configFile, *LOGFILE);
+my $dbh = $base->getDbh();
 
+my $sst = $base->getConfig("similarSequencesTable");
 
-my $dbh = DBI->connect(getConfig("dbConnectString"), getConfig("dbLogin"),
-		       getConfig("dbPassword")) or die DBI::errstr;
-
+my $oracleNoLogging = $base->getConfig("dbVendor") eq 'oracle'? " NOLOGGING" : "";
 
 commonTempTables();
 
@@ -117,27 +106,6 @@ coorthologs();
 
 cleanall() if $clean eq 'all';
 
-############################################################################
-
-sub parseConfigFile {
-  my ($configFile) = @_;
-
-  open(F, $configFile) || die "Can't open config file '$configFile'\n";
-
-  my $config;
-  while(<F>) {
-    chomp;
-    s/\s+$//;
-    next if /^\#/;
-    /^(\w+)\=(.+)/ || die "illegal line in config file '$_'\n";
-    my $key=$1;
-    my $val=$2;
-    $config->{$key} = $val;
-    $val = '********' if $key eq 'dbPassword';
-    print LOGFILE localtime() . " configuration: $key=$val\n";
-  }
-  return $config;
-}
 
 ################################################################################
 ############################### Common tables  #################################
@@ -146,7 +114,7 @@ sub commonTempTables {
   print LOGFILE localtime() . " Constructing common temp tables\n"
     unless $clean eq 'only' || $clean eq 'all';
 
-  my $interTaxonMatch = getConfig("interTaxonMatchView");
+  my $interTaxonMatch = $base->getConfig("interTaxonMatchView");
 
   # a little bit of a hack here.  mysql can't tolerate finding the
   # minEvalueExp in the sql that updates the table
@@ -208,8 +176,8 @@ sub orthologs {
   print LOGFILE localtime() . " Constructing ortholog tables\n"
     unless $clean eq 'only' || $clean eq 'all';
 
-  my $evalueExpThreshold = getConfig("evalueExponentCutoff");
-  my $percentMatchThreshold = getConfig("percentMatchCutoff");
+  my $evalueExpThreshold = $base->getConfig("evalueExponentCutoff");
+  my $percentMatchThreshold = $base->getConfig("percentMatchCutoff");
 
   my $sql = "
 create table BestHit $oracleNoLogging as
@@ -264,7 +232,7 @@ where bh1.query_id < bh1.subject_id
 
   ######################################################################
 
-  normalizeOrthologsSub('', getConfig("orthologTable"));
+  normalizeOrthologsSub('', $base->getConfig("orthologTable"));
 }
 
 
@@ -275,10 +243,10 @@ sub inparalogs {
   print LOGFILE localtime() . " Constructing inParalog tables\n"
     unless $clean eq 'only' || $clean eq 'all';
 
-  my $inParalogTable = getConfig("inParalogTable");
-  my $orthologTable = getConfig("orthologTable");
-  my $evalueExpThreshold = getConfig("evalueExponentCutoff");
-  my $percentMatchThreshold = getConfig("percentMatchCutoff");
+  my $inParalogTable = $base->getConfig("inParalogTable");
+  my $orthologTable = $base->getConfig("orthologTable");
+  my $evalueExpThreshold = $base->getConfig("evalueExponentCutoff");
+  my $percentMatchThreshold = $base->getConfig("percentMatchCutoff");
 
   my $sql = "
 create table BestInterTaxonScore $oracleNoLogging as
@@ -473,11 +441,11 @@ sub coorthologs {
   print LOGFILE localtime() . " Constructing coOrtholog tables\n"
     unless $clean eq 'only' || $clean eq 'all';
 
-  my $inParalogTable = getConfig("inParalogTable");
-  my $orthologTable = getConfig("orthologTable");
-  my $coOrthologTable = getConfig("coOrthologTable");
-  my $evalueExpThreshold = getConfig("evalueExponentCutoff");
-  my $percentMatchThreshold = getConfig("percentMatchCutoff");
+  my $inParalogTable = $base->getConfig("inParalogTable");
+  my $orthologTable = $base->getConfig("orthologTable");
+  my $coOrthologTable = $base->getConfig("coOrthologTable");
+  my $evalueExpThreshold = $base->getConfig("evalueExponentCutoff");
+  my $percentMatchThreshold = $base->getConfig("percentMatchCutoff");
 
   my $sql = "
 create table InParalog2Way $oracleNoLogging as
@@ -607,7 +575,7 @@ where ab.query_id = candidate.sequence_id_a
 
   ######################################################################
 
-  normalizeOrthologsSub("Co", getConfig("coOrthologTable"));
+  normalizeOrthologsSub("Co", $base->getConfig("coOrthologTable"));
 }
 
 
@@ -707,11 +675,11 @@ sub runSql {
 sub clean {
   my ($tag) = @_;
 
-  my $orthologTable = getConfig("orthologTable");
-  my $coOrthologTable = getConfig("coOrthologTable");
-  my $inParalogTable = getConfig("inParalogTable");
+  my $orthologTable = $base->getConfig("orthologTable");
+  my $coOrthologTable = $base->getConfig("coOrthologTable");
+  my $inParalogTable = $base->getConfig("inParalogTable");
 
-  my $sqlPrefix = getConfig("dbVendor") eq 'oracle'?
+  my $sqlPrefix = $base->getConfig("dbVendor") eq 'oracle'?
     'select * from all_tables where table_name' :
       'select * from all_tables where table_name';
 
@@ -741,12 +709,6 @@ sub cleanall {
     foreach my $tag (keys (%$cleanHash)) {
 	clean($tag);
     }
-}
-
-sub getConfig {
-  my ($prop) = @_;
-  die "can't find property $prop in config file" unless $config->{$prop};
-  return $config->{$prop};
 }
 
 sub usage {

@@ -7,22 +7,14 @@ my $configFile = $ARGV[0];
 
 &usage() unless $configFile;
 
-my $config = parseConfigFile($configFile);
+my $base = OrthomclEngine::Main::Base->new($configFile);
+my $dbh = $base->getDbh();
 
-if (getConfig("dbVendor") eq 'oracle') {
-  require DBD::Oracle;
-} else {
-  require DBD::mysql;
-}
+my $orthologTable = $base->getConfig("orthologTable");
+my $inParalogTable = $base->getConfig("inParalogTable");
+my $coOrthologTable = $base->getConfig("coOrthologTable");
 
-my $dbh = DBI->connect(getConfig("dbConnectString"), getConfig("dbLogin"),
-		       getConfig("dbPassword")) or die DBI::errstr;
-
-my $orthologTable = getConfig("orthologTable");
-my $inParalogTable = getConfig("inParalogTable");
-my $coOrthologTable = getConfig("coOrthologTable");
-
-my $dir = "pregroupingReciprocalRelationships";
+my $dir = "pairs";
 
 die "dir '$dir' already exists" if -e $dir;
 
@@ -98,12 +90,6 @@ sub printMclAbcFile {
     print F "$queryId\t$subjectId\t$score\n";
   }
   close(F);
-}
-
-sub getConfig {
-  my ($prop) = @_;
-  die "can't find property $prop in config file" unless $config->{$prop};
-  return $config->{$prop};
 }
 
 sub usage {
