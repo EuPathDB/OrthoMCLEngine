@@ -28,7 +28,6 @@ printOrthologsFile($dbh, $orthologTable, "$dir/orthologs.txt");
 printInparalogsFile($dbh, $inParalogTable, "$dir/inparalogs.txt");
 
 printOrthologsFile($dbh, $coOrthologTable, "$dir/coorthologs.txt");
-exit;
 
 printMclAbcFile($dbh, $orthologTable, $inParalogTable, $coOrthologTable,
 	       "orthomclMclInputFile");
@@ -43,7 +42,7 @@ sub printInparalogsFile {
 select taxon_id, sequence_id_a, sequence_id_b, normalized_score
 from $inparalogTable
 where sequence_id_a < sequence_id_b
-and rownum < 10";
+";
 
   my $stmt = $dbh->prepare($sql) or die DBI::errstr;
   $stmt->execute();
@@ -62,7 +61,7 @@ sub printOrthologsFile {
 select taxon_id_a, sequence_id_a, taxon_id_b, sequence_id_b, normalized_score
 from $table
 where taxon_id_a || '|' || sequence_id_a < taxon_id_b || '|' || sequence_id_b
-and rownum < 10";
+";
 
   my $stmt = $dbh->prepare($sql) or die DBI::errstr;
   $stmt->execute();
