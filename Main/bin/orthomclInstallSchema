@@ -42,7 +42,7 @@ CREATE TABLE $sst $oracleNoLogging (
   runSql($sql);
 
   $sql = "
-CREATE INDEX ss_qtaxexp_ix
+CREATE INDEX ss_qtaxexp_ix $oracleNoLogging
 ON $sst(query_id, subject_taxon_id,
 evalue_exp, evalue_mant,
 query_taxon_id, subject_id)
@@ -50,7 +50,7 @@ query_taxon_id, subject_id)
   runSql($sql);
 
   $sql = "
-CREATE INDEX ss_seqs_ix 
+CREATE INDEX ss_seqs_ix $oracleNoLogging
 ON $sst(query_id, subject_id,
 evalue_exp, evalue_mant)
 ";
@@ -61,7 +61,7 @@ evalue_exp, evalue_mant)
 sub createInParalogTable {
  my $ipt = getConfig("inParalogTable");
  my $sql = "
-CREATE TABLE $ipt (
+CREATE TABLE $ipt $oracleNoLogging (
  SEQUENCE_ID_A           $intType,
  SEQUENCE_ID_B           $intType,
  TAXON_ID                $intType,
@@ -76,7 +76,7 @@ CREATE TABLE $ipt (
 sub createOrthologTable  {
  my $olt = getConfig("orthologTable");
  my $sql = " 
-CREATE TABLE $olt  (
+CREATE TABLE $olt $oracleNoLogging (
  SEQUENCE_ID_A           $intType,
  SEQUENCE_ID_B           $intType,
  TAXON_ID_A              $intType,
@@ -88,12 +88,14 @@ CREATE TABLE $olt  (
   runSql($sql);
 
 $sql = "
-CREATE INDEX ortholog_seq_a_ix ON $olt(sequence_id_a)
+CREATE INDEX ortholog_seq_a_ix  $oracleNoLogging
+ON $olt(sequence_id_a)
 ";
   runSql($sql);
 
 $sql = "
-CREATE INDEX ortholog_seq_b_ix ON $olt(sequence_id_b)
+CREATE INDEX ortholog_seq_b_ix $oracleNoLogging
+ON $olt(sequence_id_b)
 ";
   runSql($sql);
 }
@@ -102,7 +104,7 @@ CREATE INDEX ortholog_seq_b_ix ON $olt(sequence_id_b)
 sub createCoOrthologTable  {
  my $cot = getConfig("coOrthologTable");
  my $sql = "
-CREATE TABLE $cot (
+CREATE TABLE $cot $oracleNoLogging (
  SEQUENCE_ID_A           $intType,
  SEQUENCE_ID_B           $intType,
  TAXON_ID_A              $intType,

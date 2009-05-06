@@ -1,13 +1,16 @@
 #!/usr/bin/perl
 
-use strict;
 use DBI;
+use FindBin;
+use lib "$FindBin::Bin/../lib/perl";
+use OrthoMCLEngine::Main::Base;
+use strict;
 
 my $configFile = $ARGV[0];
 
 &usage() unless $configFile;
 
-my $base = OrthomclEngine::Main::Base->new($configFile);
+my $base = OrthoMCLEngine::Main::Base->new($configFile);
 my $dbh = $base->getDbh();
 
 my $orthologTable = $base->getConfig("orthologTable");
@@ -25,6 +28,7 @@ printOrthologsFile($dbh, $orthologTable, "$dir/orthologs.txt");
 printInparalogsFile($dbh, $inParalogTable, "$dir/inparalogs.txt");
 
 printOrthologsFile($dbh, $coOrthologTable, "$dir/coorthologs.txt");
+exit;
 
 printMclAbcFile($dbh, $orthologTable, $inParalogTable, $coOrthologTable,
 	       "orthomclMclInputFile");
@@ -38,7 +42,8 @@ sub printInparalogsFile {
   my $sql = "
 select taxon_id, sequence_id_a, sequence_id_b, normalized_score
 from $inparalogTable
-where sequence_id_a < sequence_id_b";
+where sequence_id_a < sequence_id_b
+and rownum < 10";
 
   my $stmt = $dbh->prepare($sql) or die DBI::errstr;
   $stmt->execute();
@@ -56,7 +61,8 @@ sub printOrthologsFile {
   my $sql = "
 select taxon_id_a, sequence_id_a, taxon_id_b, sequence_id_b, normalized_score
 from $table
-where taxon_id_a || '|' || sequence_id_a < taxon_id_b || '|' || sequence_id_b";
+where taxon_id_a || '|' || sequence_id_a < taxon_id_b || '|' || sequence_id_b
+and rownum < 10";
 
   my $stmt = $dbh->prepare($sql) or die DBI::errstr;
   $stmt->execute();
@@ -94,25 +100,26 @@ sub printMclAbcFile {
 
 sub usage {
   print "
-Dump files from the database produced by the orthomclEdges program.
+Dump files from the database produced by the orthomclPairs program.
 
-usage: orthomclEdgesDumpFiles config_file
+usage: orthomclDumpPairsFiles config_file
 
 where:
-  config_file : see below (you can use the same file given to orthomclEdges)
+  config_file : see below (you can use the same file given to orthomclPairs)
 
 Database Input:
-  - InParalog, Ortholog, CoOrtholog tables - populated by orthomclEdges
+  - InParalog, Ortholog, CoOrtholog tables - populated by orthomclPairs
 
 Output files:
   orthomclMclInput                       - file required by the mcl program
-  pregroupingReciprocalRelationships/    - dir holding relationship files
-    orthologs.txt                        - ortholog relationships
-    inparalogs.txt                       - inparalog relationships
-    coorthologs.txt                      - coortholog relationships
+  pairs/                                 - dir holding relationship files
+    potentialOrthologs.txt               - ortholog relationships
+    potentialInparalogs.txt              - inparalog relationships
+    potentialCoorthologs.txt             - coortholog relationships
 
-The pregrouping relationship files contain the same information as the
-orthomclMclInput file, but segragated by relationship type.  These are
+The pairs/ files contain the pairs found by the orthomclPairs tables, and their
+average normalized scores.  This is the same information as in the
+orthomclMclInput file, but segregated by relationship type.  These are
 candidate relationships (edges) that will subsequently be grouped (clustered)
 by the mcl program to form the OrthoMCL ortholog groups.  These files contain
 more sensitive and less selective relationships then the final ortholog groups.
