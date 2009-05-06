@@ -1,12 +1,17 @@
 #!/usr/bin/perl
 
+use DBI;
+use FindBin;
+use lib "$FindBin::Bin/../lib/perl";
+use OrthoMCLEngine::Main::Base;
 use strict;
+
 
 usage() unless (@ARGV >= 1);
 my $configFile = $ARGV[0];
 my $sqlLog = $ARGV[1];
 
-my $base = OrthomclEngine::Main::Base->new($configFile);
+my $base = OrthoMCLEngine::Main::Base->new($configFile);
 my $dbh = $base->getDbh();
 
 if ($sqlLog) {
