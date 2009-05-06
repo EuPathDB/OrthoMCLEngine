@@ -3,11 +3,9 @@
 use strict;
 use DBI;
 
-my $dbLogin = getConfig("dbLogin");
-my $dbPassword = getConfig("dbPassword");
+usage() unless (@ARGV >= 2);
 
 my $configFile = $ARGV[0];
-usage() unless $configFile;
 my $config = parseConfigFile($configFile);
 
 my $blastFile = $ARGV[1];
@@ -17,10 +15,47 @@ my $sqlLog = $ARGV[2];
  open (LOGFILE, ">$sqlLog");
  }
 
-my $mysqlDatabase = getConfig("mysqlDatabase");
+my $dbLogin = getConfig("dbLogin");
+my $dbPassword = getConfig("dbPassword");
 my $sst = getConfig("similarSequencesTable");
+my $dbVendor = getConfig("dbVendor");
 
-my $sqlHeader = "
+my $dbString = getConfig("dbConnectString");
+my @database = split(/:/, $dbString);
+my $dbInstance = $dbString[2];
+
+my $dbh = DBI->connect($dbString, $dbLogin,$dbPassword)
+                        or die DBI::errstr
+                           unless $dbVendor eq 'oracle';
+
+if ($dbVendor eq 'mysql') {
+  require DBD::mysql;
+  mysqlDbSelect();
+  loadBlastMySQL($blastFile);
+}
+  elsif ($dbVendor eq 'oracle') {
+       loadBlastOracle($dbLogin,$dbPassword,$blastFile);
+   }
+
+
+
+sub loadBlastMySQL {
+ my $sql = "
+ LOAD DATA
+ LOCAL INFILE \"$blastFile\"
+ REPLACE INTO TABLE $dbInstance.$sst
+ FIELDS TERMINATED BY '\\t'
+";
+  runSql($sql);
+}
+
+
+sub loadBlastOracle {
+  my $dbLogin=$_[0];
+  my $dbPassword=$_[1];
+  my $blastFile=$_[2];
+  my $blastResults = do { local( @ARGV, $/ ) = $blastFile ; <> } ;
+  my $sqlHeader = "
 LOAD DATA
 INFILE *
 INTO TABLE $dbLogin.$sst
@@ -35,50 +70,18 @@ TRAILING NULLCOLS
     percent_identity,
     percent_match
 )
+BEGINDATA
 ";
+  open (PARFILE, ">orthomclPar.tmp");
+  print PARFILE "userid=$dbLogin/$dbPassword\@$dbInstance"; 
+  close PARFILE;
+  
+  open (CTLFILE, ">orthomclCtl.tmp");
+  print CTLFILE $sqlHeader;
+  print CTLFILE $blastResults;
+  close CTLFILE;
 
-my $blastResults = do { local( @ARGV, $/ ) = $blastFile ; <> } ;
-open(BLASTFILE, ">$blastFile");
-print BLASTFILE $sqlHeader;
-print BLASTFILE $blastResults;
-
-if (getConfig("dbVendor") eq 'oracle') {
-  require DBD::Oracle;
-}
- else {
-  require DBD::mysql;
-}
-
-my $dbh = DBI->connect(getConfig("dbConnectString"), getConfig("dbLogin"),
-                       getConfig("dbPassword")) or die DBI::errstr;
-
-my $dbVendor = getConfig("dbVendor");
-
-if ($dbVendor eq 'mysql') {
-    mysqlDbSelect();
-    loadBlastDataMySQL($blastFile);
-}
-   elsif ($dbVendor eq 'oracle') {
-       loadBlastDataOracle($blastFile);
-   }
-
-
-sub loadBlastDataMySQL {
- my $sql = "
- LOAD DATA
- LOCAL INFILE \"$blastFile\"
- REPLACE INTO TABLE $mysqlDatabase.$sst
- FIELDS TERMINATED BY '\\t'
-";
-  runSql($sql);
-}
-
-
-sub loadBlastDataOracle {
- my $sql = "
-HOST sqlldr $dbLogin//$dbPassword control=$blastFile
-";
-  run($sql);
+  my $command=`sqlldr parfile=orthomclPar.tmp control=orthmclCtl.tmp`;
 }
 
 
@@ -97,7 +100,7 @@ sub parseConfigFile {
     my $val=$2;
     $config->{$key} = $val;
     $val = '********' if $key eq 'dbPassword';
-    print STDERR localtime() . " configuration: $key=$val\n";
+    #print STDERR localtime() . " configuration: $key=$val\n";
   }
   return $config;
 }
@@ -111,7 +114,7 @@ sub getConfig {
 
 sub mysqlDbSelect {
  my $sql = "
-USE $mysqlDatabase
+USE $dbInstance
 ";
   runSql($sql);
 }
