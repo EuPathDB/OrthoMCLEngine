@@ -90,12 +90,16 @@ my $sst = getConfig("similarSequencesTable");
 
 my $oracleNoLogging;
 
-if (getConfig("dbVendor") eq 'oracle') {
+my $dbVendor = getConfig("dbVendor");
+if ($dbVendor eq 'oracle') {
   require DBD::Oracle;
   $oracleNoLogging = " NOLOGGING";
-} else {
+} elsif ($dbVendor eq 'mysql') {
   require DBD::mysql;
+} else {
+    die "config file '$configFile' has invalid value '$dbVendor' for dbVendor property\n";
 }
+
 
 my $dbh = DBI->connect(getConfig("dbConnectString"), getConfig("dbLogin"),
 		       getConfig("dbPassword")) or die DBI::errstr;
@@ -123,6 +127,7 @@ sub parseConfigFile {
   my $config;
   while(<F>) {
     chomp;
+    s/\s+$//;
     next if /^\#/;
     /^(\w+)\=(.+)/ || die "illegal line in config file '$_'\n";
     my $key=$1;
@@ -574,8 +579,7 @@ SELECT cc.sequence_id_a, cc.sequence_id_b
 
   $sql = "
 create table CoOrthologTemp $oracleNoLogging as
-select /*+ use_nl(candidate, ab) use_nl(candidate, ba)  */
-       candidate.sequence_id_a, candidate.sequence_id_b,
+select candidate.sequence_id_a, candidate.sequence_id_b,
        ab.query_taxon_id as taxon_id_a, ab.subject_taxon_id as taxon_id_b,
        case  -- in case of 0 evalue, use rigged exponent
          when ab.evalue_mant < 0.00001 or ba.evalue_mant < 0.00001

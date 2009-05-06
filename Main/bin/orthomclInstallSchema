@@ -13,15 +13,16 @@ my $sqlLog = $ARGV[1];
  }
 
 
-my $dbVendor = getConfig("dbVendor");
-my $oracleNoLog;
+my $oracleNoLogging;
 
+my $dbVendor = getConfig("dbVendor");
 if ($dbVendor eq 'oracle') {
   require DBD::Oracle;
-   $oracleNoLog = " NOLOGGING";
-} 
- else {
+  $oracleNoLogging = " NOLOGGING";
+} elsif ($dbVendor eq 'mysql') {
   require DBD::mysql;
+} else {
+    die "config file '$configFile' has invalid value '$dbVendor' for dbVendor property\n";
 }
 
 my $dbh = DBI->connect(getConfig("dbConnectString"), getConfig("dbLogin"),
@@ -57,7 +58,7 @@ CREATE TABLE $sst (
  EVALUE_EXP               FLOAT,
  PERCENT_IDENTITY         FLOAT,
  PERCENT_MATCH            FLOAT  
-)$oracleNoLog
+)$oracleNoLogging
 ";
   runSql($sql);
 
@@ -81,13 +82,13 @@ evalue_exp, evalue_mant)
 sub createInParalogTable {
  my $ipt = getConfig("inParalogTable");
  my $sql = "
-CREATE TABLE $ipt $oracleNoLog (
+CREATE TABLE $ipt $oracleNoLogging (
  SEQUENCE_ID_A           $intType,
  SEQUENCE_ID_B           $intType,
  TAXON_ID                $intType,
  UNNORMALIZED_SCORE      FLOAT,
  NORMALIZED_SCORE        FLOAT    
-)$oracleNoLog
+)$oracleNoLogging
 ";
   runSql($sql);
 }
@@ -96,14 +97,14 @@ CREATE TABLE $ipt $oracleNoLog (
 sub createOrthologTable  {
  my $olt = getConfig("orthologTable");
  my $sql = " 
-CREATE TABLE $olt $oracleNoLog  (
+CREATE TABLE $olt $oracleNoLogging  (
  SEQUENCE_ID_A           $intType,
  SEQUENCE_ID_B           $intType,
  TAXON_ID_A              $intType,
  TAXON_ID_B              $intType,
  UNNORMALIZED_SCORE      FLOAT,
  NORMALIZED_SCORE        FLOAT    
-)$oracleNoLog
+)$oracleNoLogging
 ";
   runSql($sql);
 
@@ -122,14 +123,14 @@ CREATE INDEX ortholog_seq_b_ix ON $olt(sequence_id_b)
 sub createCoOrthologTable  {
  my $cot = getConfig("coOrthologTable");
  my $sql = "
-CREATE TABLE $cot $oracleNoLog (
+CREATE TABLE $cot $oracleNoLogging (
  SEQUENCE_ID_A           $intType,
  SEQUENCE_ID_B           $intType,
  TAXON_ID_A              $intType,
  TAXON_ID_B              $intType,
  UNNORMALIZED_SCORE      FLOAT,
  NORMALIZED_SCORE        FLOAT    
-)$oracleNoLog
+)$oracleNoLogging
 ";
   runSql($sql);
 }
@@ -154,6 +155,7 @@ sub parseConfigFile {
   my $config;
   while(<F>) {
     chomp;
+    s/\s+$//;
     next if /^\#/;
     /^(\w+)\=(.+)/ || die "illegal line in config file '$_'\n";
     my $key=$1;

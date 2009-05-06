@@ -90,16 +90,19 @@ my $skipPast;
 if ($restart) {
   usage() unless $restart =~ /startAfter=(.*)/;
   $skipPast = $stepsHash->{$1};
-  die "invalid restart arg $restart" unless $skipPast;
+  die "invalid restart arg $restart\n" unless $skipPast;
 }
 
 my $config = parseConfigFile($configFile);
 my $sst = getConfig("similarSequencesTable");
 
+my $
 if (getConfig("dbVendor") eq 'oracle') {
   require DBD::Oracle;
-} else {
+} elsif (getConfig("dbVendor") eq 'mysql') {
   require DBD::mysql;
+} else {
+    die "config file '$configFile' has invalid value for dbVendor property\n";
 }
 
 my $dbh = DBI->connect(getConfig("dbConnectString"), getConfig("dbLogin"),
@@ -668,8 +671,7 @@ SELECT cc.sequence_id_a, cc.sequence_id_b
 
   $sql = "
 create table CoOrthologTemp as
-select /*+ use_nl(candidate, ab) use_nl(candidate, ba)  */
-       candidate.sequence_id_a, candidate.sequence_id_b,
+select candidate.sequence_id_a, candidate.sequence_id_b,
        ab.query_taxon_id as taxon_id_a, ab.subject_taxon_id as taxon_id_b,
        case  -- in case of 0 evalue, use rigged exponent
          when ab.evalue_mant < 0.00001 or ba.evalue_mant < 0.00001

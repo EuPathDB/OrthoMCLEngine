@@ -90,6 +90,7 @@ sub parseConfigFile {
   my $config;
   while(<F>) {
     chomp;
+    s/\s+$//;
     next if /^\#/;
     /^(\w+)\=(.+)/ || die "illegal line in config file '$_'\n";
     my $key=$1;
