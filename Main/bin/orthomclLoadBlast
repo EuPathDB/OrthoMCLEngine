@@ -9,14 +9,9 @@ use strict;
 usage() unless (@ARGV >= 2);
 my $configFile = $ARGV[0];
 my $blastFile = $ARGV[1];
-my $sqlLog = $ARGV[2];
 
 my $base = OrthoMCLEngine::Main::Base->new($configFile);
 my $dbh = $base->getDbh();
-
-if ($sqlLog) {
-  open (LOGFILE, ">$sqlLog");
-}
 
 my $dbVendor = getConfig("dbVendor");
 
@@ -40,7 +35,8 @@ sub loadBlastMySQL {
  REPLACE INTO TABLE $sst
  FIELDS TERMINATED BY '\\t'
 ";
-  runSql($dbh, $sql);
+  my $stmt = $dbh->prepare($sql) or die DBI::errstr;
+  $stmt->execute() or die DBI::errstr;
 }
 
 
@@ -83,14 +79,6 @@ BEGINDATA
   close CTLFILE;
 
   my $command=`sqlldr parfile=orthomclPar.tmp control=orthmclCtl.tmp`;
-}
-
-sub runSql {
-  my ($dbh, $sql) = @_;
-
-  print LOGFILE "\n$sql" if ($sqlLog);
-  my $stmt = $dbh->prepare($sql) or die DBI::errstr;
-  $stmt->execute() or die DBI::errstr;
 }
 
 sub usage {
