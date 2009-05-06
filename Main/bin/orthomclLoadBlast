@@ -22,7 +22,7 @@ my $dbVendor = getConfig("dbVendor");
 
 my $dbString = getConfig("dbConnectString");
 my @database = split(/:/, $dbString);
-my $dbInstance = $dbString[2];
+my $dbInstance = $database[2];
 
 my $dbh = DBI->connect($dbString, $dbLogin,$dbPassword)
                         or die DBI::errstr
@@ -30,7 +30,6 @@ my $dbh = DBI->connect($dbString, $dbLogin,$dbPassword)
 
 if ($dbVendor eq 'mysql') {
   require DBD::mysql;
-  mysqlDbSelect();
   loadBlastMySQL($blastFile);
 }
   elsif ($dbVendor eq 'oracle') {
@@ -110,13 +109,6 @@ sub getConfig {
   my ($prop) = @_;
   die "can't find property $prop in config file" unless $config->{$prop};
   return $config->{$prop};
-}
-
-sub mysqlDbSelect {
- my $sql = "
-USE $dbInstance
-";
-  runSql($sql);
 }
 
 

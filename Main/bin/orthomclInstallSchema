@@ -30,10 +30,10 @@ my $dbh = DBI->connect(getConfig("dbConnectString"), getConfig("dbLogin"),
 
 
 
-if ($dbVendor eq 'mysql') {
-   getConfig("mysqlDatabase");
-   mysqlDbSelect();
-}
+#if ($dbVendor eq 'mysql') {
+ #  getConfig("mysqlDatabase");
+  # mysqlDbSelect();
+#}
 
 my $intType = ($dbVendor eq 'oracle') ? 'NUMBER' : 'INT';
 
