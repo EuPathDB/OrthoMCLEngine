@@ -1,9 +1,11 @@
 OrthoMCL User's Guide
 Version ??
 
+===================================================
 =========== Introduction ==========================
+===================================================
 
-For details on the orthomcl algorithm, please read the OrthoMCL Algorithm document available here: http://docs.google.com/Doc?id=dd996jxg_1gsqsp6
+For details on the orthomcl algorithm, please read the OrthoMCL Algorithm Document available here: http://docs.google.com/Doc?id=dd996jxg_1gsqsp6
 
 The input to OrthoMCL is a set of proteomes.
 
@@ -14,7 +16,7 @@ The output is a set of files:
      potentialInparalogs.txt
   groups.txt
 
-The files in the pairs/ directory contain pairwise relationships between proteins, and their scores.  They are categorized into potential orthologs, co-orthologs and inparalogs as described in the OrthoMCL Algorithm document.  The groups.txt file contains the groups created by clustering the pairs with the MCL program.
+The files in the pairs/ directory contain pairwise relationships between proteins, and their scores.  They are categorized into potential orthologs, co-orthologs and inparalogs as described in the OrthoMCL Algorithm Document.  The groups.txt file contains the groups created by clustering the pairs with the MCL program.
 
 There are three overall stages:
   - all-v-all BLAST
@@ -24,7 +26,9 @@ There are three overall stages:
 These stages are executed in a series of thirteen steps detailed below.  Most simply involve running a provided program.  They are broken into steps for ease of backtracking and recoverability.  Most are very simple to run, so don't be discouraged.
 
 
-========= Requirements ==========
+===================================================
+========= Requirements ============================
+===================================================
 
 (1) UNIX
   - The OrthoMCL Pairs program has only been tested on UNIX
@@ -57,7 +61,9 @@ These stages are executed in a series of thirteen steps detailed below.  Most si
   - This set took XXXX days to run all-v-all BLAST on a 200 node compute cluster.  The processing to find pairs took XXXX hours on a XXXX machine and the processing to find groups took XXXX hours.
 
 
-=========== Overview of steps =======================
+===================================================
+=========== Overview of steps =====================
+===================================================
 
 This is an overview of the thirteen steps to run orthomcl.  Details are in the next sections. 
 
@@ -92,6 +98,10 @@ All programs except mysql and mcl are provided as part of the OrthoMCL download.
 We recommend you save the output of each step so that you can easily redo it if things go wrong.
 
 
+===================================================
+============ Steps in detail ======================
+===================================================
+
 ========== Step 1: MySql ============
 
 
@@ -112,19 +122,56 @@ Use this command to unpack the software:
 The result will be the orthomclSoftware/ directory.
 
 The directory contains a set of programs and a sample config file.  To run the programs you will need to either:
-  a) include this directory in your PATH
+  a) include the orthomclSoftware/ directory in your PATH
   b) call the programs using their full directory path
 
 Make a directory to hold the data and results for your run of orthomcl.  In this document we will call that directory "your_orthomcl_dir".
 
-In the orthomclSoftware/ directory is a file called orthomcl.config.sample.  Copy that file
-to your_orthomcl_dir/orthomcl.config, and edit the new file according to the following instructions.
+In the orthomclSoftware/ directory is a file called orthomcl.config.sample.  Copy that file to your_orthomcl_dir/orthomcl.config, and edit the new file according to the following instructions.
+
+dbVendor=
+  - either 'oracle' or 'mysql'
+  - used by orthomclInstallSchema, orthomclLoadBlast, orthomclPairs
+dbConnectString=
+  - the string required by Perl DBI to find the database.  
+  - examples are:
+     dbi:Oracle:orthomcl  (for an oracle database with service name 'orthomcl')
+     dbi:MySql:orthomcl   (for a mysql server with a database called 'orthomcl')
+  - used by orthomclInstallSchema, orthomclLoadBlast, orthomclPairs, orthomclDumpPairsFiles
+dbLogin=
+  - your database login name
+  - used by orthomclInstallSchema, orthomclLoadBlast, orthomclPairs, orthomclDumpPairsFiles
+dbPassword=
+  - your database password
+  - used by orthomclInstallSchema, orthomclLoadBlast, orthomclPairs, orthomclDumpPairsFiles
+blastResultsTable=
+  - the name to give the table that will be loaded with blast results by orthomclLoadBlast. This is configurable for your flexibility.  It doesn't matter what you call it. 
+  - used by orthomclInstallSchema, orthomclLoadBlast, orthomclPairs
+orthologTable=
+  - the name of the table that will hold potential ortholog pairs.  This is configurable so that you can run orthomclPairs multiple times, and compare results.
+  - used by orthomclInstallSchema, orthomclPairs, orthomclDumpPairsFiles
+inParalogTable=InParalog
+  - the name of the table that will hold potential inparalog pairs.  This is configurable so that you can run orthomclPairs multiple times, and compare results.
+  - used by orthomclInstallSchema, orthomclPairs, orthomclDumpPairsFiles
+coOrthologTable=CoOrtholog
+  - the name of the table that will hold potential coortholog pairs.  This is configurable so that you can run orthomclPairs multiple times, and compare results.
+  - used by orthomclInstallSchema, orthomclPairs, orthomclDumpPairsFiles
+interTaxonMatchView=InterTaxonMatch
+percentMatchCutoff=
+  - blast similarities with percent match less than this value are ignored.
+  - used by orthomclPairs
+evalueExponentCutoff=
+  - blast similarities with evalue Exponents greather than this value are ignored.
+  - used by orthomclPairs
 
 
+========== Step 4: orthomclInstallSchema ========
+Input:
+  - database
+Output:
+  - database with schema installed
 
-
-
-========== Step 4: install schema ========
+Run the orthmclInstallSchema program to install the schema.
 
 
 ========== Step 5: orthomclAdjustFasta ==========
@@ -176,7 +223,7 @@ You must run your own BLAST.  For large datasets you should consider gaining acc
 We expect you to:
   - use NCBI BLAST (XXXX reasons....)
   - run with the -m 8 option to provide tab delimited output required by Step 8
-  - see the OrthoMCL Algorithm document for important details about other BLAST arguments
+  - see the OrthoMCL Algorithm Document for important details about other BLAST arguments
 
 If you are a power user you can deviate from this, so long as you can ultimately provide output in exactly the format provided by NCBI BLAST using the -m 8 option, and expected by Step 8.
 
@@ -213,7 +260,7 @@ Output:
   - PotentialInParalogs table
   - PotentialCoOrthologs table
 
-This is a computationally major step that finds protein pairs.  It executes the algorithm described in the OrthoMCL Algorithm document, using a relational database.  The program proceeds through a series of internal steps, each creating an intermediate database table or index.  There are about 20 such tables created. Finally, it populates the output tables.
+This is a computationally major step that finds protein pairs.  It executes the algorithm described in the OrthoMCL Algorithm Document, using a relational database.  The program proceeds through a series of internal steps, each creating an intermediate database table or index.  There are about 20 such tables created. Finally, it populates the output tables.
 
 Use the orthomclPairs program for this step.  On a set of 500M protein similarities, it took XXXX hours to run.
 
@@ -222,7 +269,12 @@ The cleanup= option allows you to control the cleaning up of the intermediary ta
 The startAfter= option allows you to pick up where the program left off, if it stops for any reason.  Look in the log to find the last completed step, and use its tag as the value for startAfter=
 
 ========== Step 11: orthomclDumpPairsFiles ========
+Input:
+  - database with populated pairs tables
+Output
+  - pairs/ directory
 
+Run the orthomclDumpPairsFiles
 
 ========== Step 12: mcl ========
 
