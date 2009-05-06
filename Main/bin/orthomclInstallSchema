@@ -29,12 +29,6 @@ my $dbh = DBI->connect(getConfig("dbConnectString"), getConfig("dbLogin"),
                        getConfig("dbPassword")) or die DBI::errstr;
 
 
-
-#if ($dbVendor eq 'mysql') {
- #  getConfig("mysqlDatabase");
-  # mysqlDbSelect();
-#}
-
 my $intType = ($dbVendor eq 'oracle') ? 'NUMBER' : 'INT';
 
 
@@ -174,14 +168,6 @@ sub getConfig {
   return $config->{$prop};
 }
 
-sub mysqlDbSelect {
- my $mysqlDatabase = getConfig("mysqlDatabase");
- my $sql = "
-USE $mysqlDatabase
-";
-  runSql($sql);
-}
- 
 
 sub runSql {
  my $sql = $_[0]; 
