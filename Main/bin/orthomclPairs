@@ -96,11 +96,9 @@ my $oracleNoLogging = $base->getConfig("dbVendor") eq 'oracle'? " NOLOGGING" : "
 
 commonTempTables();
 
-inparalogs();
-
 orthologs();
 
-normalizeInParalogs();
+inparalogs();
 
 coorthologs();
 
@@ -634,10 +632,6 @@ where least(ot.taxon_id_a, ot.taxon_id_b) = a.smaller_tax_id
 ";
   
   runSql($sql, "populate $orthologTable table, including normalized_score", "${co}rthologsNormalization", '0');
-}
-
-sub normalizeInParalogs {
-
 }
 
 sub runSql {
