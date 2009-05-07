@@ -104,7 +104,7 @@ normalizeInParalogs();
 
 coorthologs();
 
-cleanall() if $clean eq 'all';
+#cleanall() if $clean eq 'all';  # i think this is redundant
 
 
 ################################################################################
