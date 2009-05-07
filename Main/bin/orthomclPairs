@@ -26,13 +26,13 @@ my @steps = ( # Common
 	     ['orthologTaxon', [ 'drop table OrthologTemp']],
 	     ['orthologAvg'],
 	     ['orthologAvgIndex'],
-	     ['orthologsNormalization', ['drop table OrthologAvgScore', 'drop table OrthologTemp2']],
+	     ['orthologsNormalization', ['drop table OrthologAvgScore', 'drop table OrthologTemp2', 'drop table OrthologTaxon']],
              # InParalog
 	     ['bestInterTaxonScore'],
              ['bis_uids_ix'],
              ['uniqueSimSeqsQueryId'],
              ['ust_qids_ix'],
-	     ['betterHit', ['drop table BestInterTaxonScore']],
+	     ['betterHit', ['drop table BestInterTaxonScore', 'drop table UniqueSimSeqsQueryId']],
              ['better_hit_ix'],
 	     ['inParalog', ['drop table BetterHit']],
  	     ['inParalogTaxonAvg'],
@@ -274,7 +274,7 @@ create index bis_uids_ix on BestInterTaxonScore(query_id)
 
    $sql = "
 create table UniqueSimSeqsQueryId $oracleNoLogging as
-select distinct query_id from SimilarSequences
+select distinct query_id from $sst
 ";
 
   runSql($sql, "create UniqueSimSeqsQueryId", 'uniqueSimSeqsQueryId', '3 secs');
