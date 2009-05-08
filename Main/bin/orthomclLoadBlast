@@ -13,13 +13,13 @@ my $blastFile = $ARGV[1];
 my $base = OrthoMCLEngine::Main::Base->new($configFile);
 my $dbh = $base->getDbh();
 
-my $dbVendor = getConfig("dbVendor");
+my $dbVendor = $base->getConfig("dbVendor");
 
 if ($dbVendor eq 'mysql') {
-  loadBlastMySQL($blastFile);
+  loadBlastMySQL($base, $blastFile);
 }
 elsif ($dbVendor eq 'oracle') {
-  loadBlastOracle($blastFile);
+  loadBlastOracle($base, $blastFile);
 } else {
   die "Config file '$configFile' contains invalid value '$dbVendor' for dbVendor\n";
 }
@@ -57,7 +57,7 @@ sub loadBlastOracle {
 
   my $sqlHeader = "
 LOAD DATA
-INFILE *
+INFILE '$blastFile' 
 INTO TABLE $sst
 FIELDS TERMINATED BY \"\\t \" OPTIONALLY ENCLOSED BY '\"'
 TRAILING NULLCOLS
@@ -70,15 +70,14 @@ TRAILING NULLCOLS
     percent_identity,
     percent_match
 )
-BEGINDATA
 ";
 
   open (CTLFILE, ">orthomclCtl.tmp");
   print CTLFILE $sqlHeader;
-#  print CTLFILE $blastResults;
   close CTLFILE;
 
-  my $command=`sqlldr parfile=orthomclPar.tmp control=orthmclCtl.tmp`;
+  my $command=`sqlldr parfile=orthomclPar.tmp control=orthomclCtl.tmp`;
+  unlink("orthomclCtl.tmp", "orthomclPar.tmp");
 }
 
 sub usage {
@@ -104,5 +103,3 @@ dbPassword=my_db_password
 similarSequencesTable=SimilarSequences
 ";
 }
-
-
