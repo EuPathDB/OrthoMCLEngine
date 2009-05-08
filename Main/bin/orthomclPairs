@@ -93,6 +93,7 @@ my $dbh = $base->getDbh();
 my $sst = $base->getConfig("similarSequencesTable");
 
 my $oracleNoLogging = $base->getConfig("dbVendor") eq 'oracle'? " NOLOGGING" : "";
+my $straightJoin = $base->getConfig("dbVendor") eq 'oracle'? "" : "STRAIGHT_JOIN";
 
 commonTempTables();
 
@@ -542,10 +543,9 @@ SELECT cc.sequence_id_a, cc.sequence_id_b
    runSql($sql, "create CoOrthologNotOrtholog table", 'coOrthologNotOrtholog', '30 min');
 
   ##########################################################
-
   $sql = "
 create table CoOrthologTemp $oracleNoLogging as
-select candidate.sequence_id_a, candidate.sequence_id_b,
+select $straightJoin candidate.sequence_id_a, candidate.sequence_id_b,
        ab.query_taxon_id as taxon_id_a, ab.subject_taxon_id as taxon_id_b,
        case  -- in case of 0 evalue, use rigged exponent
          when ab.evalue_mant < 0.00001 or ba.evalue_mant < 0.00001
