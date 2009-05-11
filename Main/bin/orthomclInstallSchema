@@ -38,8 +38,8 @@ CREATE TABLE $sst $oracleNoLogging (
  SUBJECT_ID               $intType,
  QUERY_TAXON_ID           $intType,
  SUBJECT_TAXON_ID         $intType,
- EVALUE_MANT              $intType,
- EVALUE_EXP               FLOAT,
+ EVALUE_MANT              FLOAT, 
+ EVALUE_EXP               $intType,
  PERCENT_IDENTITY         FLOAT,
  PERCENT_MATCH            FLOAT
 )
