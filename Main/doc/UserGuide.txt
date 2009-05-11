@@ -44,21 +44,31 @@ These stages are executed in a series of thirteen steps detailed below.  Most si
   - The OrthoMCL Pairs program runs in a relational database.  Supported vendors are:
      - Oracle
      - MySql
-  - If you don't already have one of these installed, you will need to install MySql which should be doable without significant systems administration support.
+  - If you don't already have one of these installed, you will need to install MySql which you can do without significant systems administration support.
 
-(4) Perl
+(4) Hardware
+  - memory: at least 2G
+  - disk: for a set of 1M proteins, the relational database will need at least
+    100G free space.  Or, once you have produced the orthomcl compatible blast
+    result file (Step 8), at least 5 times the size of that file.  90% of the
+    disk space required is to hold that file, load it into the database and
+    index it in the database.
+
+(5) Perl
   - standard perl
   - DBI libraries
 
-(5) MCL program
+(6) MCL program
   - more details here...
 
-(6) Time
+(7) Time
   - As a benchmark, OrthoMCL-DB Version 3 had:
      - 100 genomes (eukaryotes and prokaryotes)
      - 1M protein sequences
      - 500M significant pairwise BLAST matches
   - This set took XXXX days to run all-v-all BLAST on a 200 node compute cluster.  The processing to find pairs took XXXX hours on a XXXX machine and the processing to find groups took XXXX hours.
+
+
 
 
 ===================================================
@@ -144,7 +154,7 @@ dbLogin=
 dbPassword=
   - your database password
   - used by orthomclInstallSchema, orthomclLoadBlast, orthomclPairs, orthomclDumpPairsFiles
-blastResultsTable=
+similarSequencesTable=
   - the name to give the table that will be loaded with blast results by orthomclLoadBlast. This is configurable for your flexibility.  It doesn't matter what you call it. 
   - used by orthomclInstallSchema, orthomclLoadBlast, orthomclPairs
 orthologTable=
