@@ -18,7 +18,10 @@ if ($sqlLog) {
   open (LOGFILE, ">$sqlLog");
 }
 
+my $dbVendor;
 my $intType = ($dbVendor eq 'oracle') ? 'NUMBER' : 'INT';
+my $oracleNoLogging = $base->getConfig("dbVendor") eq 'oracle'? " NOLOGGING" : "";
+
 
 createSimilarSequencesTable();
 createInParalogTable();
@@ -29,8 +32,7 @@ createInterTaxonMatchView();
 ##############################################################
 
 sub createSimilarSequencesTable {
-  my $sst = getConfig("similarSequencesTable");
-  my $oracleNoLogging = $base->getConfig("dbVendor") eq 'oracle'? " NOLOGGING" : "";
+  my $sst = $base->getConfig("similarSequencesTable");
 
   my $sql = "
 CREATE TABLE $sst $oracleNoLogging (
@@ -64,7 +66,7 @@ evalue_exp, evalue_mant)
 
 
 sub createInParalogTable {
- my $ipt = getConfig("inParalogTable");
+ my $ipt = $base->getConfig("inParalogTable");
  my $sql = "
 CREATE TABLE $ipt $oracleNoLogging (
  SEQUENCE_ID_A           $intType,
@@ -79,7 +81,7 @@ CREATE TABLE $ipt $oracleNoLogging (
 
 
 sub createOrthologTable  {
- my $olt = getConfig("orthologTable");
+ my $olt = $base->getConfig("orthologTable");
  my $sql = " 
 CREATE TABLE $olt $oracleNoLogging (
  SEQUENCE_ID_A           $intType,
@@ -107,7 +109,7 @@ ON $olt(sequence_id_b)
 
 
 sub createCoOrthologTable  {
- my $cot = getConfig("coOrthologTable");
+ my $cot = $base->getConfig("coOrthologTable");
  my $sql = "
 CREATE TABLE $cot $oracleNoLogging (
  SEQUENCE_ID_A           $intType,
@@ -122,7 +124,7 @@ CREATE TABLE $cot $oracleNoLogging (
 }
 
 sub createInterTaxonMatchView {
- my $itv = getConfig("interTaxonMatchView");
+ my $itv = $base->getConfig("interTaxonMatchView");
  my $sql = "
 CREATE OR REPLACE VIEW $itv 
 	AS SELECT ss.query_id, ss.subject_id, ss.subject_taxon_id, 
