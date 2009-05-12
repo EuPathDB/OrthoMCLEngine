@@ -1,0 +1,13 @@
+[client]
+port=3306 ##Change this setting if another MySQL server is running to avoid conflicts
+socket=/tmp/mysql.sock
+
+[mysqld]
+port=3306 ##Change this setting if another MySQL server is running to avoid conflicts
+socket=/tmp/mysql.sock
+basedir=/home/james/mysql       #Change to reflect your mysql home directory
+datadir=/home/james/mysql/data  #Change to reflect your mysql data directory
+key_buffer_size=64M
+myisam_sort_buffer_size=4G
+myisam_max_sort_file_size=200G
+read_buffer_size=4G
