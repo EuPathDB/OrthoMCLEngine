@@ -29,7 +29,8 @@ documentation for your operating system for instructions regarding OS specific p
 III. Installing MySQL From Linux/Unix Binary Packages
 
 - If you do not wish to use OS packages, or you need to install MySQL from a normal user account,      
-please perform the following:
+  you can install MySQL using the following steps:
+
 
    1. Change to your home directory (cd ~/), or to the directory in which you want to install MySQL. 
       Note that you will need full privileges to the directory in which you install MySQL.
@@ -64,8 +65,8 @@ please perform the following:
       mysql directories upon startup, and to optimize server settings.
 
       Please we aware of the importance of the MySQL data directory! This
-      directory resides in the MySQL home directory by default and houses 
-      the MySQL core databases, as well as the database that you create, 
+      directory is essential and resides in the MySQL home directory by default. It 
+      houses the MySQL core databases, as well as the database(s) that you create, 
       thus it is very possible that this directory will be quite large in
       size. Please take this under consideration, and if the volume on which your
       data directory currently resides is small, you should copy or move your mysql/data
@@ -78,8 +79,8 @@ please perform the following:
 
            ./bin/mysqld_safe --defaults-file=~/mysql.cnf &
         
-      NOTE: You *must* run this command from the mysql directory.
-            You should see something similar to the following:
+         NOTE: You *must* run this command from the mysql directory.
+               You should see something similar to the following:
 
  		[1] 67786% Starting mysqld daemon with databases from home/youraccountname/mysql/data
 
