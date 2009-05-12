@@ -12,7 +12,7 @@ I. General Requirements
     -  MySQL server 5.1 or greater
     -  MySQL DBI driver module for PERL (available at CPAN)
     -  Unix/Linux or MacOS 10.0.1 or greater
-____________________________________________________
+________________________________________________________
 II. Installing MYSQL from OS Specific Packages
 
 MySQL has pre-packaged installation suites for many operating systems (RPM, Solaris or MacOS 
@@ -57,20 +57,20 @@ please perform the following:
         The script will most likely inform that you that need to set a root password. Don't worry about       
 	this for now; you will perform this task in another step.
 
-   6. Move to your home directory and edit the included my.cnf file or create
-      your own using in a text editor using our included file as a guide. This is
-      necessary to specify the correct directories upon startup, and to adjust
-      server settings.
+   6. Move or copy to your home directory the included mysql.cnf file. Edit this
+      file to reflect your mysql installation, or create your own with a text editor 
+      using our included file as a guide. This file is necessary to specify the correct 
+      mysql directories upon startup, and to optimize server settings.
 
    7. You are now ready to start your MySQL server as a background process. To do so, from within the mysql 
       directory base install, run:
 
-           /bin/mysqld_safe --defaults-file=my.cnf
+           ./bin/mysqld_safe --defaults-file=~/mysql.cnf &
         
       Note that you *must* run this command from the mysql directory.
       You should see something similar to the following:
 
- 		[1] 67786% Starting mysqld daemon with databases from /accountname/mysql/data
+ 		[1] 67786% Starting mysqld daemon with databases from home/youraccountname/mysql/data
 
    8. At this point your MySQL password is still blank. Use the following command to set a new                     
       root password:
@@ -87,8 +87,8 @@ IV. Create a New Database and User Account
 
       Enter the password you set in Step 7 when prompted.
 
-   2. Once logged in as root, create the database and user (schema) that you will use for OrthoMCL,
-      and grant the user account the necessary privileges:
+   2. Once logged in as root, create the database and user (schema) that you will use for OrthoMCL
+      (we use orthomcl as an example here), and grant the user account the necessary privileges:
  
               mysql> CREATE DATABASE orthomcl;
 	
