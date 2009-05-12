@@ -12,19 +12,20 @@ I. General Requirements
     -  MySQL server 5.1 or greater
     -  MySQL DBI driver module for PERL (available at CPAN)
     -  Unix/Linux or MacOS 10.0.1 or greater
-________________________________________________________
+
+----------------------------------------------------
 II. Installing MYSQL from OS Specific Packages
 
 MySQL has pre-packaged installation suites for many operating systems (RPM, Solaris or MacOS 
 pkg, etc). To determine if packages have been created for your operating system, check 
 http://www.mysql.com/downloads. Click the "Current Release" link under the MySQL  Community 
-Server heading (MySQL 5.1 as of this writing).  If binary packages exist for your operating system,   
+Server heading (MySQL 5.1 as of this writing). If packages exist specific to your operating system,   
 these packages provide the quickest method of installing the MySQL server, but please note that the 
 installation directory will vary from OS to OS unless it is explicitly specified when installing the 
 package, and default directory installations may require administrator privileges. Refer to the 
 documentation for your operating system for instructions regarding OS specific package installation.
 
-_________________________________________________________
+----------------------------------------------------
 III. Installing MySQL From Linux/Unix Binary Packages
 
 - If you do not wish to use OS packages, or you need to install MySQL from a normal user account,      
@@ -54,21 +55,31 @@ please perform the following:
 	        cd mysql
                 ./scripts/mysql_install_db
     
-        The script will most likely inform that you that need to set a root password. Don't worry about       
-	this for now; you will perform this task in another step.
+        NOTE: The script will most likely inform that you that need to set a root password. 
+              Don't worry about this for now; you will perform this task in another step.
 
    6. Move or copy to your home directory the included mysql.cnf file. Edit this
       file to reflect your mysql installation, or create your own with a text editor 
       using our included file as a guide. This file is necessary to specify the correct 
       mysql directories upon startup, and to optimize server settings.
 
+      Please we aware of the importance of the MySQL data directory! This
+      directory resides in the MySQL home directory by default and houses 
+      the MySQL core databases, as well as the database that you create, 
+      thus it is very possible that this directory will be quite large in
+      size. Please take this under consideration, and if the volume on which your
+      data directory currently resides is small, you should copy or move your mysql/data
+      directory to a volume with sufficient capacity. Make sure you specify the path to 
+      this relocated directory via the "datadir" parameter in your mysql.cnf
+      file.
+
    7. You are now ready to start your MySQL server as a background process. To do so, from within the mysql 
       directory base install, run:
 
            ./bin/mysqld_safe --defaults-file=~/mysql.cnf &
         
-      Note that you *must* run this command from the mysql directory.
-      You should see something similar to the following:
+      NOTE: You *must* run this command from the mysql directory.
+            You should see something similar to the following:
 
  		[1] 67786% Starting mysqld daemon with databases from home/youraccountname/mysql/data
 
@@ -77,7 +88,7 @@ please perform the following:
 
 		./bin/mysqladmin -u root password "yourpasswordhere"
 
--------------------------------------------------------------
+--------------------------------------------------
 IV. Create a New Database and User Account
 
    1. Log in to your mysql server as root. If you are logging in to an existing MySQL server, 
