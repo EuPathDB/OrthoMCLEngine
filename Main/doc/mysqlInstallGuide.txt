@@ -24,7 +24,7 @@ installation directory will vary from OS to OS unless it is explicitly specified
 package, and default directory installations may require administrator privileges. Refer to the 
 documentation for your operating system for instructions regarding OS specific package installation.
 
-____________________________________________________
+_________________________________________________________
 III. Installing MySQL From Linux/Unix Binary Packages
 
 - If you do not wish to use OS packages, or you need to install MySQL from a normal user account,      
@@ -36,8 +36,9 @@ please perform the following:
    2. Download the MySQL binary package to the directory you specified in Step 1. This package 
       can be obtained from http://www.mysql.com/downloads/; click the "Current Release" option 
       under MySQL Community Server (MySQL 5.1 as of this writing). On the download page, 
-      select "Linux Non RPM packages", or otherwise the .tar package for your operating system. 
-      Make sure you select the download file that is appropriate for your architecture (32 or 64 bit).
+      select "Linux Non RPM packages" if you are running Linux, or otherwise the .tar package for your 
+      operating system. Make sure you select the download file that is appropriate for your 
+      architecture (32 or 64 bit).
 
    3. Unzip the downloaded file into the directory:
   
@@ -56,21 +57,27 @@ please perform the following:
         The script will most likely inform that you that need to set a root password. Don't worry about       
 	this for now; you will perform this task in another step.
 
-   6. You are now ready to start your MySQL server as a background process. To do so, from      	   
-      within the mysql directory, run:
+   6. Move to your home directory and edit the included my.cnf file or create
+      your own using in a text editor using our included file as a guide. This is
+      necessary to specify the correct directories upon startup, and to adjust
+      server settings.
 
-		./bin/mysqld_safe &
+   7. You are now ready to start your MySQL server as a background process. To do so, from within the mysql 
+      directory base install, run:
+
+           /bin/mysqld_safe --defaults-file=my.cnf
         
-       You should see something similar to the following:
+      Note that you *must* run this command from the mysql directory.
+      You should see something similar to the following:
 
  		[1] 67786% Starting mysqld daemon with databases from /accountname/mysql/data
 
-   7. At this point your MySQL password is still blank. Use the following command to set a new                     
+   8. At this point your MySQL password is still blank. Use the following command to set a new                     
       root password:
 
 		./bin/mysqladmin -u root password "yourpasswordhere"
 
-
+-------------------------------------------------------------
 IV. Create a New Database and User Account
 
    1. Log in to your mysql server as root. If you are logging in to an existing MySQL server, 
