@@ -3,7 +3,7 @@
 use strict;
 
 my $blastFile = shift(@ARGV);
-my $fastaFileDir = shift(@ARGV);
+my $fastaFilesDir = shift(@ARGV);
 
 usage() unless $blastFile;
 
