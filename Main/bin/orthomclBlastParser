@@ -3,12 +3,16 @@
 use strict;
 
 my $blastFile = shift(@ARGV);
-my @fastaFiles = @ARGV;
+my $fastaFileDir = shift(@ARGV);
 
 usage() unless $blastFile;
 
-usage() unless scalar(@fastaFiles) > 1;
+usage() unless $fastaFilesDir;
  
+opendir(DIR, $fastaFilesDir) || "Can't open fasta directory '$fastaFilesDir'\n";
+my @fastaFiles = readdir(DIR);
+closedir(DIR);
+
 my $genes = getGenesFromFasta(@fastaFiles);
 
 open(F,$blastFile) || die "can't open BLAST file '$blastFile'\n";
@@ -164,13 +168,13 @@ sub getStartEnd {
 sub usage {
   print "
 
-orthomclBlastParser blast_file xxxxx.fasta yyyyy.fasta ...
+orthomclBlastParser blast_file fasta_files_dir
 
 where:
-  blast_file:   BLAST output in m8 format.
-  xxxxxx.fasta: name of a multi-fasta file containing one genome's proteins 
-                or genes.  'xxxxx' is used as a unique identifier of that 
-                genome.  
+  blast_file:       BLAST output in m8 format.
+  fasta_files_dir:  a directory of compliant fasta files as produced by
+                    orthomclAdjustFasta 
+
   
 m8 format has these columns:
   query_name, hitname, pcid, len, mismatches, ngaps, start('query'), 
