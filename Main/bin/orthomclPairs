@@ -161,7 +161,7 @@ group by im.query_id, im.subject_taxon_id, low_exp.evalue_exp
   ################################################################################
 
   $sql = "
-create index qtscore_ix on BestQueryTaxonScore(query_id, subject_taxon_id, evalue_exp, evalue_mant)
+create unique index qtscore_ix on BestQueryTaxonScore(query_id, subject_taxon_id, evalue_exp, evalue_mant)
 ";
   
   runSql($sql, "create qtscore_ix index on BestQueryTaxonScore", 'qtscore_ix', '3 min'); 
@@ -199,7 +199,7 @@ where s.query_id = cutoff.query_id
   ######################################################################
 
   $sql = "
-create index best_hit_ix on BestHit(query_id,subject_id)
+create unique index best_hit_ix on BestHit(query_id,subject_id)
 ";
 
   runSql($sql, "create best_hit_ix index on BestHit", 'best_hit_ix', '3 min');
@@ -264,7 +264,7 @@ group by im.query_id, low_exp.evalue_exp
   ###########################################################################
 
   $sql = "
-create index bis_uids_ix on BestInterTaxonScore(query_id)
+create unique index bis_uids_ix on BestInterTaxonScore(query_id)
 ";
 
   runSql($sql, "create bis_uids_ix index on BestQueryTaxonScore", 'bis_uids_ix', '3 min');
@@ -281,7 +281,7 @@ select distinct query_id from $sst
   ###########################################################################
 
   $sql = "
-create index ust_qids_ix on UniqueSimSeqsQueryId(query_id)
+create unique index ust_qids_ix on UniqueSimSeqsQueryId(query_id)
 ";
 
   runSql($sql, "create ust_qids_ix index on UniqueSimSeqsQueryId", 'ust_qids_ix', '3 min');
@@ -324,7 +324,7 @@ where s.query_taxon_id = s.subject_taxon_id
   ###########################################################################
   
   $sql = "
-create index better_hit_ix on BetterHit(query_id,subject_id)
+create unique index better_hit_ix on BetterHit(query_id,subject_id)
 ";
 
   runSql($sql, "create better_hit_ix index on BetterHit", 'better_hit_ix', '3 min');
@@ -414,7 +414,7 @@ create table InParalogAvgScore $oracleNoLogging as
 
   ################################################################
 
-  $sql = "create index inparalog_avg_ix on InParalogAvgScore(taxon_id,avg_score)";
+  $sql = "create unique index inparalog_avg_ix on InParalogAvgScore(taxon_id,avg_score)";
 
 
   runSql($sql, "create InParalogAvgScore index", 'inParalogAvgIndex', '1 min');
@@ -458,7 +458,7 @@ select sequence_id_b as sequence_id_a, sequence_id_a as sequence_id_b from $inPa
   ######################################################################
 
   $sql = "
-create index in2a_ix on InParalog2Way(sequence_id_a, sequence_id_b)
+create unique index in2a_ix on InParalog2Way(sequence_id_a, sequence_id_b)
 ";
   
   runSql($sql, "index in2a_ix", 'in2a_ix', '1.5 hours');
@@ -466,7 +466,7 @@ create index in2a_ix on InParalog2Way(sequence_id_a, sequence_id_b)
   ######################################################################
 
   $sql = "
-create index in2b_ix on InParalog2Way(sequence_id_b, sequence_id_a)
+create unique index in2b_ix on InParalog2Way(sequence_id_b, sequence_id_a)
 ";
   
   runSql($sql, "index in2b_ix", 'in2b_ix', '1.5 hours');
@@ -486,7 +486,7 @@ select sequence_id_b as sequence_id_a, sequence_id_a as sequence_id_b from $orth
   ######################################################################
 
   $sql = "
-create index ortholog2way_ix on Ortholog2Way(sequence_id_a, sequence_id_b)
+create unique index ortholog2way_ix on Ortholog2Way(sequence_id_a, sequence_id_b)
 ";
 
   runSql($sql, "index ortholog2way_ix", 'ortholog2WayIndex', '1.5 hours');
@@ -617,7 +617,7 @@ group by smaller_tax_id, bigger_tax_id
 
   ################################################################
   
-  $sql = "create index ${co}orthoAvg_ix on ${coCaps}OrthologAvgScore(smaller_tax_id,bigger_tax_id,avg_score)";
+  $sql = "create unique index ${co}orthoAvg_ix on ${coCaps}OrthologAvgScore(smaller_tax_id,bigger_tax_id,avg_score)";
   
   runSql($sql, "create ${coCaps}OrthologAvgScore index", "${co}rthologAvgIndex", '1 min');
 
