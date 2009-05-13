@@ -49,7 +49,7 @@ CREATE TABLE $sst $oracleNoLogging (
   runSql($sql);
 
   $sql = "
-CREATE INDEX ss_qtaxexp_ix $oracleNoLogging
+CREATE UNIQUE INDEX ss_qtaxexp_ix $oracleNoLogging
 ON $sst(query_id, subject_taxon_id,
 evalue_exp, evalue_mant,
 query_taxon_id, subject_id)
@@ -57,7 +57,7 @@ query_taxon_id, subject_id)
   runSql($sql);
 
   $sql = "
-CREATE INDEX ss_seqs_ix $oracleNoLogging
+CREATE UNIQUE INDEX ss_seqs_ix $oracleNoLogging
 ON $sst(query_id, subject_id,
 evalue_exp, evalue_mant, percent_match)
 ";
