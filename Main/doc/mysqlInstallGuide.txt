@@ -14,33 +14,32 @@ I. General Requirements
     -  Unix/Linux or MacOS 10.0.1 or greater
 
 ----------------------------------------------------
-II. Installing MYSQL from OS Specific Packages
+II. Installing MySQL from OS Specific Packages (Root access required)
 
-MySQL has pre-packaged installation suites for many operating systems (RPM, Solaris or MacOS 
-pkg, etc). To determine if packages have been created for your operating system, check 
-http://www.mysql.com/downloads. Click the "Current Release" link under the MySQL  Community 
-Server heading (MySQL 5.1 as of this writing). If packages exist specific to your operating system,   
-these packages provide the quickest method of installing the MySQL server, but please note that the 
-installation directory will vary from OS to OS unless it is explicitly specified when installing the 
-package, and default directory installations may require administrator privileges. Refer to the 
-documentation for your operating system for instructions regarding OS specific package installation.
+MySQL has pre-packaged installation suites for many operating systems (RPM, Solaris or MacOS pkg, etc). To determine if packages have been created for your operating system
+  - Go to http://www.mysql.com/downloads
+  - Click on "Download" under MySQL Community Server
+
+If packages exist specific to your operating system, these packages provide the quickest method of installing the MySQL server, but please note that the installation directory will vary from OS to OS unless it is explicitly specified when installing the package, and default directory installations may require administrator privileges. Refer to the documentation for your operating system for instructions regarding OS specific package installation.
 
 ----------------------------------------------------
-III. Installing MySQL From Linux/Unix Binary Packages
+III. Installing MySQL From Linux/Unix Binary Packages (Root access not required)
 
 - If you do not wish to use OS packages, or you need to install MySQL from a normal user account,      
   you can install MySQL using the following steps:
 
 
-   1. Change to your home directory (cd ~/), or to the directory in which you want to install MySQL. 
-      Note that you will need full privileges to the directory in which you install MySQL.
+   1. Go to  http://www.mysql.com/downloads/
+       - click on "Download" under MySQL Community Server
+       - for linux: click on "Linux (non RPM packages)"
+       - otherwise, find the .tar package for your OS
+       - choose the download for your platform
+          - use the 'uname -arv' command if you don't know your platform 
+       - either login/register or click "No thanks, just take me to the downloads!"
+       - choose a mirror near you, and download
 
-   2. Download the MySQL binary package to the directory you specified in Step 1. This package 
-      can be obtained from http://www.mysql.com/downloads/; click the "Current Release" option 
-      under MySQL Community Server (MySQL 5.1 as of this writing). On the download page, 
-      select "Linux Non RPM packages" if you are running Linux, or otherwise the .tar package for your 
-      operating system. Make sure you select the download file that is appropriate for your 
-      architecture (32 or 64 bit).
+   2. Create a directory for your installation, and move the file to it.
+
 
    3. Unzip the downloaded file into the directory:
   
