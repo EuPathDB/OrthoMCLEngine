@@ -496,7 +496,7 @@ create unique index ortholog2way_ix on Ortholog2Way(sequence_id_a, sequence_id_b
 
   $sql = "
 create table InParalogOrthologInParalog $oracleNoLogging as
-      select $straightJoin ip1.sequence_id_a, ip2.sequence_id_b
+      select ip1.sequence_id_a, ip2.sequence_id_b
       from  Ortholog2Way o, InParalog2Way ip2, InParalog2Way ip1
       where ip1.sequence_id_b = o.sequence_id_a
         and o.sequence_id_b = ip2.sequence_id_a
@@ -557,7 +557,7 @@ create index coortholog_not_ortholog_ix on CoOrthologNotOrtholog(sequence_id_a,s
 
   $sql = "
 create table CoOrthologTemp $oracleNoLogging as
-select $straightJoin candidate.sequence_id_a, candidate.sequence_id_b,
+select candidate.sequence_id_a, candidate.sequence_id_b,
        ab.query_taxon_id as taxon_id_a, ab.subject_taxon_id as taxon_id_b,
        case  -- in case of 0 evalue, use rigged exponent
          when ab.evalue_mant < 0.00001 or ba.evalue_mant < 0.00001
