@@ -26,7 +26,7 @@ my @steps = ( # Common
 	     ['orthologTaxon', [ 'drop table OrthologTemp']],
 	     ['orthologAvg'],
 	     ['orthologAvgIndex'],
-	     ['orthologsNormalization', ['drop table OrthologAvgScore', 'drop table OrthologTemp2', 'drop table OrthologTaxon']],
+	     ['orthologsNormalization', ['drop table OrthologAvgScore', 'drop table OrthologTaxon']],
              # InParalog
 	     ['bestInterTaxonScore'],
              ['bis_uids_ix'],
@@ -104,7 +104,7 @@ inparalogs();
 
 coorthologs();
 
-#cleanall() if $clean eq 'all';  # i think this is redundant
+clean('cleanall') if $clean eq 'all';
 
 
 ################################################################################
@@ -681,7 +681,7 @@ sub runSql {
 }
 
 sub analyzeStats {
-    sub ($tableToAnalyze) = @_;
+    my ($tableToAnalyze) = @_;
 
     if ($base->getConfig("dbVendor") eq 'oracle') {
 	my $sql = "analyze table $tableToAnalyze compute statistics";
@@ -699,28 +699,13 @@ sub analyzeStats {
 sub clean {
   my ($tag) = @_;
 
-  my $orthologTable = $base->getConfig("orthologTable");
-  my $coOrthologTable = $base->getConfig("coOrthologTable");
-  my $inParalogTable = $base->getConfig("inParalogTable");
-
-  my $sqlPrefix = $base->getConfig("dbVendor") eq 'oracle'?
-    'select * from all_tables where table_name' :
-      'select * from all_tables where table_name';
-
   my $cleanSqls = $cleanHash->{$tag};
   foreach my $cleanSql (@$cleanSqls) {
     if ($cleanSql) {
       $cleanSql =~ /(\w+) table (\w+)/i || die "invalid clean sql '$cleanSql'";
       my $action = $1;
-      my $table = uc($2);  # NOT COMPATIBLE WITH MYSQL!!!
-      $table = uc($orthologTable) if $table eq 'Ortholog';
-      $table = uc($coOrthologTable) if $table eq 'CoOrtholog';
-      $table = uc($inParalogTable) if $table eq 'InParalog';
-      if ($action eq 'drop') {
-	my $stmt = $dbh->prepare("$sqlPrefix = '$table'" ) or die DBI::errstr;
-	$stmt->execute() or die DBI::errstr;
-	return unless $stmt->fetchrow();
-      }
+      my $table = $2;
+      next if ($action eq 'drop' && &tableAlreadyDropped($table));
       my $stmt = $dbh->prepare($cleanSql) or die DBI::errstr;
       print LOGFILE localtime() . "   cleaning: $cleanSql\n";
       $stmt->execute() or die DBI::errstr;
@@ -728,6 +713,30 @@ sub clean {
     }
   }
 }
+
+sub tableAlreadyDropped {
+  my ($table) = @_;
+
+  my $orthologTable = $base->getConfig("orthologTable");
+  my $coOrthologTable = $base->getConfig("coOrthologTable");
+  my $inParalogTable = $base->getConfig("inParalogTable");
+
+  $table = $orthologTable if $table eq 'Ortholog';
+  $table = $coOrthologTable if $table eq 'CoOrtholog';
+  $table = $inParalogTable if $table eq 'InParalog';
+  my $sql;
+  if ($base->getConfig("dbVendor") eq 'oracle') {
+    $table = uc($table);
+    $sql = "select table_name from all_tables where table_name = '$table'";
+  } else {
+    $sql = "show tables like '$table'";
+  }
+  my $stmt = $dbh->prepare($sql);
+  $stmt->execute() or die DBI::errstr;
+  while ($stmt->fetchrow()) { return 0};
+  return 1;
+}
+
 
 sub cleanall {
     foreach my $tag (keys (%$cleanHash)) {
