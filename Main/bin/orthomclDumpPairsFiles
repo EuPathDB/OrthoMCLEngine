@@ -41,8 +41,7 @@ sub printInparalogsFile {
   my $sql = "
 select taxon_id, sequence_id_a, sequence_id_b, normalized_score
 from $inparalogTable
-where sequence_id_a < sequence_id_b
-order by taxon_id, sequence_id_a, sequence_id_b
+order by taxon_id, sequence_id_a, sequence_id_b asc
 ";
 
   my $stmt = $dbh->prepare($sql) or die DBI::errstr;
@@ -61,8 +60,7 @@ sub printOrthologsFile {
   my $sql = "
 select taxon_id_a, sequence_id_a, taxon_id_b, sequence_id_b, normalized_score
 from $table
-where taxon_id_a || '|' || sequence_id_a < taxon_id_b || '|' || sequence_id_b
-order by taxon_id_a, taxon_id_b, sequence_id_a, sequence_id_b
+order by taxon_id_a, taxon_id_b, sequence_id_a, sequence_id_b asc
 ";
 
   my $stmt = $dbh->prepare($sql) or die DBI::errstr;
