@@ -124,10 +124,15 @@ We recommend you save the output of each step so that you can easily redo it if 
 ===================================================
 
 ========== Step 1: MySql ============
-See the mysqlInstallationGuide.txt document provided with the orthomcl software.
+See the mysqlInstallationGuide.txt document provided with the orthomcl software.  (UNDER CONSTRUCTION)
 
 
 ========== Step 2: install mcl ==========
+Get the latest software from http://www.micans.org/mcl/src/mcl-latest.tar.gz
+
+Follow this install instructions.
+
+MORE HERE SOON...
 
 
 ========== Step 3: install and configure OrthoMCL programs  ========
@@ -242,7 +247,7 @@ The input requirements are:
 
 Change dir to my_orthomcl_dir/ and run orthomclFilterFasta.
 
-Benchmark time:  XXXX
+Benchmark time:  5 min
  
 
 ========= Step 7: All-v-all BLAST =========
@@ -301,8 +306,6 @@ Output:
 
 This is a computationally major step that finds protein pairs.  It executes the algorithm described in the OrthoMCL Algorithm Document, using a relational database.  The program proceeds through a series of internal steps, each creating an intermediate database table or index.  There are about 20 such tables created. Finally, it populates the output tables.
 
-Use the orthomclPairs program for this step.  On a set of 500M protein similarities, it took XXXX hours to run.
-
 The cleanup= option allows you to control the cleaning up of the intermediary tables.  The 'yes' option drops the intermediary tables once they are no longer needed.  The 'no' option keeps the intermediary tables in the database.  In total, they are expected to be about 50 percent of the SimilarSequences table. This is useful mostly for power users or developers. They can be removed afterwards with the 'only' or 'all' options.  The latter also removes the final tables, and should only be done after Step 11 below has dumped them to files.
 
 The startAfter= option allows you to pick up where the program left off, if it stops for any reason.  Look in the log to find the last completed step, and use its tag as the value for startAfter=
@@ -346,7 +349,7 @@ Change to my_orthomcl_dir and run:
 
 my_prefix is an arbitrary string to use as a prefix for your group IDs.
 
-Benchmark time: 
+Benchmark time: 1 min
 
 
 
