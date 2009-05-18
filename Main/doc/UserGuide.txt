@@ -5,7 +5,7 @@ Version ??
 =========== Introduction ==========================
 ===================================================
 
-For details on the orthomcl algorithm, please read the OrthoMCL Algorithm Document available here: http://docs.google.com/Doc?id=dd996jxg_1gsqsp6
+For details on the orthomcl algorithm, please read the OrthoMCL Algorithm Document available at: http://docs.google.com/Doc?id=dd996jxg_1gsqsp6
 
 The input to OrthoMCL is a set of proteomes.
 
@@ -16,14 +16,26 @@ The output is a set of files:
      potentialInparalogs.txt
   groups.txt
 
-The files in the pairs/ directory contain pairwise relationships between proteins, and their scores.  They are categorized into potential orthologs, co-orthologs and inparalogs as described in the OrthoMCL Algorithm Document.  The groups.txt file contains the groups created by clustering the pairs with the MCL program.
+The files in the pairs/ directory contain pairwise relationships between proteins, and their scores.  They are categorized into potential orthologs, co-orthologs and inparalogs as described in the OrthoMCL Algorithm Document.  The groups.txt file contains the groups created by clustering the pairs with the MCL program.  
 
 There are three overall stages:
   - all-v-all BLAST
   - the OrthoMCL Pairs program -- makes the pairs/ directory
   - the MCL program -- clusters the pairs to make the groups.txt file
 
-These stages are executed in a series of thirteen steps detailed below.  Most simply involve running a provided program.  They are broken into steps for ease of backtracking and recoverability.  Most are very simple to run, so don't be discouraged.
+These stages are executed in a series of thirteen steps detailed below.  Most simply involve running a provided program.  They are broken into steps for ease of backtracking and recoverability.  Most are *very simple* to run, so don't be discouraged.
+
+
+===================================================
+========= Benchmark Dataset  ======================
+===================================================
+
+In the documentation for Orthomcl we refer to a Benchmark Dataset.  We tested this set extensively.  It had:
+  - 100 proteomes (across the tree of life)
+  - 1M proteins
+  - 500M significant similarities (BLAST hits)
+
+We base hardware requirements and time estimates on this benchmark dataset.  The most significant predictor of resourc/time requirements is the number of significant similarities.  Even so, as this number changes, resource requirements will change non-linearly.
 
 
 ===================================================
@@ -32,7 +44,7 @@ These stages are executed in a series of thirteen steps detailed below.  Most si
 
 (1) UNIX
   - The OrthoMCL Pairs program has only been tested on UNIX
-  - The MCL program is only UNIX compatible
+  - The MCL program is UNIX compatible only
 
 (2) BLAST
   - we recommend NCBI BLAST for two reasons
@@ -44,15 +56,16 @@ These stages are executed in a series of thirteen steps detailed below.  Most si
   - The OrthoMCL Pairs program runs in a relational database.  Supported vendors are:
      - Oracle
      - MySql
-  - If you don't already have one of these installed, you will need to install MySql which you can do without significant systems administration support.
+  - If you don't already have one of these installed, install MySql, which can be done for free and without significant systems administration support.  (Follow the instructions we provide below.)
+  
+   We realize that it is a little inconvenient to require a relational database.  However, using a relational database as the core technology for orthomclPairs provides speed, robustness and scalability that would have been very hard to acheive without it.
 
 (4) Hardware
-  - memory: at least 2G
-  - disk: for a set of 1M proteins, the relational database will need at least
-    100G free space.  Or, once you have produced the orthomcl compatible blast
-    result file (Step 8), at least 5 times the size of that file.  90% of the
-    disk space required is to hold that file, load it into the database and
-    index it in the database.
+  - the hardware requirements vary dramatically with the size of your dataset.
+  - for the Benchmark Dataset, we recommend:
+     - memory: at least 4G
+     - disk: 100G free space.  
+  - you can estimate your disk space needs more accurately when you have completed Step 8 below.  You will need at least 5 times the size of the blast results file produced in that step.  90% of the disk space required is to hold that file, load it into the database and index it in the database.
 
 (5) Perl
   - standard perl
@@ -62,12 +75,10 @@ These stages are executed in a series of thirteen steps detailed below.  Most si
   - more details here...
 
 (7) Time
-  - As a benchmark, OrthoMCL-DB Version 3 had:
-     - 100 genomes (eukaryotes and prokaryotes)
-     - 1M protein sequences
-     - 500M significant pairwise BLAST matches
-  - This set took XXXX days to run all-v-all BLAST on a 200 node compute cluster.  The processing to find pairs took XXXX hours on a XXXX machine and the processing to find groups took XXXX hours.
-
+  - The Benchmark Dataset took:
+    - 3 days to run all-v-all BLAST on a 500 cpu compute cluster.  
+    - 16 hours for the orthmclPairs processing to find pairs
+    - 2 hours for MCL to find the groups
 
 
 
@@ -79,15 +90,15 @@ This is an overview of the thirteen steps to run orthomcl.  Details are in the n
 
 All programs except mysql and mcl are provided as part of the OrthoMCL download.  The provided programs all begin with 'orthomcl' and will print help if called with no arguments.
 
-(1) install or get access to a supported relational database.  If using MySql, a specific installation configuration is required, so it may require installing your own MySql, which is straightforward.
+(1) install or get access to a supported relational database.  If using MySql, certain configurations are required, so it may involve working with your MySql administrator or installing your own MySql.  See the mysqlInstallationGuide.txt document provided with the orthomcl software.
 
 (2) download and install the mcl program according to provided instructions.
 
 (3) install and configure the OrthoMCL suite of programs.
 
-(4) run orthomclInstallSchema to install the required schema into the database
+(4) run orthomclInstallSchema to install the required schema into the database.
 
-(5) run orthomclAdjustFasta (or your own simple script) to generate protein fasta files in the required format
+(5) run orthomclAdjustFasta (or your own simple script) to generate protein fasta files in the required format.
 
 (6) run orthomclFilterFasta to filter away poor quality proteins, and optionally remove alternative proteins. Creates a single large goodProteins.fasta file (and a poorProteins.fasta file)
 
@@ -113,6 +124,7 @@ We recommend you save the output of each step so that you can easily redo it if 
 ===================================================
 
 ========== Step 1: MySql ============
+See the mysqlInstallationGuide.txt document provided with the orthomcl software.
 
 
 ========== Step 2: install mcl ==========
@@ -122,22 +134,29 @@ We recommend you save the output of each step so that you can easily redo it if 
 Input:
   - orthomclSoftware.tar
 Output:
-  - a directory of executable programs
-  - a home directory for your run of orthomcl
+  - directory of executable programs
+  - home directory for your run of orthomcl
   - orthomcl.config file
 
 Use this command to unpack the software:
   tar -xf orthomclSoftware.tar
 
-The result will be the orthomclSoftware/ directory.
+The result will be this:
+  orthomclSoftware/
+    bin/
+     ...
+    doc/
+     UserGuide.txt
+     orthomcl.config.template
+    lib/
 
-The directory contains a set of programs and a sample config file.  To run the programs you will need to either:
-  a) include the orthomclSoftware/ directory in your PATH
+The bin/ directory has a set of programs.  To run the programs you will need to either:
+  a) include the orthomclSoftware/bin directory in your PATH
   b) call the programs using their full directory path
 
-Make a directory to hold the data and results for your run of orthomcl.  In this document we will call that directory "your_orthomcl_dir".
+Make a directory to hold the data and results for your run of orthomcl.  In this document we will call that directory "my_orthomcl_dir".
 
-In the orthomclSoftware/ directory is a file called orthomcl.config.sample.  Copy that file to your_orthomcl_dir/orthomcl.config, and edit the new file according to the following instructions.
+In the orthomclSoftware/doc/ directory is a file called orthomcl.config.template.  Copy that file to my_orthomcl_dir/orthomcl.config, and edit the new file according to the following instructions.
 
 dbVendor=
   - either 'oracle' or 'mysql'
@@ -183,12 +202,14 @@ Output:
 
 Run the orthmclInstallSchema program to install the schema.
 
+Benchmark time: < 1 min
+
 
 ========== Step 5: orthomclAdjustFasta ==========
 Input: 
   - fasta files as acquired from the genome resource.
 Output:
-  - the your_orthomcl_dir/input directory of orthomcl-compliant fasta files (see Step 6)
+  - the my_orthomcl_dir/compliantFasta/ directory of orthomcl-compliant fasta files (see Step 6)
 
 Use orthomclAdjustFasta to produce a compliant file from any input file that conforms to the following pattern (for other files, provide your own script to produce complaint fasta files):
   - has one or more fields that are separated by white space or the '|' character (optionally surrounded by white space)
@@ -196,30 +217,32 @@ Use orthomclAdjustFasta to produce a compliant file from any input file that con
 
 First, for any organism that has multiple protein fasta files, combine them all into one single proteome fasta file
 
-Then, create an empty your_orthomcl_dir/input directory, and change to that directory.  Run orthomclAdjustFasta once for each input proteome fasta file.  It will produce a compliant file in the new directory.  Check each file to ensure that the proteins all have proper IDs.
+Then, create an empty my_orthomcl_dir/compliantFasta/ directory, and change to that directory.  Run orthomclAdjustFasta once for each input proteome fasta file.  It will produce a compliant file in the new directory.  Check each file to ensure that the proteins all have proper IDs.
+
+Benchmark time: < 1 min per genome
 
 
 ======== Step 6: orthomclFilterFasta ===========
 Input: 
-  - the your_orthomcl_dir/input directory
+  - my_orthomcl_dir/compliantFasta/ 
   - optionally a gene->protein mapping file
 Output:
-  - your_orthomcl_dir/goodProteins.fasta
-  - your_orthomcl_dir/poorProteins.fasta
-  - a report of suspicious proteomes (> 10% rejects)
+  - my_orthomcl_dir/goodProteins.fasta
+  - my_orthomcl_dir/poorProteins.fasta
+  - report of suspicious proteomes (> 10% poor proteins)
 
 This step produces a single goodProteins.fasta file to run BLAST on.  It filters away poor-quality sequences (placing them in poorProteins.fasta).  The filter is based on length and percent stop codons.  You can adjust these values.
 
 The input requirements are:
-  1) an input/ directory which contains all and only the proteome .fasta files, one file per proteome.
+  1) a compliantFasta/ directory which contains all and only the proteome .fasta files, one file per proteome.
   1) each .fasta file must have a name in the form 'xxxx.fasta' where xxxx is a three or four letter unique taxon code.  For example: hsa.fasta or eco.fasta
   2) each protein in those files must have a definition line in the following format:
      >xxxx|yyyyyyyy
      where xxxx is the three or four letter taxon code and yyyyyyy is a sequence identifier unique within that taxon.
 
-Change dir to your_orthomcl_dir and run orthomclFilterFasta, passing it the input/ directory. It should run in a few minutes.
+Change dir to my_orthomcl_dir/ and run orthomclFilterFasta.
 
-After this step is complete you can delete the input/ directory to save disk space.
+Benchmark time:  XXXX
  
 
 ========= Step 7: All-v-all BLAST =========
@@ -228,10 +251,10 @@ Input:
 Output:
   - your_blast_results_in_tab_format
 
-You must run your own BLAST.  For large datasets you should consider gaining access to a compute cluster.  (For 1 million sequences we ran on a 200 node cluster and it took XXXX days).
+You must run your own BLAST.  For large datasets you should consider gaining access to a compute cluster.
 
 We expect you to:
-  - use NCBI BLAST (XXXX reasons....)
+  - use NCBI BLAST
   - run with the -m 8 option to provide tab delimited output required by Step 8
   - see the OrthoMCL Algorithm Document for important details about other BLAST arguments
 
@@ -239,16 +262,20 @@ If you are a power user you can deviate from this, so long as you can ultimately
 
 If you are a super-power user you can deviate from that, and also skip Step 8.   But you must be able to provide the exact format file created by that step as expected by Step 9.  The tricky part is computing percent match.  
 
+Time estimate: highly dependent on your data and hardware
 
 ========= Step 8: orthomclBlastParser ========
 Input:
   - your_blast_results_in_tab_format
+  - my_orthomcl_dir/compliantFasta/
 Output:
   - similarSequences.txt
 
 This step parses NCBI BLAST -m 8 output into the format that can be loaded into the orthomcl database. 
 
-Use the orthomclBlastParser program for this.  It will run in XXXXX.  In addition to formatting, it computes the percent match of each hit, which is tricky (see the perl code if you are a super-power user.)
+Use the orthomclBlastParser program for this.   In addition to formatting, it computes the percent match of each hit, which is tricky (see the perl code if you are a super-power user.)
+
+Benchmark time: 10 min
 
 
 ========= Step 9: orthomclLoadBlast  ===========
@@ -259,7 +286,9 @@ Output:
 
 This step loads the BLAST results into the orthomcl database. 
 
-Use the orthomclLoadBlast program for this.  It may take many hours to run (15 hours for 500M similarities).
+Use the orthomclLoadBlast program for this. 
+
+Benchmark time: 4 hours
 
 
 ========= Step 10: orthomclPairs =========
@@ -274,23 +303,50 @@ This is a computationally major step that finds protein pairs.  It executes the 
 
 Use the orthomclPairs program for this step.  On a set of 500M protein similarities, it took XXXX hours to run.
 
-The cleanup= option allows you to control the cleaning up of the intermediary tables.  The 'yes' option drops the intermediary tables once they are no longer needed.  The 'no' option keeps the intermediary tables in the database.  In total, they are expected to be about XXXX percent of the SimilarSequences table. This is useful mostly for power users or developers. They can be removed afterwards with the 'only' or 'all' options.  The latter also removes the final tables, and should only be done after Step 11 below has dumped them to files.
+The cleanup= option allows you to control the cleaning up of the intermediary tables.  The 'yes' option drops the intermediary tables once they are no longer needed.  The 'no' option keeps the intermediary tables in the database.  In total, they are expected to be about 50 percent of the SimilarSequences table. This is useful mostly for power users or developers. They can be removed afterwards with the 'only' or 'all' options.  The latter also removes the final tables, and should only be done after Step 11 below has dumped them to files.
 
 The startAfter= option allows you to pick up where the program left off, if it stops for any reason.  Look in the log to find the last completed step, and use its tag as the value for startAfter=
+
+Because this program will run for many hours, we recommend you run it using the UNIX 'screen' program, so that it does not abort in the middle.  (If it does, use startAfter=).
+
+Benchmark time: 16 hours
+
 
 ========== Step 11: orthomclDumpPairsFiles ========
 Input:
   - database with populated pairs tables
 Output
   - pairs/ directory
-  - orthomclMclInput file
+  - mclInput file
 
 Run the orthomclDumpPairsFiles
 
+Benchmark time: 5 min
+
+
 ========== Step 12: mcl ========
+Input:
+  - mclInput file
+Output:
+  - mclOutput file
+
+mcl my_orthomcl_dir/mclInput --abc -I 1.5 -o my_orthomcl_dir/mclOutput
+
+Benchmark time: 3 hours
 
 
 ========== Step 13: orthomclMclToGroups ==========
+Input:
+  - mclOutput file
+Output:
+  - groups.txt
+
+Change to my_orthomcl_dir and run:
+  orthomclMclToGroups my_prefix 1000 < mclOutput > groups.txt
+
+my_prefix is an arbitrary string to use as a prefix for your group IDs.
+
+Benchmark time: 
 
 
 
