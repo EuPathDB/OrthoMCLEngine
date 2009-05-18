@@ -30,7 +30,7 @@ printInparalogsFile($dbh, $inParalogTable, "$dir/inparalogs.txt");
 printOrthologsFile($dbh, $coOrthologTable, "$dir/coorthologs.txt");
 
 printMclAbcFile($dbh, $orthologTable, $inParalogTable, $coOrthologTable,
-	       "orthomclMclInputFile");
+	       "mclInput");
 
 
 ################# subroutines #########################
