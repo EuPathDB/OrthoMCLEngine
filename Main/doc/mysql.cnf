@@ -27,7 +27,7 @@ socket=/tmp/mysql.sock
 #Our default is probably fine here. Change this value only if your machine has very little RAM.
 key_buffer_size=64M
 
-#Set this value to %50 of available RAM if your environment permits.
+#Set this value to 50% of available RAM if your environment permits.
 myisam_sort_buffer_size=4G
 
 #This value should be at least %50 of free hard drive space. Use caution setting it %100 of free space however. Your hard disk may fill up!
