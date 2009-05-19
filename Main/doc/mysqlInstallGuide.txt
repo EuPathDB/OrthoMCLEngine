@@ -83,6 +83,7 @@ III. Installing MySQL From Linux/Unix Binary Packages (Root access not required)
            - it gives you a report in kilobytes.  divide by 1000000 to get a number of Gs.
        - set myisam_max_sort_file_size= to 5 x the size of the file made by orthomclBlastParser.  make sure
          you have space on the volume used by the datadir= to easily hold that.
+       - set read_buffer_size= to ???
 
    7. You are now ready to start your MySQL server as a background process. To do so, from within the mysql 
       directory base install, run:
@@ -123,16 +124,11 @@ IV. Create a New Database and User Account
 -------------------------------------------------
 V. MySQL Server Optimization
 
-   - Due to the potential volume of data in your blast results, you may find that it
-     substantially boosts overall performance of the OrthoMCL suite to increase 
-     the system resources available to MySQL. This can be achieved by specifying 
-     MySQL runtime environment variables in your mysql.cnf file. In particular, 
-     you may want to change the values of myisam_max_sort_file_size, mysiam_sort_buffer_size, 
-     and read_buffer_size variables.
-
-         -To view the values associated with these variables, log in to
-            mysql as root as described in Step 1 of Section IV, and
-            type:
+   - If you are using an existing MySQL database, you may need to adjust its configuration
+     to handle the volume of data in your blast results.  (If you just installed MySQL
+     following the instructions above, this is already handled).
+   
+         -To view the key values, log in to mysql and run these commands:
           
                  mysql> show variables LIKE 'myisam_max_sort_file_size';
                
@@ -145,20 +141,7 @@ V. MySQL Server Optimization
                 2147479552 for read_buffer_size is equivalent to 2 Gigabytes.
 
     
-   -  As a frame of reference, our test lab settings are displayed below:
-
-                myisam_max_sort_file_size=4G
-                
-                myisam_sort_buffer_size=200G
-
-                read_buffer_size=2G
-
-      
-      Sizes are expressed in Gigabytes. Using these settings, our bulk load of 
-      a 19GB blast file (orthomclLoadBlast) took 2.5 hours on a Dual Core
-      2.4Ghz machine with 8G of RAM running Red Hat Linux. 
-
-
+   - See step III.6 for suggested settings for these properties
 
 
 
