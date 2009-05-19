@@ -7,9 +7,11 @@ I.	General Requirements
 II.	Installing from OS Specific Packages
 III.	Installing from General Linux/Unix Binary Packages
 IV.	Creating a Database and User Account
-V.	Troubleshooting Installation Issues
+V.	Optimizing MySQL
+VI.     Troubleshooting Installation Issues
+VII.    Removing Your MySQL Installation
 ----------------------------------------------------
-
+----------------------------------------------------
 I. General Requirements  
 
     -  MySQL server 5.1 or greater
@@ -17,14 +19,16 @@ I. General Requirements
     -  Unix/Linux or MacOS 10.0.1 or greater
 
 ----------------------------------------------------
+----------------------------------------------------
 II. Installing MySQL from OS Specific Packages (Root access required)
 
 MySQL has pre-packaged installation suites for many operating systems (RPM, Solaris or MacOS pkg, etc). To determine if packages have been created for your operating system
   - Go to http://www.mysql.com/downloads
   - Click on "Download" under MySQL Community Server
 
-If packages exist specific to your operating system, these packages provide the quickest method of installing the MySQL server, but please note that the installation directory will vary from OS to OS unless it is explicitly specified when installing the package, and default directory installations may require administrator privileges. Refer to the documentation for your operating system for instructions regarding OS specific package installation.
+If packages exist specific to your operating system, these packages provide the quickest method of installing the MySQL server, but please note that the installation directory for MySQL will vary from OS to OS, and you may find necessary to specify another directory when installing the package as default directory installations often require administrator privileges. Refer to the documentation for your operating system for instructions regarding OS specific package installation.
 
+----------------------------------------------------
 ----------------------------------------------------
 III. Installing MySQL From Linux/Unix Binary Packages (Root access not required)
 
@@ -37,7 +41,7 @@ III. Installing MySQL From Linux/Unix Binary Packages (Root access not required)
        - for linux: click on "Linux (non RPM packages)"
        - otherwise, find the .tar package for your OS
        - choose the download for your platform
-          - use the 'uname -arv' command for information on your platform 
+          - use the 'uname -a' command if you don't know your platform 
        - either login/register or click "No thanks, just take me to the downloads!"
        - choose a mirror near you, and download
 
@@ -54,18 +58,19 @@ III. Installing MySQL From Linux/Unix Binary Packages (Root access not required)
 
 	 	ln -s mysql-standard-5.1.34-linux-i686-glibc23 mysql
 
-   5. Set up the default MySQL databases:
+   5. Change to the mysql directory and set up the default MySQL databases.
+      Make sure to specify the mysql base install directory and data directory:
 
 	        cd mysql
-                ./scripts/mysql_install_db
+                ./scripts/mysql_install_db --basedir=/home/accountname/mysql --datadir=/home/accountname/mysql/data
     
         NOTE: The script will most likely inform that you that need to set a root password. 
               Don't worry about this for now; you will perform this task in another step.
 
    6. Move or copy to your home directory the included mysql.cnf file. Edit this
-      file to reflect your mysql installation, or create your own with a text editor 
-      using our included file as a guide. This file is necessary to specify the correct 
-      mysql directories upon startup, and to optimize server settings.
+      file to reflect youri the path to your mysql installation, or create your own with 
+      a text editor using our included file as a guide. This file is necessary to specify 
+      the correct mysql directories upon startup, and to optimize server settings.
 
       Please we aware of the importance of the MySQL data directory! This
       directory is essential and resides in the MySQL home directory by default. It 
@@ -93,6 +98,7 @@ III. Installing MySQL From Linux/Unix Binary Packages (Root access not required)
 		./bin/mysqladmin -u root password "yourpasswordhere"
 
 --------------------------------------------------
+--------------------------------------------------
 IV. Create a New Database and User Account
 
    1. Log in to your mysql server as root. If you are logging in to an existing MySQL server, 
@@ -110,6 +116,48 @@ IV. Create a New Database and User Account
 	      mysql> GRANT SELECT,INSERT,UPDATE,DELETE,CREATE VIEW,CREATE, INDEX, DROP on orthomcl.* TO orthomcl@localhost;
 	
  	      mysql> set password for orthomcl@localhost = password('yourpassword');
+
+-------------------------------------------------
+-------------------------------------------------
+V. MySQL Server Optimization
+
+   - Due to the potential volume of data in your blast results, you may find that it
+     substantially boosts overall performance of the OrthoMCL suite to increase 
+     the system resources available to MySQL. This can be achieved by specifying 
+     MySQL runtime environment variables in your mysql.cnf file. In particular, 
+     you may want to change the values of myisam_max_sort_file_size, mysiam_sort_buffer_size, 
+     and read_buffer_size variables.
+
+         -To view the values associated with these variables, log in to
+            mysql as root as described in Step 1 of Section IV, and
+            type:
+          
+                 mysql> show variables LIKE 'myisam_max_sort_file_size';
+               
+                 mysql> show variables LIKE 'myisam_sort_buffer_size';
+
+                 mysql> show variables LIKE 'read_buffer_size';     
+
+         
+          NOTE: These values will display in bytes, i.e. a value of
+                2147479552 for read_buffer_size is equivalent to 2 Gigabytes.
+
+    
+   -  As a frame of reference, our test lab settings are displayed below:
+
+                myisam_max_sort_file_size=4G
+                
+                myisam_sort_buffer_size=200G
+
+                read_buffer_size=2G
+
+      
+      Sizes are expressed in Gigabytes. Using these settings, our bulk load of 
+      a 19GB blast file (orthomclLoadBlast) took 2.5 hours on a Dual Core
+      2.4Ghz machine with 8G of RAM running Red Hat Linux. 
+
+
+
 
 
  TODO: ADD TROUBLESHOOTING SECTION     
