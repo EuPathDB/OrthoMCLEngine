@@ -169,8 +169,9 @@ dbVendor=
 dbConnectString=
   - the string required by Perl DBI to find the database.  
   - examples are:
-     dbi:Oracle:orthomcl  (for an oracle database with service name 'orthomcl')
-     dbi:MySql:orthomcl   (for a mysql server with a database called 'orthomcl')
+     dbi:Oracle:orthomcl                 (for an oracle database with service name 'orthomcl')
+     dbi:MySql:orthomcl                  (for a centrally installed mysql server with a database called 'orthomcl')
+     dbi:MySql:orthomcl:localhost:3307   (for a user installed mysql server on port 3307)
   - used by orthomclInstallSchema, orthomclLoadBlast, orthomclPairs, orthomclDumpPairsFiles
 dbLogin=
   - your database login name
