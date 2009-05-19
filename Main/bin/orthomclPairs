@@ -140,7 +140,7 @@ set evalue_exp = ${minEvalueExp}-1
 where evalue_exp = 0
 ";
   runSql($sql, "updating $sst, setting 0 evalue_exp to underflow value (${minEvalueExp} - 1)",
-	 'updateMinimumEvalueExponent', '23 min', undef);
+	 'updateMinimumEvalueExponent', '25 min', undef);
 
   ##########################################################################
 
@@ -165,7 +165,7 @@ group by im.query_id, im.subject_taxon_id, low_exp.evalue_exp
 create unique index qtscore_ix on BestQueryTaxonScore(query_id, subject_taxon_id, evalue_exp, evalue_mant)
 ";
   
-  runSql($sql, "create qtscore_ix index on BestQueryTaxonScore", 'qtscore_ix', '3 min', 'BestQueryTaxonScore');
+  runSql($sql, "create qtscore_ix index on BestQueryTaxonScore", 'qtscore_ix', '15 min', 'BestQueryTaxonScore');
 }
 
 
@@ -195,7 +195,7 @@ where s.query_id = cutoff.query_id
           and s.evalue_mant = cutoff.evalue_mant)
 ";
   
-  runSql($sql, "create BestHit", 'bestHit', '45 min', undef);
+  runSql($sql, "create BestHit", 'bestHit', '1.5 hours', undef);
 
   ######################################################################
 
@@ -203,7 +203,7 @@ where s.query_id = cutoff.query_id
 create unique index best_hit_ix on BestHit(query_id,subject_id)
 ";
 
-  runSql($sql, "create best_hit_ix index on BestHit", 'best_hit_ix', '3 min', 'BestHit');
+  runSql($sql, "create best_hit_ix index on BestHit", 'best_hit_ix', '15 min', 'BestHit');
 
   ######################################################################
 
@@ -224,7 +224,7 @@ where bh1.query_id < bh1.subject_id
   and bh1.subject_id = bh2.query_id
 ";
     
-  runSql($sql, "create OrthologTemp table", 'ortholog', '10 min', 'OrthologTemp');
+  runSql($sql, "create OrthologTemp table", 'ortholog', '5 min', 'OrthologTemp');
 
   ######################################################################
 
@@ -260,7 +260,7 @@ where im.query_id = low_exp.query_id
 group by im.query_id, low_exp.evalue_exp
 ";
 
-  runSql($sql, "create BestInterTaxonScore", 'bestInterTaxonScore', '2 min', undef);
+  runSql($sql, "create BestInterTaxonScore", 'bestInterTaxonScore', '5 min', undef);
 
   ###########################################################################
 
@@ -268,7 +268,7 @@ group by im.query_id, low_exp.evalue_exp
 create unique index bis_uids_ix on BestInterTaxonScore(query_id)
 ";
 
-  runSql($sql, "create bis_uids_ix index on BestQueryTaxonScore", 'bis_uids_ix', '3 min', 'BestQueryTaxonScore');
+  runSql($sql, "create bis_uids_ix index on BestQueryTaxonScore", 'bis_uids_ix', '1 min', 'BestQueryTaxonScore');
 
   ###########################################################################
 
@@ -277,7 +277,7 @@ create table UniqueSimSeqsQueryId $oracleNoLogging as
 select distinct query_id from $sst
 ";
 
-  runSql($sql, "create UniqueSimSeqsQueryId", 'uniqueSimSeqsQueryId', '3 secs', undef);
+  runSql($sql, "create UniqueSimSeqsQueryId", 'uniqueSimSeqsQueryId', '25 min', undef);
 
   ###########################################################################
 
@@ -285,7 +285,7 @@ select distinct query_id from $sst
 create unique index ust_qids_ix on UniqueSimSeqsQueryId(query_id)
 ";
 
-  runSql($sql, "create ust_qids_ix index on UniqueSimSeqsQueryId", 'ust_qids_ix', '3 min', 'UniqueSimSeqsQueryId');
+  runSql($sql, "create ust_qids_ix index on UniqueSimSeqsQueryId", 'ust_qids_ix', '1 min', 'UniqueSimSeqsQueryId');
 
 
   ###########################################################################
@@ -320,7 +320,7 @@ where s.query_taxon_id = s.subject_taxon_id
       WHERE bis.query_id IS NULL)
 ";
   
-  runSql($sql, "create BetterHit table", 'betterHit', '30 min', undef);
+  runSql($sql, "create BetterHit table", 'betterHit', '3 hours', undef);
 
   ###########################################################################
   
@@ -328,7 +328,7 @@ where s.query_taxon_id = s.subject_taxon_id
 create unique index better_hit_ix on BetterHit(query_id,subject_id)
 ";
 
-  runSql($sql, "create better_hit_ix index on BetterHit", 'better_hit_ix', '3 min', 'BetterHit');
+  runSql($sql, "create better_hit_ix index on BetterHit", 'better_hit_ix', '25 min', 'BetterHit');
 
   ###########################################################################
 
@@ -349,7 +349,7 @@ where bh1.query_id < bh1.subject_id
   and bh1.subject_id = bh2.query_id
 ";
 
-   runSql($sql, "create InParalogTemp table", 'inParalog', '5 min', undef);
+   runSql($sql, "create InParalogTemp table", 'inParalog', '15 min', undef);
 
   ################################################################
 
@@ -360,7 +360,7 @@ from InParalogTemp i
 group by i.taxon_id
 ";
 
-  runSql($sql, "create InParalogTaxonAvg table", 'inParalogTaxonAvg', '5 min', undef);
+  runSql($sql, "create InParalogTaxonAvg table", 'inParalogTaxonAvg', '1 min', undef);
 
   ################################################################
 
@@ -395,7 +395,7 @@ create table InParalogOrthologTaxonAvg $oracleNoLogging as
          group by i.taxon_id
 ";
 
-  runSql($sql, "create InParalogOrthologTaxonAvg table", 'inParalogOrthologTaxonAvg', '5 min', undef);
+  runSql($sql, "create InParalogOrthologTaxonAvg table", 'inParalogOrthologTaxonAvg', '10 min', undef);
 
   ################################################################
 
@@ -429,7 +429,7 @@ create table InParalogAvgScore $oracleNoLogging as
   where it.taxon_id = a.taxon_id
 ";
 
-  runSql($sql, "populate $inParalogTable table, including normalized_score", 'inParalogsNormalization', '0', "$inParalogTable");
+  runSql($sql, "populate $inParalogTable table, including normalized_score", 'inParalogsNormalization', '3 min', "$inParalogTable");
 
   ################################################################
 }
@@ -462,7 +462,7 @@ select sequence_id_b as sequence_id_a, sequence_id_a as sequence_id_b from $inPa
 create unique index in2a_ix on InParalog2Way(sequence_id_a, sequence_id_b)
 ";
   
-  runSql($sql, "index in2a_ix", 'in2a_ix', '1.5 hours', undef);
+  runSql($sql, "index in2a_ix", 'in2a_ix', '45 min', undef);
 
   ######################################################################
 
@@ -470,7 +470,7 @@ create unique index in2a_ix on InParalog2Way(sequence_id_a, sequence_id_b)
 create unique index in2b_ix on InParalog2Way(sequence_id_b, sequence_id_a)
 ";
   
-  runSql($sql, "index in2b_ix", 'in2b_ix', '1.5 hours', 'InParalog2Way');
+  runSql($sql, "index in2b_ix", 'in2b_ix', '45 min', 'InParalog2Way');
 
   ######################################################################
 
@@ -482,7 +482,7 @@ union
 select sequence_id_b as sequence_id_a, sequence_id_a as sequence_id_b from $orthologTable
 ";
   
-   runSql($sql, "create Ortholog2Way", 'ortholog2Way', '1.5 hours', undef);
+   runSql($sql, "create Ortholog2Way", 'ortholog2Way', '1 hours', undef);
 
   ######################################################################
 
@@ -490,7 +490,7 @@ select sequence_id_b as sequence_id_a, sequence_id_a as sequence_id_b from $orth
 create unique index ortholog2way_ix on Ortholog2Way(sequence_id_a, sequence_id_b)
 ";
 
-  runSql($sql, "index ortholog2way_ix", 'ortholog2WayIndex', '1.5 hours', 'Ortholog2Way');
+  runSql($sql, "index ortholog2way_ix", 'ortholog2WayIndex', '5 min', 'Ortholog2Way');
 
   ######################################################################
 
@@ -502,7 +502,7 @@ create table InParalogOrthologInParalog $oracleNoLogging as
         and o.sequence_id_b = ip2.sequence_id_a
 ";
   
-   runSql($sql, "create InParalogOrthologInParalog", 'inParalogOrthologInParalog', '10 min', undef);
+   runSql($sql, "create InParalogOrthologInParalog", 'inParalogOrthologInParalog', '20 min', undef);
 
   ##################################################################
 
@@ -513,7 +513,7 @@ create table InParalogOrtholog $oracleNoLogging as
       where ip.sequence_id_b = o.sequence_id_a
 ";
   
-   runSql($sql, "create InParalogOrtholog", 'inParalogOrtholog', '10 min', undef);
+   runSql($sql, "create InParalogOrtholog", 'inParalogOrtholog', '15 min', undef);
 
   ##################################################################
 
@@ -527,7 +527,7 @@ from (select sequence_id_a, sequence_id_b from InParalogOrthologInParalog
       select sequence_id_a, sequence_id_b from InParalogOrtholog) t
 ";
   
-   runSql($sql, "create CoOrthologCandidate", 'coOrthologCandidate', '10 min', undef);
+   runSql($sql, "create CoOrthologCandidate", 'coOrthologCandidate', '1 hour', undef);
 
   ######################################################################
 
@@ -541,7 +541,7 @@ SELECT cc.sequence_id_a, cc.sequence_id_b
       WHERE o.sequence_id_a IS NULL
 ";
 
-   runSql($sql, "create CoOrthologNotOrtholog table", 'coOrthologNotOrtholog', '30 min', undef);
+   runSql($sql, "create CoOrthologNotOrtholog table", 'coOrthologNotOrtholog', '10 min', undef);
 
 
   #####################################################################
@@ -550,7 +550,7 @@ SELECT cc.sequence_id_a, cc.sequence_id_b
 create index coortholog_not_ortholog_ix on CoOrthologNotOrtholog(sequence_id_a,sequence_id_b)
 ";
 
-  runSql($sql, "index coortholog_not_ortholog_ix", 'coOrthologNotOrthologIndex', '1.5 hours', 'CoOrthologNotOrtholog');
+  runSql($sql, "index coortholog_not_ortholog_ix", 'coOrthologNotOrthologIndex', '1 min', 'CoOrthologNotOrtholog');
 
 
   ######################################################################
@@ -577,7 +577,7 @@ where ab.query_id = candidate.sequence_id_a
   and ba.percent_match >= $percentMatchThreshold
 ";
 
-  runSql($sql, "create CoOrthologTemp table", 'coOrtholog', '30 min', undef);
+  runSql($sql, "create CoOrthologTemp table", 'coOrtholog', '2 hours', undef);
 
   ######################################################################
 
@@ -609,7 +609,7 @@ select case
         unnormalized_score
       from ${coCaps}OrthologTemp";
 
-  runSql($sql, "create ${coCaps}OrthologTaxon table", "${co}rthologTaxon", '10 min', undef);
+  runSql($sql, "create ${coCaps}OrthologTaxon table", "${co}rthologTaxon", '1 min', undef);
 }
 
 sub normalizeOrthologsSub {
@@ -643,7 +643,7 @@ where least(ot.taxon_id_a, ot.taxon_id_b) = a.smaller_tax_id
     and greatest(ot.taxon_id_a, ot.taxon_id_b) = a.bigger_tax_id
 ";
   
-  runSql($sql, "populate $orthologTable table, including normalized_score", "${co}rthologsNormalization", '0', "$orthologTable");
+  runSql($sql, "populate $orthologTable table, including normalized_score", "${co}rthologsNormalization", '2 min', "$orthologTable");
 }
 
 sub runSql {
@@ -662,7 +662,7 @@ sub runSql {
   if ($clean ne 'only' && $clean ne 'all') {
       my $t = time();
 
-      print LOGFILE localtime() . "   $msg  (OrthoMCL-DB V2 took $sampleTime for this step)\n";
+      print LOGFILE localtime() . "   $msg  (Benchmark dataset took $sampleTime for this step)\n";
 
       my $stmt = $dbh->prepare($sql) or die DBI::errstr;
       $stmt->execute() or die DBI::errstr;
