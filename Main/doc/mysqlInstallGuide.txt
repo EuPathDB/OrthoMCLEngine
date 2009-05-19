@@ -46,6 +46,9 @@ III. Installing MySQL From Linux/Unix Binary Packages (Root access not required)
        - choose a mirror near you, and download
 
    2. Create a directory for your installation, and move the file to it.
+       - This directory needs to be on a volume that has *adequate space* for all the data. 
+         Please see the UserGuide.txt to estimate how much disk space you will need.
+       - (See step 6 below if you want to relocate the mysql data to a separate volume.)
 
 
    3. Unzip the downloaded file into the directory:
@@ -59,33 +62,32 @@ III. Installing MySQL From Linux/Unix Binary Packages (Root access not required)
 	 	ln -s mysql-standard-5.1.34-linux-i686-glibc23 mysql
 
    5. Change to the mysql directory and set up the default MySQL databases.
-      Make sure to specify the mysql base install directory and data directory:
 
 	        cd mysql
-                ./scripts/mysql_install_db --basedir=/home/accountname/mysql --datadir=/home/accountname/mysql/data
+                ./scripts/mysql_install_db --basedir=../mysql --datadir=../mysql/data
     
-        NOTE: The script will most likely inform that you that need to set a root password. 
+        NOTE: The script will inform that you that need to set a root password. 
               Don't worry about this for now; you will perform this task in another step.
 
-   6. Move or copy to your home directory the included mysql.cnf file. Edit this
-      file to reflect youri the path to your mysql installation, or create your own with 
-      a text editor using our included file as a guide. This file is necessary to specify 
-      the correct mysql directories upon startup, and to optimize server settings.
+   6. Configure mysql
 
-      Please we aware of the importance of the MySQL data directory! This
-      directory is essential and resides in the MySQL home directory by default. It 
-      houses the MySQL core databases, as well as the database(s) that you create, 
-      thus it is very possible that this directory will be quite large in
-      size. Please take this under consideration, and if the volume on which your
-      data directory currently resides is small, you should copy or move your mysql/data
-      directory to a volume with sufficient capacity. Make sure you specify the path to 
-      this relocated directory via the "datadir" parameter in your mysql.cnf
-      file.
+               cp my_orthomcl_dir/doc/mysql.cnf .
+
+       - set the basedir= and datadir= properties to reflect where your mysql/ dir and data/ dir are
+       - set port= if 3306 is already in use:
+           - to see if it is, ???
+           - if so, change it to ???
+       - set myisam_sort_buffer_size= to 50% of available ram
+           - to find out how much ram you have:
+                dmesg | grep Memory
+           - it gives you a report in kilobytes.  divide by 1000000 to get a number of Gs.
+       - set myisam_max_sort_file_size= to 5 x the size of the file made by orthomclBlastParser.  make sure
+         you have space on the volume used by the datadir= to easily hold that.
 
    7. You are now ready to start your MySQL server as a background process. To do so, from within the mysql 
       directory base install, run:
 
-           ./bin/mysqld_safe --defaults-file=~/mysql.cnf &
+           ./bin/mysqld_safe --defaults-file=mysql.cnf &
         
          NOTE: You *must* run this command from the mysql directory.
                You should see something similar to the following:

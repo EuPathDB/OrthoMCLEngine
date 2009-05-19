@@ -12,11 +12,11 @@ socket=/tmp/mysql.sock
 
 #REQUIRED!!
 #Change the basedir directory to reflect your mysql home directory
-basedir=/home/username/mysql
+basedir=your_mysql_dir
 
 #REQUIRED!!
 #Change the data direcory to reflect your mysql data directory
-datadir=/home/username/mysql/data
+datadir=your_mysql_dir/data
 
 #Change this setting if another MySQL server is running to avoid conflicts
 port=3306 
