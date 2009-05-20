@@ -71,7 +71,7 @@ sub getGenesFromFasta {
 	print STDERR "acquiring genes from $fastaFile\n";
 	$fastaFile =~ /(\w+).fasta/ || die "'$fastaFile' is not in 'taxon.fasta' format\n";
 	my $taxon = $1;
-	open(FF,$fastaFile) || "die can't open fasta file '$fastaFile'";
+	open(FF,$fastaFile) || die "can't open fasta file '$fastaFile'";
 	my $gene;
 	my $length;
 	while (<FF>) {
@@ -113,7 +113,7 @@ sub printPreviousSubject {
 	int($subject->{totalIdentities} / $subject->{totalLength} * 10 + .5)/10;
     my $shorterLength = $subject->{queryShorter}? $subject->{queryLength} : $subject->{subjectLength};
     my $percentMatch = int($nonOverlapMatchLen / $shorterLength * 1000 + .5) / 10;
-    print "$subject->{queryId}, $subject->{subjectId}, $subject->{queryTaxon}, $subject->{subjectTaxon}, $subject->{evalueMant}, $subject->{evalueExp}, $percentIdent, $percentMatch\n";
+    print "$subject->{queryId}\t$subject->{subjectId}\t$subject->{queryTaxon}\t$subject->{subjectTaxon}\t$subject->{evalueMant}\t$subject->{evalueExp}\t$percentIdent\t$percentMatch\n";
 }
 
 sub formatEvalue {
