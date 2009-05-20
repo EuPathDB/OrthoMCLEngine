@@ -74,10 +74,10 @@ III. Installing MySQL From Linux/Unix Binary Packages (Root access not required)
                cp my_orthomcl_dir/doc/mysql.cnf .
 
        - set the basedir= and datadir= properties to reflect where your mysql/ dir and data/ dir are
-       - set port= if 3306 is already in use:
+       - set port= if 3307 is already in use:
            - to see if it is, from the command line type:
-                    netstat -a | grep 3306 
-           - if so, change it to 3307,3308, etc. 
+                    netstat -a | grep 3307
+           - if so, change it to 3308,3309, etc. 
        - set myisam_sort_buffer_size= to 50% of available ram
            - to find out how much ram you have:
                 dmesg | grep Memory
