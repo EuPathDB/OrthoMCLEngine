@@ -3,8 +3,8 @@
 #Change the mysql.sock dir only if you can't write to the the /tmp directory.
 socket=your_mysql_dir/mysql.sock
 
-#Change the default port if another MySQL installation is using port 3306
-port=3306
+#Change the default port if another MySQL installation is using port 3307
+port=3307
 
 ####################################
 
@@ -19,7 +19,7 @@ basedir=your_mysql_dir
 datadir=your_mysql_dir/data
 
 #Change the default port if another MySQL installation is using port 3306
-port=3306
+port=3307
 
 #Change the mysql.sock dir only if you can't write to the the /tmp directory.
 socket=your_mysql_dir/mysql.sock
