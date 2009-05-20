@@ -75,8 +75,9 @@ III. Installing MySQL From Linux/Unix Binary Packages (Root access not required)
 
        - set the basedir= and datadir= properties to reflect where your mysql/ dir and data/ dir are
        - set port= if 3306 is already in use:
-           - to see if it is, ???
-           - if so, change it to ???
+           - to see if it is, from the command line type:
+                    netstat -a | grep 3306 
+           - if so, change it to 3307,3308, etc. 
        - set myisam_sort_buffer_size= to 50% of available ram
            - to find out how much ram you have:
                 dmesg | grep Memory
@@ -146,6 +147,56 @@ V. MySQL Server Optimization
 -------------------------------------------------
 -------------------------------------------------
 VI. Troublshooting Installation Issues
+
+   The MySQL server logs all status and error messages in a file called
+yourhost.err, where yourhost is the name of your machine. The file is located 
+in the mysql/data directory and contains useful information for debugging problems 
+with your MySQL server.
+
+Below are some common installation issues and resolutions:
+
+ (1)
+     ISSUE: Your MySQL installation is conflicting with another install
+
+        - You may be conflicting with an existing MySQL install if you see an
+          error your log similar to the follwoing when running mysql_install_db, 
+          mysqladmin, or mysql:
+
+              Installing MySQL system tables...
+              090515 13:32:49 [Warning] Can't create test file
+              /var/lib/mysql/localhost.lower-test
+              090515 13:32:49 [Warning] Can't create test file
+              /var/lib/mysql/localhost.lower-test
+              ERROR: 1005  Can't create table 'db' (errno: 13)
+              090515 13:32:49 [ERROR] Aborting
+
+          
+     RESOLUTION:
+
+         - A path is set incorrect in your mysql.cnf if you see a reference to
+           /var/lib in your error log. Check to ensure that you have correctly 
+           set the mysql_sock and port parameters in mysql.cnf.
+
+ (2)
+     ISSUE: Unspecified or Misconfigured mysql.cnf file 
+
+        - If only the first numeric line appears (you do not see a "Starting
+          mysqld daemon..." message) when you execute ./bin/mysqld_safe &, you
+          probably entered at least one incorrect path in your mysql.cnf file, or
+          you did not specify --defaults-file=mysql.cnf when starting MySQL.
+
+
+     RESOLUTION:
+
+        - Check to ensure that:  
+
+           - You specified the --defaults-file=mysql.cnf when running mysql or
+             a mysqladmin command.
+        
+           - Your mysql.cnf parameters correctly reflect your MySQL
+             installation path. 
+   
+                
 
 -------------------------------------------------
 -------------------------------------------------
