@@ -1,14 +1,13 @@
 [client]
 
-#Change the port setting if another MySQL server is running to avoid conflicts
-port=3306 
-
 #Change the mysql.sock dir only if you can't write to the the /tmp directory.
-socket=/tmp/mysql.sock
+socket=your_mysql_dir/mysql.sock
 
 ####################################
 
 [mysqld]
+
+skip-networking
 
 #REQUIRED!!
 #Change the basedir directory to reflect your mysql home directory
@@ -18,20 +17,20 @@ basedir=your_mysql_dir
 #Change the data direcory to reflect your mysql data directory
 datadir=your_mysql_dir/data
 
-#Change this setting if another MySQL server is running to avoid conflicts
-port=3306 
-
 #Change the mysql.sock dir only if you can't write to the the /tmp directory.
-socket=/tmp/mysql.sock
+socket=your_mysql_dir/mysql.sock
 
 #Our default is probably fine here. Change this value only if your machine has very little RAM.
 key_buffer_size=64M
 
+#[OPTIMIZATION]
 #Set this value to 50% of available RAM if your environment permits.
 myisam_sort_buffer_size=4G
 
+#[OPTIMIZATION]
 #This value should be at least 50% of free hard drive space. Use caution if setting it to 100% of free space however. Your hard disk may fill up!
 myisam_max_sort_file_size=200G
 
+#[OPTIMIZATION]
 #Our default of 2G is probably fine for this value. Change this value only if you are using a machine with little resources available. 
 read_buffer_size=2G
