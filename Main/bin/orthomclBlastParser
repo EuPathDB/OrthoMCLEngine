@@ -67,6 +67,7 @@ sub getGenesFromFasta {
 
     my $genes;
     foreach my $fastaFile (@fastaFiles) {
+	next if $fastaFile =~ /^\./;
 	print STDERR "acquiring genes from $fastaFile\n";
 	$fastaFile =~ /(\w+).fasta/ || die "'$fastaFile' is not in 'taxon.fasta' format\n";
 	my $taxon = $1;
