@@ -99,7 +99,7 @@ III. Installing MySQL From Linux/Unix Binary Packages (Root access not required)
    8. At this point your MySQL password is still blank. Use the following command to set a new                     
       root password:
 
-		./bin/mysqladmin -u root password "yourpasswordhere"
+		./bin/mysqladmin --defaults-file=mysql.cnf -u root password "yourpasswordhere"
 
 --------------------------------------------------
 --------------------------------------------------
@@ -108,7 +108,7 @@ IV. Create a New Database and User Account
    1. Log in to your mysql server as root. If you are logging in to an existing MySQL server, 
       use any existing account that can create a user and grant privileges: 
 
-		./bin/mysql -u root -p
+		./bin/mysql --defaults-file=mysql.cnf -u root -p
 
       Enter the password you set in Step 7 when prompted.
 
@@ -159,7 +159,7 @@ Below are some common installation issues and resolutions:
      ISSUE: Your MySQL installation is conflicting with another install
 
         - You may be conflicting with an existing MySQL install if you see an
-          error your log similar to the follwoing when running mysql_install_db, 
+          error in your log similar to the following when running mysql_install_db, 
           mysqladmin, or mysql:
 
               Installing MySQL system tables...
@@ -220,8 +220,8 @@ VII. Removing Your MySQL Installation
 
 
             NOTE: Always use caution when using the rm -r -f command! This
-                 command deletes an entire directory structory with no request
-                 for confirmation, so be sure the correct directory is specified.
+                  command deletes an entire directory structory with no request
+                  for confirmation, so be sure the correct directory is specified.
 
 
 
