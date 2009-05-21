@@ -111,7 +111,7 @@ III. Create a New Database and User Account
 
 		./bin/mysql --defaults-file=mysql.cnf -u root -p
 
-      Enter the root password you set in Step III.8 when prompted.
+      Enter the root password you set in Step II.8 when prompted.
 
    2. Once logged in as root, create the database and user (schema) that you will use for OrthoMCL
       (we use orthomcl as an example here), and grant the user account the necessary privileges:
@@ -175,7 +175,7 @@ Below are some common installation issues and resolutions:
      ISSUE: Unspecified or Misconfigured mysql.cnf file 
 
         - If only the first numeric line appears (you do not see a "Starting
-          mysqld daemon..." message) when you execute ./bin/mysqld_safe &, you
+          mysqld daemon..." message) when you execute ./bin/mysqld_safe, you
           probably entered at least one incorrect path in your mysql.cnf file, or
           you did not specify --defaults-file=mysql.cnf when starting MySQL.
 
