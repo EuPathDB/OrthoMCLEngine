@@ -127,8 +127,12 @@ We recommend you save the output of each step so that you can easily redo it if 
 ============ Steps in detail ======================
 ===================================================
 
-========== Step 1: MySql ============
-See the mysqlInstallationGuide.txt document provided with the orthomcl software.  (UNDER CONSTRUCTION)
+========== Step 1: Install and configure the relational database  ============
+If you are using Oracle, please see the included oracleConfigurationGuide.txt
+
+If you are using MySQL, please see the included mysqlConfigurationGuide.txt
+
+If you do not have either, please see the mysqlInstallationGuide.txt to install your own mysql.
 
 
 ========== Step 2: install mcl ==========
@@ -287,7 +291,7 @@ This step parses NCBI BLAST -m 8 output into the format that can be loaded into 
 
 Use the orthomclBlastParser program for this.   In addition to formatting, it computes the percent match of each hit, which is tricky (see the perl code if you are a super-power user.)
 
-IMPORTANT NOTE: the size of this file determines the disk space required by the relational database.  You will need 5x the size of this file.  Please see the OracleConfigGuide and MysqlConfigGuide now that you know the size of this file.
+IMPORTANT NOTE: the size of this file determines the disk space required by the relational database.  You will need 5x the size of this file.  Please see the oracleConfigGuide or mysqlConfigGuide now that you know the size of this file.
 
 Benchmark time: 10 min
 

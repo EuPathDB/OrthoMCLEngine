@@ -1,15 +1,23 @@
 THIS FILE IS UNDER CONSTRUCTION.  please mail stevef@pcbi.upenn.edu with questions....
 
+This file is a guide to installing a mysql server by a regular user (not an administrator).
+It installs mysql in the user's space.  
+
+It is intended to serve users who:
+  -  do not already have a mysql available, and cannot get an admin to install one
+  -  do have one already installed, but will not be able to use it or reconfigure it
+
 
 ----INSTALLATION OVERVIEW---------------------------
 
 I.	General Requirements
-II.	Installing from OS Specific Packages
-III.	Installing from General Linux/Unix Binary Packages
-IV.	Creating a Database and User Account
-V.	Optimizing MySQL
-VI.     Troubleshooting Installation Issues
-VII.    Removing Your MySQL Installation
+II.	Installing from General Linux/Unix Binary Packages
+III.	Creating a Database and User Account
+IV.	Optimizing MySQL
+V.     Troubleshooting Installation Issues
+VI.    Removing Your MySQL Installation
+
+
 ----------------------------------------------------
 ----------------------------------------------------
 I. General Requirements  
@@ -18,36 +26,30 @@ I. General Requirements
     -  MySQL DBI driver module for PERL (available at CPAN)
     -  Unix/Linux or MacOS 10.0.1 or greater
 
-----------------------------------------------------
-----------------------------------------------------
-II. Installing MySQL from OS Specific Packages (Root access required)
-
-MySQL has pre-packaged installation suites for many operating systems (RPM, Solaris or MacOS pkg, etc). To determine if packages have been created for your operating system
-  - Go to http://www.mysql.com/downloads
-  - Click on "Download" under MySQL Community Server
-
-If packages exist specific to your operating system, these packages provide the quickest method of installing the MySQL server, but please note that the installation directory for MySQL will vary from OS to OS, and you may find necessary to specify another directory when installing the package as default directory installations often require administrator privileges. Refer to the documentation for your operating system for instructions regarding OS specific package installation.
 
 ----------------------------------------------------
 ----------------------------------------------------
-III. Installing MySQL From Linux/Unix Binary Packages (Root access not required)
-
-- If you do not wish to use OS packages, or you need to install MySQL from a normal user account,      
-  you can install MySQL using the following steps:
-
+II. Installing MySQL From Linux/Unix Binary Packages (Root access not required)
 
    1. Go to  http://www.mysql.com/downloads/
        a) click on "Download" under MySQL Community Server
+
        b) for linux: click on "Linux (non RPM packages)"
+
        c) otherwise, find the .tar package for your OS
+
        d) choose the download for your platform
           - use the 'uname -a' command if you don't know your platform 
+
        e) either login/register or click "No thanks, just take me to the downloads!"
+
        f) choose a mirror near you, and download
+
 
    2. Create a directory for your installation, and move the file to it.
        a) This directory needs to be on a volume that has *adequate space* for all the data. 
-         Please see the UserGuide.txt to estimate how much disk space you will need.
+          - Please see the UserGuide.txt to estimate how much disk space you will need.
+
        b) (See step 6 below if you want to relocate the mysql data to a separate volume.)
 
 
@@ -68,30 +70,23 @@ III. Installing MySQL From Linux/Unix Binary Packages (Root access not required)
         NOTE: The script will inform that you that need to set a root password. 
               Don't worry about this for now; you will perform this task in another step.
 
+
    6. Configure mysql using the sample config file provided in orthomcl download
 
                cp my_orthomcl_dir/doc/mysql.cnf .
 
        a) set basedir= to the full path of your new mysql directory
+
        b) set datadir= to the full path of the /data subdir in your new mysql directory
            - this is the directory that will hold all the data.  
            - use the df -h command to see how much space you have
            - you will need at least 5x the size of the file made by orthomclBlastParser
            - (revisit this after you have run orthomclBlastParser)
-       c) if port 3306 is already in use, set the port= property to a different port
-           - to see if 3306 is in use, type this command:
-                    netstat -a | grep tcp | grep 3306 
-           - if so, set port=3307 (or 3308, etc., if 3307 is already used) 
-       d) set myisam_sort_buffer_size= to 50% of available ram
-           - to find out how much ram you have:
-                dmesg | grep Memory
-           - it gives you a report in kilobytes.  divide by 1000000 to get a number of Gs.
-       e) set myisam_max_sort_file_size= to 5 x the size of the file made by orthomclBlastParser.
-           - (revisit this after you have run orthomclBlastParser)
-       f) set read_buffer_size= to ???
 
-   7. You are now ready to start your MySQL server as a background process. To do so, from within the mysql 
-      directory base install, run:
+       c) now see the mysqlConfigurationGuide.txt for important optimization configuration items
+
+
+   7. You are now ready to start your MySQL server as a background process. To do so, from within your mysql directory, run:
 
            ./bin/mysqld_safe --defaults-file=mysql.cnf &
         
@@ -107,7 +102,7 @@ III. Installing MySQL From Linux/Unix Binary Packages (Root access not required)
 
 --------------------------------------------------
 --------------------------------------------------
-IV. Create a New Database and User Account
+III. Create a New Database and User Account
 
    1. Log in to your mysql server as root. If you are logging in to an existing MySQL server, 
       use any existing account that can create a user and grant privileges: 
@@ -128,29 +123,13 @@ IV. Create a New Database and User Account
 -------------------------------------------------
 -------------------------------------------------
 V. MySQL Server Optimization
-
-   - If you are using an existing MySQL database, you may need to adjust its configuration
-     to handle the volume of data in your blast results.  (If you just installed MySQL
-     following the instructions above, this is already handled).
    
-         -To view the key values, log in to mysql and run these commands:
-          
-                 mysql> show variables LIKE 'myisam_max_sort_file_size';
-               
-                 mysql> show variables LIKE 'myisam_sort_buffer_size';
+   - please see the mysqlConfigurationGuide.txt document provided in the orthomcl download.
 
-                 mysql> show variables LIKE 'read_buffer_size';     
-
-         
-          NOTE: These values will display in bytes, i.e. a value of
-                2147479552 for read_buffer_size is equivalent to 2 Gigabytes.
-
-    
-   - See step III.6 for suggested settings for these properties
 
 -------------------------------------------------
 -------------------------------------------------
-VI. Troublshooting Installation Issues
+V. Troublshooting Installation Issues
 
    The MySQL server logs all status and error messages in a file called
 yourhost.err, where yourhost is the name of your machine. The file is located 
@@ -199,6 +178,12 @@ Below are some common installation issues and resolutions:
         
            - Your mysql.cnf parameters correctly reflect your MySQL
              installation path. 
+
+
+       c) if port 3306 is already in use, set the port= property to a different port
+           - to see if 3306 is in use, type this command:
+                    netstat -a | grep tcp | grep 3306 
+           - if so, set port=3307 (or 3308, etc., if 3307 is already used) 
    
                 
 
