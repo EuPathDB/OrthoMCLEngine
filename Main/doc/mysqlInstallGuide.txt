@@ -56,8 +56,7 @@ III. Installing MySQL From Linux/Unix Binary Packages (Root access not required)
 		tar -xzvf mysql-standard-5.1.34-linux-i686-glibc23.tar.gz
                 rm mysql-standard-5.1.34-linux-i686-glibc23.tar.gz   (to save disk space)
 
-   4. A subdirectory will be created with the full name of the MySQL version. For simplicity, create a  
-      symbolic link to the mysql directory:
+   4. Give the new directory a shortcut name
 
 	 	ln -s mysql-standard-5.1.34-linux-i686-glibc23 mysql
 
@@ -69,15 +68,15 @@ III. Installing MySQL From Linux/Unix Binary Packages (Root access not required)
         NOTE: The script will inform that you that need to set a root password. 
               Don't worry about this for now; you will perform this task in another step.
 
-   6. Configure mysql
+   6. Configure mysql using sample config file provided in orthomcl download
 
                cp my_orthomcl_dir/doc/mysql.cnf .
 
        - set the basedir= and datadir= properties to reflect where your mysql/ dir and data/ dir are
-       - set port= if 3307 is already in use:
-           - to see if it is, from the command line type:
-                    netstat -a | grep 3307
-           - if so, change it to 3308,3309, etc. 
+       - if port 3306 is already in use, set the port= property to a different port
+           - to see if 3306 is in use, type this command:
+                    netstat -a | grep tcp | grep 3306 
+           - if so, set port=3307 (or 3308, etc., if 3307 is already used) 
        - set myisam_sort_buffer_size= to 50% of available ram
            - to find out how much ram you have:
                 dmesg | grep Memory
@@ -110,7 +109,7 @@ IV. Create a New Database and User Account
 
 		./bin/mysql --defaults-file=mysql.cnf -u root -p
 
-      Enter the password you set in Step 7 when prompted.
+      Enter the root password you set in Step 7 when prompted.
 
    2. Once logged in as root, create the database and user (schema) that you will use for OrthoMCL
       (we use orthomcl as an example here), and grant the user account the necessary privileges:
