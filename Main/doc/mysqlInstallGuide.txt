@@ -100,6 +100,8 @@ II. Installing MySQL From Linux/Unix Binary Packages (Root access not required)
 
 		./bin/mysqladmin --defaults-file=mysql.cnf -u root password "yourpasswordhere"
 
+      NOTE: DO NOT FORGET THIS PASSWORD.  write it down someplace that you won't forget.
+
 --------------------------------------------------
 --------------------------------------------------
 III. Create a New Database and User Account
@@ -109,7 +111,7 @@ III. Create a New Database and User Account
 
 		./bin/mysql --defaults-file=mysql.cnf -u root -p
 
-      Enter the root password you set in Step 7 when prompted.
+      Enter the root password you set in Step III.8 when prompted.
 
    2. Once logged in as root, create the database and user (schema) that you will use for OrthoMCL
       (we use orthomcl as an example here), and grant the user account the necessary privileges:
@@ -120,9 +122,14 @@ III. Create a New Database and User Account
 	
  	      mysql> set password for orthomcl@localhost = password('yourpassword');
 
+      NOTE: DO NOT FORGET THIS PASSWORD.  write it down someplace that you won't forget
+
+      NOTE: if you want to play with the data in the database, you can get into it like this:
+               ./bin/mysql --defaults-file=mysql.cnf -u orthomcl
+
 -------------------------------------------------
 -------------------------------------------------
-V. MySQL Server Optimization
+IV. MySQL Server Optimization
    
    - please see the mysqlConfigurationGuide.txt document provided in the orthomcl download.
 
@@ -160,6 +167,10 @@ Below are some common installation issues and resolutions:
            /var/lib in your error log. Check to ensure that you have correctly 
            set the mysql_sock and port parameters in mysql.cnf.
 
+         -  - to see if 3307 is in use, type this command:
+                    netstat -a | grep tcp | grep 3307
+           - if so, set port=3308 (or 3309, etc., if 3308 is already used) 
+
  (2)
      ISSUE: Unspecified or Misconfigured mysql.cnf file 
 
@@ -179,17 +190,11 @@ Below are some common installation issues and resolutions:
            - Your mysql.cnf parameters correctly reflect your MySQL
              installation path. 
 
-
-       c) if port 3306 is already in use, set the port= property to a different port
-           - to see if 3306 is in use, type this command:
-                    netstat -a | grep tcp | grep 3306 
-           - if so, set port=3307 (or 3308, etc., if 3307 is already used) 
-   
                 
 
 -------------------------------------------------
 -------------------------------------------------
-VII. Removing Your MySQL Installation
+VI. Removing Your MySQL Installation
 
   - If you wish to remove your MySQL installation, this can be performed in
     two simple steps:
