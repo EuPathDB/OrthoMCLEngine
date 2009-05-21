@@ -9,11 +9,11 @@ usage() unless $blastFile;
 
 usage() unless $fastaFilesDir;
  
-opendir(DIR, $fastaFilesDir) || "Can't open fasta directory '$fastaFilesDir'\n";
+opendir(DIR, $fastaFilesDir) || die "Can't open fasta directory '$fastaFilesDir'\n";
 my @fastaFiles = readdir(DIR);
 closedir(DIR);
 
-my $genes = getGenesFromFasta(@fastaFiles);
+my $genes = getGenesFromFasta($fastaFilesDir, @fastaFiles);
 
 open(F,$blastFile) || die "can't open BLAST file '$blastFile'\n";
 
@@ -63,6 +63,7 @@ printPreviousSubject($subject);
 ########################################################################################
 
 sub getGenesFromFasta {
+    my $fastaFilesDir = shift(@_);
     my (@fastaFiles) = @_;
 
     my $genes;
@@ -71,7 +72,7 @@ sub getGenesFromFasta {
 	print STDERR "acquiring genes from $fastaFile\n";
 	$fastaFile =~ /(\w+).fasta/ || die "'$fastaFile' is not in 'taxon.fasta' format\n";
 	my $taxon = $1;
-	open(FF,$fastaFile) || die "can't open fasta file '$fastaFile'";
+	open(FF,"$fastaFilesDir/$fastaFile") || die "can't open fasta file '$fastaFilesDir/$fastaFile'";
 	my $gene;
 	my $length;
 	while (<FF>) {
