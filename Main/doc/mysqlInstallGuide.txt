@@ -37,18 +37,18 @@ III. Installing MySQL From Linux/Unix Binary Packages (Root access not required)
 
 
    1. Go to  http://www.mysql.com/downloads/
-       - click on "Download" under MySQL Community Server
-       - for linux: click on "Linux (non RPM packages)"
-       - otherwise, find the .tar package for your OS
-       - choose the download for your platform
+       a) click on "Download" under MySQL Community Server
+       b) for linux: click on "Linux (non RPM packages)"
+       c) otherwise, find the .tar package for your OS
+       d) choose the download for your platform
           - use the 'uname -a' command if you don't know your platform 
-       - either login/register or click "No thanks, just take me to the downloads!"
-       - choose a mirror near you, and download
+       e) either login/register or click "No thanks, just take me to the downloads!"
+       f) choose a mirror near you, and download
 
    2. Create a directory for your installation, and move the file to it.
-       - This directory needs to be on a volume that has *adequate space* for all the data. 
+       a) This directory needs to be on a volume that has *adequate space* for all the data. 
          Please see the UserGuide.txt to estimate how much disk space you will need.
-       - (See step 6 below if you want to relocate the mysql data to a separate volume.)
+       b) (See step 6 below if you want to relocate the mysql data to a separate volume.)
 
 
    3. Unzip the downloaded file into the directory:
@@ -68,22 +68,27 @@ III. Installing MySQL From Linux/Unix Binary Packages (Root access not required)
         NOTE: The script will inform that you that need to set a root password. 
               Don't worry about this for now; you will perform this task in another step.
 
-   6. Configure mysql using sample config file provided in orthomcl download
+   6. Configure mysql using the sample config file provided in orthomcl download
 
                cp my_orthomcl_dir/doc/mysql.cnf .
 
-       - set the basedir= and datadir= properties to reflect where your mysql/ dir and data/ dir are
-       - if port 3306 is already in use, set the port= property to a different port
+       a) set basedir= to the full path of your new mysql directory
+       b) set datadir= to the full path of the /data subdir in your new mysql directory
+           - this is the directory that will hold all the data.  
+           - use the df -h command to see how much space you have
+           - you will need at least 5x the size of the file made by orthomclBlastParser
+           - (revisit this after you have run orthomclBlastParser)
+       c) if port 3306 is already in use, set the port= property to a different port
            - to see if 3306 is in use, type this command:
                     netstat -a | grep tcp | grep 3306 
            - if so, set port=3307 (or 3308, etc., if 3307 is already used) 
-       - set myisam_sort_buffer_size= to 50% of available ram
+       d) set myisam_sort_buffer_size= to 50% of available ram
            - to find out how much ram you have:
                 dmesg | grep Memory
            - it gives you a report in kilobytes.  divide by 1000000 to get a number of Gs.
-       - set myisam_max_sort_file_size= to 5 x the size of the file made by orthomclBlastParser.  make sure
-         you have space on the volume used by the datadir= to easily hold that.
-       - set read_buffer_size= to ???
+       e) set myisam_max_sort_file_size= to 5 x the size of the file made by orthomclBlastParser.
+           - (revisit this after you have run orthomclBlastParser)
+       f) set read_buffer_size= to ???
 
    7. You are now ready to start your MySQL server as a background process. To do so, from within the mysql 
       directory base install, run:

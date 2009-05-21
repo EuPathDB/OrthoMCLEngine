@@ -287,6 +287,8 @@ This step parses NCBI BLAST -m 8 output into the format that can be loaded into 
 
 Use the orthomclBlastParser program for this.   In addition to formatting, it computes the percent match of each hit, which is tricky (see the perl code if you are a super-power user.)
 
+IMPORTANT NOTE: the size of this file determines the disk space required by the relational database.  You will need 5x the size of this file.  Please see the OracleConfigGuide and MysqlConfigGuide now that you know the size of this file.
+
 Benchmark time: 10 min
 
 
