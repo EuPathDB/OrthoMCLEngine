@@ -32,15 +32,16 @@ I. General Requirements
 ----------------------------------------------------
 II. Installing PERL modules for MySQL
 
-   1. Check to see if the required modules are installed:
+   1. Check to see if the required modules, DBI and DBD::mysql,
+      are installed:
 
          perl -MDBI -e 1
          perl -MDBD::mysql -e 1
 
  
       If you receive no output, then the module *is* installed and you
-      can continue to section II. If you receive an error message, 
-      continue to step 2.
+      can continue to section II. If you receive an error message for 
+      either, continue to step 2 and install the missing module(s).
 
 
    2. The easiest way to install Perl modules on Unix/Linux is to use the CPAN
