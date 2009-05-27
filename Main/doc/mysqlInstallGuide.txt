@@ -11,7 +11,7 @@ It is intended to serve users who:
 ----INSTALLATION OVERVIEW---------------------------
 
 I.	General Requirements
-II.     Installing PERL modules for MySQL 
+II.     Installing Required PERL modules for MySQL 
 III.	Installing from General Linux/Unix Binary Packages
 IV.	Creating a Database and User Account
 V.	Optimizing MySQL
@@ -30,10 +30,9 @@ I. General Requirements
 
 ----------------------------------------------------
 ----------------------------------------------------
-II. Installing PERL modules for MySQL
+II. Installing Required PERL modules for MySQL
 
-   1. Check to see if the required modules, DBI and DBD::mysql,
-      are installed:
+   1. Check to see if DBI and DBD::mysql are installed:
 
          perl -MDBI -e 1
          perl -MDBD::mysql -e 1
