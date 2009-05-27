@@ -11,11 +11,12 @@ It is intended to serve users who:
 ----INSTALLATION OVERVIEW---------------------------
 
 I.	General Requirements
-II.	Installing from General Linux/Unix Binary Packages
-III.	Creating a Database and User Account
-IV.	Optimizing MySQL
-V.     Troubleshooting Installation Issues
-VI.    Removing Your MySQL Installation
+II.     Installing PERL modules for MySQL 
+III.	Installing from General Linux/Unix Binary Packages
+IV.	Creating a Database and User Account
+V.	Optimizing MySQL
+VI.     Troubleshooting Installation Issues
+VII.    Removing Your MySQL Installation
 
 
 ----------------------------------------------------
@@ -23,12 +24,36 @@ VI.    Removing Your MySQL Installation
 I. General Requirements  
 
     -  MySQL server 5.1 or greater
-    -  MySQL DBI driver module for PERL (available at CPAN)
+    -  MySQL DBI and DBD driver modules for PERL (available at CPAN)
     -  Unix/Linux or MacOS 10.0.1 or greater
 
 
 ----------------------------------------------------
 ----------------------------------------------------
+II. Installing PERL modules for MySQL
+
+   1. Check to see if the required modules are installed:
+
+         perl -MDBI -e 1
+         perl -MDBD::mysql -e 1
+
+ 
+      If you receive no output, then the module *is* installed and you
+      can continue to section II. If you receive an error message, 
+      continue to step 2.
+
+
+   2. The easiest way to install Perl modules on Unix/Linux is to use the CPAN
+      module. For example:
+
+        perl -MCPAN -e shell
+        cpan> install Data::Dumper
+        cpan> install DBI
+        cpan> install DBD::mysql
+
+---------------------------------------------------
+---------------------------------------------------
+
 II. Installing MySQL From Linux/Unix Binary Packages (Root access not required)
 
    1. Go to  http://www.mysql.com/downloads/
