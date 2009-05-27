@@ -32,7 +32,8 @@ I. General Requirements
 ----------------------------------------------------
 II. Installing Required PERL modules for MySQL
 
-   1. Check to see if DBI and DBD::mysql are installed:
+   1. Check to see if the DBI and DBD::mysql PERL modules 
+      are installed:
 
          perl -MDBI -e 1
          perl -MDBD::mysql -e 1
