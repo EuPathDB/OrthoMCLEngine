@@ -46,10 +46,10 @@ II. Installing PERL modules for MySQL
    2. The easiest way to install Perl modules on Unix/Linux is to use the CPAN
       module. For example:
 
-        perl -MCPAN -e shell
-        cpan> install Data::Dumper
-        cpan> install DBI
-        cpan> install DBD::mysql
+         perl -MCPAN -e shell
+         cpan> install Data::Dumper
+         cpan> install DBI
+         cpan> install DBD::mysql
 
 ---------------------------------------------------
 ---------------------------------------------------
