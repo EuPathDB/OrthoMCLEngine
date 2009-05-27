@@ -50,7 +50,7 @@ II. Installing PERL modules for MySQL
          cpan> o conf makepl_arg "mysql_config=/your_mysql_dir/bin/mysql_config"
          cpan> install Data::Dumper
          cpan> install DBI
-         cpan> install DBD::mysql
+         cpan> force install DBD::mysql
 
 ---------------------------------------------------
 ---------------------------------------------------
