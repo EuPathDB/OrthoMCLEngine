@@ -169,7 +169,7 @@ The bin/ directory has a set of programs.  To run the programs you will need to 
 
 Make a directory to hold the data and results for your run of orthomcl.  In this document we will call that directory "my_orthomcl_dir".
 
-In the orthomclSoftware/doc/ directory is a file called orthomcl.config.template.  Copy that file to my_orthomcl_dir/orthomcl.config, and edit the new file according to the following instructions.
+In the orthomclSoftware/doc/Main/OrthoMCLEngine directory is a file called orthomcl.config.template.  Copy that file to my_orthomcl_dir/orthomcl.config, and edit the new file according to the following instructions.
 
 dbVendor=
   - either 'oracle' or 'mysql'
@@ -216,7 +216,7 @@ Input:
 Output:
   - database with schema installed
 
-Run the orthmclInstallSchema program to install the schema.
+Run the orthmclInstallSchema program to install the schema. (Run the program with no arguments to get help.  This is true of all following orthomcl programs.)
 
 Benchmark time: < 1 min
 

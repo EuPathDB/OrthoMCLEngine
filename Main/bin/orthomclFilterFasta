@@ -90,6 +90,9 @@ where:
   input_dir:           a directory containing a set of .fasta files
   min_length:          minimum allowed length of proteins.  (suggested: 10)
   max_percent_stop:    maximum percent stop codons.  (suggested 20)
+
+EXAMPLE: orthomclSoftware/bin/orthomclFilterFasta my_orthomcl_dir/compliantFasta 10 20
+
 ";
   exit(1);
 }

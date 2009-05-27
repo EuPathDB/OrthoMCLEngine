@@ -55,6 +55,8 @@ The output file is named taxoncode.fasta
 
 Note: if your input files do not meet the requirements, you can do some simple perl or awk processing of them to create the required input files to this program, or the required output files.  This program is provided as a convenience, but OrthoMCL users are expected to have the scripting skills to provide OrthoMCL compliant .fasta files.
 
+EXAMPLE: orthomclSoftware/bin/orthomclAdjustFasta hsa Homo_sapiens.NCBI36.53.pep.all.fa 1
+
 ";
 exit(1);
 }

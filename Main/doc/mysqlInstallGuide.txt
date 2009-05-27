@@ -98,7 +98,7 @@ II. Installing MySQL From Linux/Unix Binary Packages (Root access not required)
 
    6. Configure mysql using the sample config file provided in orthomcl download
 
-               cp my_orthomcl_dir/doc/mysql.cnf .
+               cp my_orthomcl_dir/doc/Main/OrthoMCLEngine/mysql.cnf .
 
        a) set basedir= to the full path of your new mysql directory
 
