@@ -285,11 +285,13 @@ Input:
   - your_blast_results_in_tab_format
   - my_orthomcl_dir/compliantFasta/
 Output:
-  - similarSequences.txt
+  - my_orthomcl_dir/similarSequences.txt
 
 This step parses NCBI BLAST -m 8 output into the format that can be loaded into the orthomcl database. 
 
 Use the orthomclBlastParser program for this.   In addition to formatting, it computes the percent match of each hit, which is tricky (see the perl code if you are a super-power user.)
+
+orthomclBlastParser my_blast_results compliantFasta >> similarSequences.txt
 
 IMPORTANT NOTE: the size of this file determines the disk space required by the relational database.  You will need 5x the size of this file.  Please see the oracleConfigGuide or mysqlConfigGuide now that you know the size of this file.
 
@@ -319,7 +321,7 @@ Output:
 
 This is a computationally major step that finds protein pairs.  It executes the algorithm described in the OrthoMCL Algorithm Document, using a relational database.  The program proceeds through a series of internal steps, each creating an intermediate database table or index.  There are about 20 such tables created. Finally, it populates the output tables.
 
-The cleanup= option allows you to control the cleaning up of the intermediary tables.  The 'yes' option drops the intermediary tables once they are no longer needed.  The 'no' option keeps the intermediary tables in the database.  In total, they are expected to be about 50 percent of the SimilarSequences table. This is useful mostly for power users or developers. They can be removed afterwards with the 'only' or 'all' options.  The latter also removes the final tables, and should only be done after Step 11 below has dumped them to files.
+The cleanup= option allows you to control the cleaning up of the intermediary tables.  The 'yes' option drops the intermediary tables once they are no longer needed.  The 'no' option keeps the intermediary tables in the database.  In total, they are expected to be about 50 percent of the SimilarSequences table. They are useful mostly for power users or developers who would like to query them. They can be removed afterwards with the 'only' or 'all' options.  The latter also removes the final tables, and should only be done after Step 11 below has dumped them to files.
 
 The startAfter= option allows you to pick up where the program left off, if it stops for any reason.  Look in the log to find the last completed step, and use its tag as the value for startAfter=
 
