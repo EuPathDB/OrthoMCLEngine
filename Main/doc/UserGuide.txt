@@ -272,7 +272,7 @@ You must run your own BLAST.  For large datasets you should consider gaining acc
 We expect you to:
   - use NCBI BLAST
   - run with the -m 8 option to provide tab delimited output required by Step 8
-  - see the OrthoMCL Algorithm Document for important details about other BLAST arguments
+  - see the OrthoMCL Algorithm Document (http://docs.google.com/Doc?id=dd996jxg_1gsqsp6) for important details about other BLAST arguments
 
 If you are a power user you can deviate from this, so long as you can ultimately provide output in exactly the format provided by NCBI BLAST using the -m 8 option, and expected by Step 8.
 
@@ -319,7 +319,7 @@ Output:
   - PotentialInParalogs table
   - PotentialCoOrthologs table
 
-This is a computationally major step that finds protein pairs.  It executes the algorithm described in the OrthoMCL Algorithm Document, using a relational database.  The program proceeds through a series of internal steps, each creating an intermediate database table or index.  There are about 20 such tables created. Finally, it populates the output tables.
+This is a computationally major step that finds protein pairs.  It executes the algorithm described in the OrthoMCL Algorithm Document (http://docs.google.com/Doc?id=dd996jxg_1gsqsp6), using a relational database.  The program proceeds through a series of internal steps, each creating an intermediate database table or index.  There are about 20 such tables created. Finally, it populates the output tables.
 
 The cleanup= option allows you to control the cleaning up of the intermediary tables.  The 'yes' option drops the intermediary tables once they are no longer needed.  The 'no' option keeps the intermediary tables in the database.  In total, they are expected to be about 50 percent of the SimilarSequences table. They are useful mostly for power users or developers who would like to query them. They can be removed afterwards with the 'only' or 'all' options.  The latter also removes the final tables, and should only be done after Step 11 below has dumped them to files.
 
