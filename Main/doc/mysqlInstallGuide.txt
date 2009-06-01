@@ -10,14 +10,13 @@ It is intended to serve users who:
 
 ----INSTALLATION OVERVIEW---------------------------
 
-I.	General Requirements
-II.     Installing Required PERL modules for MySQL 
-III.	Installing from General Linux/Unix Binary Packages
-IV.	Creating a Database and User Account
-V.	Optimizing MySQL
+I.      General Requirements
+II.	Installing from General Linux/Unix Binary Packages
+III.	Creating a Database and User Account
+IV.     Installing Required PERL modules for MySQL
+V.      Optimizing MySQL
 VI.     Troubleshooting Installation Issues
 VII.    Removing Your MySQL Installation
-
 
 ----------------------------------------------------
 ----------------------------------------------------
@@ -30,32 +29,6 @@ I. General Requirements
 
 ----------------------------------------------------
 ----------------------------------------------------
-II. Installing Required PERL modules for MySQL
-
-   1. Check to see if the DBI and DBD::mysql PERL modules 
-      are installed:
-
-         perl -MDBI -e 1
-         perl -MDBD::mysql -e 1
-
- 
-      If you receive no output, then the module *is* installed and you
-      can continue to section II. If you receive an error message for 
-      either, continue to step 2 and install the missing module(s).
-
-
-   2. The easiest way to install Perl modules on Unix/Linux is to use the CPAN
-      modules:
-
-         perl -MCPAN -e shell
-         cpan> o conf makepl_arg "mysql_config=/your_mysql_dir/bin/mysql_config"
-         cpan> install Data::Dumper
-         cpan> install DBI
-         cpan> force install DBD::mysql
-
----------------------------------------------------
----------------------------------------------------
-
 II. Installing MySQL From Linux/Unix Binary Packages (Root access not required)
 
    1. Go to  http://www.mysql.com/downloads/
@@ -66,7 +39,9 @@ II. Installing MySQL From Linux/Unix Binary Packages (Root access not required)
        c) otherwise, find the .tar package for your OS
 
        d) choose the download for your platform
-          - use the 'uname -a' command if you don't know your platform 
+          - use the 'uname -a' command if you don't know your platform
+          - 'cat /proc/cpuinfo | grep model' will list your processor type (ie.
+             AMD or Intel, 32 or 64 bit) if you are running Linux. 
 
        e) either login/register or click "No thanks, just take me to the downloads!"
 
@@ -156,14 +131,39 @@ III. Create a New Database and User Account
 
 -------------------------------------------------
 -------------------------------------------------
-IV. MySQL Server Optimization
+IV. Installing the Required PERL Modules for MySQL 
+
+   1. Check to see if the DBI and DBD::mysql PERL modules
+      are installed:
+
+         perl -MDBI -e 1
+         perl -MDBD::mysql -e 1
+
+
+      If you receive no output, then the module *is* installed and you
+      can continue to section II. If you receive an error message for
+      either, continue to step 2 and install the missing module(s).
+
+
+   2. The easiest way to install Perl modules on Unix/Linux is to use the CPAN
+      modules:
+
+         perl -MCPAN -e shell
+         cpan> o conf makepl_arg "mysql_config=/path_to_your_mysql_dir/bin/mysql_config"
+         cpan> install Data::Dumper
+         cpan> install DBI
+         cpan> force install DBD::mysql
+
+-------------------------------------------------
+-------------------------------------------------
+V. MySQL Server Optimization
    
    - please see the mysqlConfigurationGuide.txt document provided in the orthomcl download.
 
 
 -------------------------------------------------
 -------------------------------------------------
-V. Troublshooting Installation Issues
+VI. Troublshooting Installation Issues
 
    The MySQL server logs all status and error messages in a file called
 yourhost.err, where yourhost is the name of your machine. The file is located 
