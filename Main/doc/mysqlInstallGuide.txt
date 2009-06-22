@@ -178,20 +178,20 @@ IV. Installing the Required PERL Modules for MySQL
          2. Configure your environment by adding the following to your
             .bash_profile file in your home directory:
   
-              ######################################
-              if [ -z "$PERL5LIB" ]
-                then
-	         # If PERL5LIB wasn't previously defined, set it...
+               ######################################
+               if [ -z "$PERL5LIB" ]
+                 then
+	          # If PERL5LIB wasn't previously defined, set it...
 	          PERL5LIB=~/myperl/lib
-               else
-	         # ...otherwise, extend it.
+                else
+	          # ...otherwise, extend it.
  	          PERL5LIB=$PERL5LIB:~/myperl/lib
-              fi
+               fi
 
-              MANPATH=$MANPATH:~/myperl/man
+               MANPATH=$MANPATH:~/myperl/man
 
-              export PERL5LIB MANPATH
-              ######################################
+               export PERL5LIB MANPATH
+               ######################################
 
           3. Create the necessary directories and process your .bash_profile:
   
@@ -199,7 +199,7 @@ IV. Installing the Required PERL Modules for MySQL
                 $ mkdir -p ~/myperl/man/man{1,3}
                 $ source ~/.bash_profile
  
-          4. Confirm that your custom paths have been set:
+          4. Confirm that your custom per5lib paths have been set:
 
                 $ perl -wle'print for grep /myperl/, @INC'
 
@@ -233,15 +233,16 @@ IV. Installing the Required PERL Modules for MySQL
                 Your choice:  [] UNINST=0
 
 
-           6. Install the modules that you have determined you need:
+           6. Set your mysql PATH, and install the modules that you have determined 
+              you need:
  
-                $ perl -MCPAN -we shell
-                cpan> o conf makepl_arg "mysql_config=/path_to_your_mysql_dir/bin/mysql_config"
-                cpan> install Data::Dumper
-                cpan> install DBI
-                cpan> force install DBD:mysql
+                 $ PATH=$PATH:/path_to_your_mysql_directory/bin
+                 $ export PATH
+                 $ perl -MCPAN -we shell
+                 cpan> install Data::Dumper
+                 cpan> install DBI
+                 cpan> force install DBD:mysql
                             
-
 -------------------------------------------------
 -------------------------------------------------
 V. MySQL Server Optimization
