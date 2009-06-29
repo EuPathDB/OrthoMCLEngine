@@ -13,6 +13,7 @@ my $configFile = $ARGV[0];
 my $logFile = $ARGV[1];
 my $clean = $ARGV[2];
 my $restart = $ARGV[3];
+my $taxonFilter = $ARGV[4];
 
 my $stepCount = 1;
 my @steps = ( # Common
@@ -76,10 +77,25 @@ $clean = $1;
 
 my $skipPast;
 if ($restart) {
-  usage() unless $restart =~ /startAfter=(.*)/;
-  $skipPast = $stepsHash->{$1};
-  die "invalid restart arg $restart" unless $skipPast;
+  if ($restart =~ /taxonFilter=/) {
+      $taxonFilter = $restart;
+  } else { 
+      usage() unless $restart =~ /startAfter=(.*)/;
+      $skipPast = $stepsHash->{$1};
+      die "invalid restart arg $restart" unless $skipPast;
+  }
 }
+
+my $andTaxonFilter = "";
+my $whereTaxonFilter = "";
+if ($taxonFilter) {
+    die "illegal argument '$taxonFilter'\n" unless $taxonFilter =~ /taxonFilter=(.*)/;
+    my $taxon = $1;
+    my $subjFilter = "and subject_taxon_id != '$taxon'";
+    $andTaxonFilter = "and query_taxon_id != '$taxon' $subjFilter";
+    $whereTaxonFilter = "where query_taxon_id != '$taxon' $subjFilter";
+} 
+ 
 
 open (LOGFILE, ">>$logFile") || die "Can't open log file '$logFile'\n";
 my $oldfh = select(LOGFILE); $| = 1; select($oldfh);  # flush print buffer
@@ -188,7 +204,7 @@ from $sst s, BestQueryTaxonScore cutoff
 where s.query_id = cutoff.query_id
   and s.subject_taxon_id = cutoff.subject_taxon_id
   and s.query_taxon_id != s.subject_taxon_id
-  and s.evalue_exp <= $evalueExpThreshold
+  and s.evalue_exp <= $evalueExpThreshold $andTaxonFilter
   and s.percent_match >= $percentMatchThreshold
   and (s.evalue_mant < 0.01
        or s.evalue_exp = cutoff.evalue_exp
@@ -274,7 +290,7 @@ create unique index bis_uids_ix on BestInterTaxonScore(query_id)
 
    $sql = "
 create table UniqueSimSeqsQueryId $oracleNoLogging as
-select distinct query_id from $sst
+select distinct s.query_id from $sst s $whereTaxonFilter
 ";
 
   runSql($sql, "create UniqueSimSeqsQueryId", 'uniqueSimSeqsQueryId', '25 min', undef);
@@ -296,7 +312,7 @@ select s.query_id, s.subject_id,
        s.query_taxon_id as taxon_id,
        s.evalue_exp, s.evalue_mant
 from $sst s, BestInterTaxonScore bis
-where s.query_id != s.subject_id
+where s.query_id != s.subject_id $andTaxonFilter
   and s.query_taxon_id = s.subject_taxon_id
   and s.query_id = bis.query_id
   and s.evalue_exp <= $evalueExpThreshold
@@ -310,7 +326,7 @@ where s.query_id != s.subject_id
 union
 select s.query_id, s.subject_id, s.query_taxon_id as taxon_id, s.evalue_exp, s.evalue_mant
 from $sst s
-where s.query_taxon_id = s.subject_taxon_id
+where s.query_taxon_id = s.subject_taxon_id $andTaxonFilter
   and s.evalue_exp <= $evalueExpThreshold
   and s.percent_match >= $percentMatchThreshold
   and s.query_id in 
@@ -567,7 +583,7 @@ select candidate.sequence_id_a, candidate.sequence_id_b,
             + ab.evalue_exp + ba.evalue_exp) / -2
        end as unnormalized_score
 from $sst ab, $sst ba, CoOrthologNotOrtholog candidate
-where ab.query_id = candidate.sequence_id_a
+where ab.query_id = candidate.sequence_id_a $taxonFilter
   and ab.subject_id = candidate.sequence_id_b
   and ab.evalue_exp <= $evalueExpThreshold
   and ab.percent_match >= $percentMatchThreshold
