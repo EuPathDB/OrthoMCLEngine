@@ -171,6 +171,8 @@ Make a directory to hold the data and results for your run of orthomcl.  In this
 
 In the orthomclSoftware/doc/Main/OrthoMCLEngine directory is a file called orthomcl.config.template.  Copy that file to my_orthomcl_dir/orthomcl.config, and edit the new file according to the following instructions.
 
+In the examples below, it is assumed that your MySql server has a database called 'orthomcl'.  You can either create one (go into the server and run 'create database orthomcl') or use an existing database, and change the dbConnectString accordingly.
+
 dbVendor=
   - either 'oracle' or 'mysql'
   - used by orthomclInstallSchema, orthomclLoadBlast, orthomclPairs
@@ -179,7 +181,7 @@ dbConnectString=
   - examples are:
      dbi:Oracle:orthomcl                 (for an oracle database with service name 'orthomcl')
      dbi:MySql:orthomcl                  (for a centrally installed mysql server with a database called 'orthomcl')
-     dbi:MySql:orthomcl:localhost:3307   (for a user installed mysql server on port 3307)
+     dbi:MySql:orthomcl:localhost:3307   (for a user installed mysql server on port 3307 with a database called 'orthomcl')
   - used by orthomclInstallSchema, orthomclLoadBlast, orthomclPairs, orthomclDumpPairsFiles
 dbLogin=
   - your database login name
