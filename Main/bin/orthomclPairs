@@ -24,10 +24,10 @@ my @steps = ( # Common
 	     ['bestHit', ['drop table BestQueryTaxonScore']],
              ['best_hit_ix'],
 	     ['ortholog', ['drop table BestHit']],
-	     ['orthologTaxon', [ 'drop table OrthologTemp']],
+	     ['orthologTaxon'],
 	     ['orthologAvg'],
 	     ['orthologAvgIndex'],
-	     ['orthologsNormalization', ['drop table OrthologAvgScore', 'drop table OrthologTaxon']],
+	     ['orthologsNormalization', ['drop table OrthologAvgScore', 'drop table OrthologTaxon', 'drop table OrthologTemp']],
              # InParalog
 	     ['bestInterTaxonScore'],
              ['bis_uids_ix'],
@@ -55,10 +55,10 @@ my @steps = ( # Common
 	     ['coOrthologNotOrtholog', ['drop table CoOrthologCandidate']],
 	     ['coOrthologNotOrthologIndex'],
 	     ['coOrtholog', ['drop table CoOrthologNotOrtholog']],
-	     ['coOrthologTaxon', [ 'drop table CoOrthologTemp']],
+	     ['coOrthologTaxon'],
 	     ['coOrthologAvg'],
 	     ['coOrthologAvgIndex'],
-	     ['coOrthologsNormalization', ['drop table CoOrthologAvgScore', 'drop table CoOrthologTaxon']],
+	     ['coOrthologsNormalization', ['drop table CoOrthologAvgScore', 'drop table CoOrthologTaxon', 'drop table CoOrthologTemp']],
 	     ['cleanall', ['truncate table InParalog', 'truncate table Ortholog', 'truncate table CoOrtholog']],
 	    );
 
