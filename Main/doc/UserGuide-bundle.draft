@@ -1,0 +1,85 @@
+
+Requirements
+    - Perl 5.8 or better (perl -v)
+    - bash 3.2 (bash --version)
+    - Linux 2.2.5 (uname -r)
+
+OrthoMCL package
+    - preconfigured mysql database and perl libraries included
+
+
+OrthoMCL base
+    - you provide an external database server
+
+/////////////////////////////////////////////////////////////////////
+
+
+build OrthoMCLEngine install /home/mheiges/OrthoMCL -append
+
+!! s/install/distributable (make allowable in build.pl)
+    !! reorganize docs
+    !! remove gus.config
+
+/////////////////////////////////////////////////////////////////////
+
+!! Notes using Linux and bash shell
+
+!! lookup what shell I'm using
+[mheiges@10 opt]$ echo $SHELL
+/bin/bash
+
+!! download blast
+[mheiges@10 ~]$ curl -O ftp://ftp.ncbi.nlm.nih.gov/blast/executables/LATEST/blast-2.2.21-ia32-linux.tar.gz
+
+!! unpack
+tar zxf blast-2.2.21-ia32-linux.tar.gz
+
+!! now have a blast-2.2.21 directory, can delete the downloaded file
+rm blast-2.2.21-ia32-linux.tar.gz
+
+!! add blast to command search path
+export PATH=/home/mheiges/blast-2.2.21/bin:$PATH
+
+!! add orthomcl scripts to command search path
+[mheiges@10 OrthoMCL]$ export PATH=/home/mheiges/OrthoMCL/bin/:$PATH
+
+!! for personal organization, create space for working, separate from OrthoMCL 
+!! distribution directory.
+[mheiges@10 ~]$ mkdir orthomcl_workspace
+
+[mheiges@10 ~]$ cd orthomcl_workspace/
+
+!! get sample data to play with
+[mheiges@10 orthomcl_workspace]$ cp -a ~/OrthoMCL/sample_data .
+
+[mheiges@10 OrthoMCL]$ orthomclFilterFasta sample_data 10 20
+
+!! got expected goodProteins.fasta and poorProteins.fasta files
+[mheiges@10 orthomcl_workspace]$ dir
+total 56
+-rw-rw-r-- 1 mheiges mheiges 40737 2009-08-04 04:11 goodProteins.fasta
+-rw-rw-r-- 1 mheiges mheiges     0 2009-08-04 04:11 poorProteins.fasta
+drwxr-xr-x 2 mheiges mheiges  4096 2009-08-04 04:02 sample_data/
+
+
+[mheiges@10 orthomcl_workspace]$ formatdb -p -i goodProteins.fasta -t 'OrthoMCL'
+
+!! "-m8" is critical (it specifies tab-delimited output), otherwise don't 
+!! trust the other cutoffs and stat settings for your experiments.
+blastall -p blastp -i goodProteins.fasta -d goodProteins.fasta -e 1 -o all_vs_all.out -m8 -a 2 -v 1000 -b 1000
+
+
+!! confirm the blast result has tab delimited data
+[mheiges@10 orthomcl_workspace]$ head all_vs_all.out
+scer|YAL029c	scer|YAL029c	100.00	1471	0	0	1	1471	1	1471	0.0	3012
+scer|YAL029c	scer|YOR326w	50.10	1511	654	20	1	1420	1	1502	0.0	1393
+scer|YAL029c	hsap|Hs10835119	43.62	940	480	16	7	931	11	915	0.0	 766
+scer|YAL029c	hsap|Hs10835119	23.26	129	96	1	1280	1405	1668	1796	1e-07	48.9
+scer|YAL029c	atha|At1g04160	38.03	1007	547	21	5	1003	9	946	0.0	 647
+scer|YAL029c	atha|At1g04160	28.16	103	71	1	1264	1363	1288	1390	0.21	27.7
+
+
+!! these files now need to be isolated in a dir for orthomclBlastParser (FIX THIS)
+[mheiges@10 orthomcl_workspace]$ cp poorProteins.fasta goodProteins.fasta orthoFilterOut/
+
+[mheiges@10 orthomcl_workspace]$ orthomclBlastParser all_vs_all.out orthoFilterOut > load.input
