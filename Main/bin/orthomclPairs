@@ -1,9 +1,10 @@
 #!/usr/bin/perl
 
-use DBI;
 use FindBin;
 use lib "$FindBin::Bin/../lib/perl";
+use DBI;
 use OrthoMCLEngine::Main::Base;
+use Carp;
 use strict;
 
 
@@ -684,7 +685,7 @@ sub runSql {
       print LOGFILE localtime() . "   $msg  (Benchmark dataset took $sampleTime for this step)\n";
 
       my $stmt = $dbh->prepare($sql) or die DBI::errstr;
-      $stmt->execute() or die DBI::errstr;
+      $stmt->execute() or croak DBI::errstr;
 
       &analyzeStats($tableToAnalyze) if ($tableToAnalyze);
 
