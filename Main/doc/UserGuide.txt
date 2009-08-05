@@ -46,9 +46,9 @@ We base hardware requirements and time estimates on this benchmark dataset.  The
 ========= Requirements ============================
 ===================================================
 
-(1) UNIX
-  - The OrthoMCL Pairs program has only been tested on UNIX
-  - The MCL program is UNIX compatible only
+(1) Linux
+  - The OrthoMCL Pairs program has only been tested on Linux. Unix and Cygwin may work but are not supported at this time.
+  - The MCL program is Linux/Unix compatible only
 
 (2) BLAST
   - we recommend NCBI BLAST for two reasons
