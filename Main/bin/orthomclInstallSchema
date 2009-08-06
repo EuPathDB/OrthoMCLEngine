@@ -1,8 +1,8 @@
 #!/usr/bin/perl
 
-use DBI;
 use FindBin;
 use lib "$FindBin::Bin/../lib/perl";
+use DBI;
 use OrthoMCLEngine::Main::Base;
 use strict;
 
