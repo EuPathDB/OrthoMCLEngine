@@ -40,6 +40,25 @@ rm blast-2.2.21-ia32-linux.tar.gz
 !! add blast to command search path
 export PATH=/home/mheiges/blast-2.2.21/bin:$PATH
 
+
+!! download MCL
+[mheiges@localhost ~]$ curl -O http://micans.org/mcl/src/mcl-09-182.tar.gz
+!! unpack
+[mheiges@localhost ~]$ tar zxf mcl-09-182.tar.gz 
+[mheiges@localhost ~]$ cd mcl-09-182
+!! --prefix defines where mcl will be installed
+[mheiges@localhost mcl-09-182]$ ./configure  --prefix /home/mheiges/mcl
+[mheiges@localhost mcl-09-182]$ make
+[mheiges@localhost mcl-09-182]$ make install
+
+export PATH=/home/mheiges/mcl/bin:$PATH
+!! confirm that mcl runs
+[mheiges@localhost mcl-09-182]$ mcl
+[mcl] usage: mcl <-|file name> [options], do 'mcl -h' or 'man mcl' for help
+
+!! can now delete download and source files
+[mheiges@localhost ~]$ rm -rf mcl-09-182 mcl-09-182.tar.gz 
+
 !! add orthomcl scripts to command search path
 [mheiges@10 OrthoMCL]$ export PATH=/home/mheiges/OrthoMCL/bin/:$PATH
 
@@ -83,3 +102,29 @@ scer|YAL029c	atha|At1g04160	28.16	103	71	1	1264	1363	1288	1390	0.21	27.7
 [mheiges@10 orthomcl_workspace]$ cp poorProteins.fasta goodProteins.fasta orthoFilterOut/
 
 [mheiges@10 orthomcl_workspace]$ orthomclBlastParser all_vs_all.out orthoFilterOut > load.input
+
+!! edit OrthoMCL/config/orthoConfig.txt (need to make default good enough)
+!! need to not have to specify path to orthoConfig.txt
+!! It doesn't matter what the username/password is for the built in mysql
+!! because we're running skip-grant-tables
+[mheiges@10 orthomcl_workspace]$ orthomclLoadBlast ../OrthoMCL/config/orthoConfig.txt load.input  
+
+
+!! had to "cleanup=no". "cleanup=yes" caused "Table 'orthomcl.BestQueryTaxonScore' doesn't exist"
+[mheiges@localhost orthomcl_workspace]$ orthomclPairs ~/OrthoMCL/config/orthoConfig.txt log_file cleanup=no
+
+[mheiges@localhost orthomcl_workspace]$ orthomclDumpPairsFiles ~/OrthoMCL/config/orthoConfig.txt 
+pairs/
+        0 2009-08-05 18:46 coorthologs.txt
+    18262 2009-08-05 18:46 inparalogs.txt
+        0 2009-08-05 18:46 orthologs.txt
+mclInput
+
+
+
+[mheiges@localhost orthomcl_workspace]$ mcl mclInput  --abc -I 1.5 -o mclOutput
+!! confirm output
+[mheiges@localhost orthomcl_workspace]$ head -n1 mclOutput 
+scer|YAL029c	scer|YOR326w	scer|YHR023w	scer|YMR109w	scer|YKL129c	atha|At1g04160	atha|At5g20490	hsap|Hs10835119	atha|At3g19960	atha|At5g54280	hsap|Hs4505301	hsap|Hs11024712	hsap|Hs4885503	hsap|Hs7705901
+
+[mheiges@localhost orthomcl_workspace]$ orthomclMclToGroups MSH_ 1 < mclOutput > groups.txt
