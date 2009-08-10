@@ -1,14 +1,26 @@
-# this config assumes a mysql database named 'orthomcl'.  adjust according
-# to your situation.
-dbVendor=mysql 
-dbConnectString=dbi:mysql:orthomcl:3307
-dbLogin=
-dbPassword=
+
+# mysql or oracle
+dbVendor=mysql
+
+# If supplying your own database,  
+# dbConnectString=dbi:mysql:orthomcl:3307
+dbConnectString=builtin
+
+dbLogin=null
+dbPassword=null
+
+# 
 similarSequencesTable=SimilarSequences
 orthologTable=Ortholog
 inParalogTable=InParalog
 coOrthologTable=CoOrtholog
 interTaxonMatchView=InterTaxonMatch
+
+# Oracle only
+oracleIndexTblSpc=NONE
+
+# orthomclPairs
 percentMatchCutoff=50
 evalueExponentCutoff=-5
-oracleIndexTblSpc=NONE
+
+
