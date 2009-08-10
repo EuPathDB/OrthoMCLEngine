@@ -155,7 +155,7 @@ Use this command to unpack the software:
   tar -xf orthomclSoftware.tar
 
 The result will be this:
-  orthomclSoftware/
+  OrthoMCL/
     bin/
      ...
     doc/
@@ -164,12 +164,12 @@ The result will be this:
     lib/
 
 The bin/ directory has a set of programs.  To run the programs you will need to either:
-  a) include the orthomclSoftware/bin directory in your PATH
+  a) include the OrthoMCL/bin directory in your PATH
   b) call the programs using their full directory path
 
 Make a directory to hold the data and results for your run of orthomcl.  In this document we will call that directory "my_orthomcl_dir".
 
-In the orthomclSoftware/doc/Main/OrthoMCLEngine directory is a file called orthomcl.config.template.  Copy that file to my_orthomcl_dir/orthomcl.config, and edit the new file according to the following instructions.
+In the OrthoMCL/doc/OrthoMCLEngine/Main directory is a file called orthomcl.config.template.  Copy that file to my_orthomcl_dir/orthomcl.config, and edit the new file according to the following instructions.
 
 In the examples below, it is assumed that your MySql server has a database called 'orthomcl'.  You can either create one (go into the server and run 'create database orthomcl') or use an existing database, and change the dbConnectString accordingly.
 
@@ -222,7 +222,8 @@ Run the orthmclInstallSchema program to install the schema. (Run the program wit
 
 Benchmark time: < 1 min
 
-
+!! Skip this if you already have valid fasta files
+!! Fix this. If user skips this then compliant files won't be in compliantFasta directory
 ========== Step 5: orthomclAdjustFasta ==========
 Input: 
   - fasta files as acquired from the genome resource.
@@ -240,6 +241,11 @@ Then, create an empty my_orthomcl_dir/compliantFasta/ directory, and change to t
 Benchmark time: < 1 min per genome
 
 
+!! Fix this. doc doesn't match script args
+!! Fix this. Should create dir and  output to it
+!! Fix this. Improve file names. ?.fasta and rejects
+!! Fix this. following these instructions puts goodProteins in my_orthomcl_dir 
+!!   mixed with other files.
 ======== Step 6: orthomclFilterFasta ===========
 Input: 
   - my_orthomcl_dir/compliantFasta/ 
@@ -291,7 +297,9 @@ Output:
 
 This step parses NCBI BLAST -m 8 output into the format that can be loaded into the orthomcl database. 
 
-Use the orthomclBlastParser program for this.   In addition to formatting, it computes the percent match of each hit, which is tricky (see the perl code if you are a super-power user.)
+Use the orthomclBlastParser program for this.   In addition to formatting, it computes the percent match of each hit, 
+!! Fix this. Who gives a fsck?. Take this out.
+which is tricky (see the perl code if you are a super-power user.)
 
 orthomclBlastParser my_blast_results compliantFasta >> similarSequences.txt
 
@@ -313,6 +321,11 @@ Use the orthomclLoadBlast program for this.
 Benchmark time: 4 hours
 
 
+!! Fix this. cleanup=all drops tables then exits (doesn't then compute pairs).
+!! make clearer in doc
+!!
+!! Fix this. cleanup=yes 
+!! "execute failed: Table 'orthomcl.BestQueryTaxonScore' doesn't exist"
 ========= Step 10: orthomclPairs =========
 Input:
   - SimilarSequences table in the database
@@ -332,6 +345,10 @@ Because this program will run for many hours, we recommend you run it using the 
 Benchmark time: 16 hours
 
 
+!! why is percentMatchCutoff and evalueExponentCutoff in
+!! the config file instead of passed as args (no other script,
+!! orthomclFilterFasta, has cutoffs in the config file)
+!!
 ========== Step 11: orthomclDumpPairsFiles ========
 Input:
   - database with populated pairs tables
@@ -359,12 +376,14 @@ Benchmark time: 3 hours
 Input:
   - mclOutput file
 Output:
-  - groups.txt
+  - mclOutput.grp
 
 Change to my_orthomcl_dir and run:
-  orthomclMclToGroups my_prefix 1000 < mclOutput > groups.txt
+  orthomclMclToGroups my_prefix 1000 mclOutput
 
 my_prefix is an arbitrary string to use as a prefix for your group IDs.
+
+The group file output will will be named after the mclOutput file with '.grp' appended.
 
 Benchmark time: 1 min
 
