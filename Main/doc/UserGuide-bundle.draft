@@ -113,6 +113,9 @@ scer|YAL029c	atha|At1g04160	28.16	103	71	1	1264	1363	1288	1390	0.21	27.7
 !! had to "cleanup=no". "cleanup=yes" caused "Table 'orthomcl.BestQueryTaxonScore' doesn't exist"
 [mheiges@localhost orthomcl_workspace]$ orthomclPairs ~/OrthoMCL/config/orthoConfig.txt log_file cleanup=no
 
+!! "orthomclPairs orthomcl.config log_file cleanup=all"
+!! deletes pair tables and exits. Should make clear in docs.
+
 [mheiges@localhost orthomcl_workspace]$ orthomclDumpPairsFiles ~/OrthoMCL/config/orthoConfig.txt 
 pairs/
         0 2009-08-05 18:46 coorthologs.txt
