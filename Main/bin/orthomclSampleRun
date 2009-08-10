@@ -61,3 +61,14 @@ echo "running orthomclDumpPairsFiles"
 orthomclDumpPairsFiles $WORK_DIR/orthomcl.config
 [[ "$?" -eq "0" ]] || { echo "FAILED"; exit 1; }
 
+
+echo "running mcl"
+mcl $WORK_DIR/mclInput  --abc -I 1.5 -o $WORK_DIR/mclOutput
+[[ "$?" -eq "0" ]] || { echo "FAILED"; exit 1; }
+
+
+echo "running orthomclMclToGroups"
+orthomclMclToGroups MSH_ 1 $WORK_DIR/mclOutput
+[[ "$?" -eq "0" ]] || { echo "FAILED"; exit 1; }
+
+echo "done"
