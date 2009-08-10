@@ -1,6 +1,8 @@
 package OrthoMCLEngine::Main::Base;
 
 use strict;
+use FindBin;
+use lib "$FindBin::Bin/../lib/perl";
 use DBI;
 
 sub new {
@@ -21,6 +23,7 @@ sub parseConfigFile {
   while(<F>) {
     chomp;
     s/\s+$//;
+    next if /^\s*$/;
     next if /^\#/;
     /^(\w+)\=(.+)/ || die "illegal line in config file '$_'\n";
     my $key=$1;
@@ -52,8 +55,12 @@ sub getDbh {
     } else {
       die "config file '$self->{configFile}' has invalid value '$dbVendor' for dbVendor property\n";
     }
-
-    $self->{dbh} = DBI->connect($self->getConfig("dbConnectString"),
+    
+    my $dbConnectString = ($self->getConfig("dbConnectString") eq 'builtin') ?
+        "dbi:mysql:orthomcl:mysql_socket=$FindBin::Bin/../db/tmp/myortho.sock"
+        : $self->getConfig("dbConnectString");
+        
+    $self->{dbh} = DBI->connect($dbConnectString,
 				$self->getConfig("dbLogin"),
 				$self->getConfig("dbPassword")) or die DBI::errstr;
   }
