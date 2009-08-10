@@ -1,0 +1,63 @@
+#!/bin/sh
+
+PATH=/home/mheiges/OrthoMCL/bin:$PATH
+PATH=/home/mheiges/mcl/bin:$PATH
+PATH=/home/mheiges/blast-2.2.21/bin:$PATH
+export PATH
+
+WORK_DIR=/home/mheiges/my_orthomcl_dir
+ORTHO_DIST=/home/mheiges/OrthoMCL
+
+mkdir $WORK_DIR
+
+cd $WORK_DIR
+
+echo "copying orthomcl.config"
+cp $ORTHO_DIST/doc/OrthoMCLEngine/Main/orthomcl.config.template $WORK_DIR/orthomcl.config 
+[[ "$?" -eq "0" ]] || { echo "FAILED"; exit 1; }
+
+echo "copying sample data to compliantFasta/"
+cp -r $ORTHO_DIST/doc/OrthoMCLEngine/Main/sample_data $WORK_DIR/compliantFasta
+[[ "$?" -eq "0" ]] || { echo "FAILED"; exit 1; }
+
+echo "resetting the builtin database"
+orthomclPairs orthomcl.config log_file cleanup=all
+echo y | orthomclInstallSchema orthomcl.config  --reset
+[[ "$?" -eq "0" ]] || { echo "FAILED"; exit 1; }
+
+cd $WORK_DIR
+
+echo "running orthomclFilterFasta"
+orthomclFilterFasta $WORK_DIR/compliantFasta 10 20
+[[ "$?" -eq "0" ]] || { echo "FAILED"; exit 1; }
+
+echo "running formatdb"
+formatdb -p -i $WORK_DIR/goodProteins.fasta
+[[ "$?" -eq "0" ]] || { echo "FAILED"; exit 1; }
+
+cd $WORK_DIR
+
+echo "running blastall"
+blastall -p blastp \
+    -i $WORK_DIR/goodProteins.fasta \
+    -d goodProteins.fasta \
+    -o all_vs_all.out \
+    -e 1 -m8 -a 2 -v 1000 -b 1000
+[[ "$?" -eq "0" ]] || { echo "FAILED"; exit 1; }
+
+echo "running orthomclBlastParser"
+orthomclBlastParser all_vs_all.out $WORK_DIR/compliantFasta/ > $WORK_DIR/similarSequences.txt
+[[ "$?" -eq "0" ]] || { echo "FAILED"; exit 1; }
+
+echo "running orthomclLoadBlast"
+orthomclLoadBlast $WORK_DIR/orthomcl.config $WORK_DIR/similarSequences.txt 
+[[ "$?" -eq "0" ]] || { echo "FAILED"; exit 1; }
+
+echo "running orthomclPairs"
+orthomclPairs $WORK_DIR/orthomcl.config log_file cleanup=no
+[[ "$?" -eq "0" ]] || { echo "FAILED"; exit 1; }
+
+echo "running orthomclDumpPairsFiles"
+orthomclDumpPairsFiles $WORK_DIR/orthomcl.config
+[[ "$?" -eq "0" ]] || { echo "FAILED"; exit 1; }
+
