@@ -4,10 +4,33 @@ use FindBin;
 use lib "$FindBin::Bin/../lib/perl";
 use DBI;
 use OrthoMCLEngine::Main::Base;
+use Getopt::Long;
+use Carp;
 use strict;
+
+$|=1;
 
 
 usage() unless (@ARGV >= 1);
+
+my $reset = '';
+GetOptions ('reset!' => \$reset);
+
+my $do_drop_tables = 0;
+
+if ($reset) { 
+  print "'--reset' will cause deletion of any existing data in the database.\n";
+  print "Do you want to continue? Y/N :";
+  my $ans = <STDIN>;
+  if ($ans !~ m/^y|Y$/) {
+    print "quitting\n";
+    exit 1;
+  }
+  print "\n";
+  $do_drop_tables = 1;
+}
+
+
 my $configFile = $ARGV[0];
 my $sqlLog = $ARGV[1];
 
@@ -21,8 +44,11 @@ if ($sqlLog) {
 my $dbVendor;
 my $intType = ($dbVendor eq 'oracle') ? 'NUMBER' : 'INT';
 my $oracleNoLogging = $base->getConfig("dbVendor") eq 'oracle'? " NOLOGGING" : "";
-my $oracleIndexTblSpc = $base->getConfig("oracleIndexTblSpc");
+my $oracleIndexTblSpc = $base->getConfig("dbVendor") eq 'oracle'? 
+    $base->getConfig("oracleIndexTblSpc") : "";
 $oracleIndexTblSpc =~ s/\s//g;
+
+($do_drop_tables == 1) && dropBaseTables();
 
 createSimilarSequencesTable();
 createInParalogTable();
@@ -31,6 +57,42 @@ createCoOrthologTable();
 createInterTaxonMatchView();
 
 ##############################################################
+
+sub dropBaseTables {
+    my @baseViews = (
+        $base->getConfig("interTaxonMatchView"),
+    );
+    
+    my @baseTables = (
+        $base->getConfig("similarSequencesTable"),
+        $base->getConfig("inParalogTable"),
+        $base->getConfig("orthologTable"),
+        $base->getConfig("coOrthologTable"),
+    );
+    
+    my @indexes = (
+         { 'ortholog_seq_a_ix' => $base->getConfig("orthologTable") },
+         { 'ortholog_seq_b_ix' => $base->getConfig("orthologTable") },
+    );
+
+    for my $view (@baseViews) {
+        warn "Dropping $view\n";
+        eval { local $SIG{'__WARN__'} = \&missingOK; runSql("DROP VIEW $view"); }
+    }
+    
+    for my $table (@baseTables) {
+        warn "Dropping $table\n";
+        eval { local $SIG{'__WARN__'} = \&missingOK; runSql("DROP TABLE $table"); }
+    }
+    
+    for my $idx_tbl (@indexes) {
+        my ($index) = keys %$idx_tbl;
+        my $table = $idx_tbl->{$index};
+        warn "Dropping $index on $table\n";
+        eval { local $SIG{'__WARN__'} = \&missingOK; runSql("DROP INDEX $index on $table"); }
+    }
+    
+}
 
 sub createSimilarSequencesTable {
   my $sst = $base->getConfig("similarSequencesTable");
@@ -141,14 +203,22 @@ sub runSql {
  if ($sqlLog) {
      logSql($sql);
     }
-  my $stmt = $dbh->prepare($sql) or die DBI::errstr;
-      $stmt->execute() or die DBI::errstr;
+  my $stmt = $dbh->prepare($sql) || croak DBI::errstr . "\n";
+  $stmt->execute() || croak DBI::errstr . "\n";
 }
 
 
 sub logSql {
   my $sql = $_[0];
   print LOGFILE "\n$sql";
+}
+
+sub missingOK {
+    return if $_[0] =~ m/Unknown table/;
+    return if $_[0] =~ m/Table .+ doesn't exist/;
+    print $_[0];
+    print "quitting\n";
+    exit 1;
 }
 
 sub usage {
@@ -161,7 +231,7 @@ where:
   config_file : see below
   sql_log_file : optional log of sql executed
 
-EXAMPLE: orthomclSoftware/bin/orthomclInstallSchema my_orthomcl_dir/orthomcl.config my_orthomcl_dir/install_schema.log
+EXAMPLE: orthomclInstallSchema my_orthomcl_dir/orthomcl.config my_orthomcl_dir/install_schema.log
 
 NOTE: the database login in the config file must have update/insert/truncate privileges on the tables specified in the config file.
 
