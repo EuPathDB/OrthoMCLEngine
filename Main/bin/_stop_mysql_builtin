@@ -1,0 +1,32 @@
+#!/bin/sh
+#
+# Shutdown a user instance of MySQL
+
+BASE_DIR=$( dirname $( readlink -f -- "${0%/*}" ))
+THIS="$(basename "$0")"
+
+PID_FILE="$BASE_DIR/db/tmp/myortho.pid"
+
+if cat $PID_FILE; then
+   pid=`cat $PID_FILE`
+   echo $(date) "Stopping MySQL server" >> $BASE_DIR/db/tmp/myortho.log
+   kill -15 $pid
+else
+   echo "ERROR: No pid file exists for this host."
+   echo "Check to ensure that MySQL is actually running."
+   exit 1
+fi
+   
+
+count=0
+while [[ -f "$PID_FILE" && $count -lt 10 ]]; do 
+    sleep 1
+    let "count += 1"
+done
+
+if [[ -f "$PID_FILE" && $count -ge 10 ]]; then
+    echo "WARN: $THIS $PID_FILE persists; unable to stop mysql?"
+    exit 1
+fi
+
+exit 0

@@ -1,0 +1,46 @@
+#!/bin/bash 
+#
+# Start a user instance of MySQL
+#
+
+BASE_DIR=$( dirname $( readlink -f -- "${0%/*}" ))
+THIS="$(basename "$0")"
+SOCKET="$BASE_DIR/db/tmp/myortho.sock"
+
+MYSQL_SO="$(find $BASE_DIR -name mysql.so)";
+
+# change security level of mysql.so per SeLinux restrictions
+if [[ -e "$MYSQL_SO" ]]; then
+  chcon -t textrel_shlib_t "$MYSQL_SO" 2>&1 >> $BASE_DIR/db/tmp/myortho.log
+fi
+
+echo $(date) "Starting MySQL server" >> $BASE_DIR/db/tmp/myortho.log
+cd $HOME/OrthoMCL/db
+./bin/mysqld_safe \
+     --defaults-file=$BASE_DIR/config/mysql.cnf \
+     --basedir=$BASE_DIR/db \
+     --skip-networking \
+     --skip-grant-tables \
+     --skip-innodb \
+     --datadir=$BASE_DIR/db/data \
+     --socket=$SOCKET  \
+     --key_buffer_size=64M  \
+     --myisam-recover \
+     --tmpdir=$BASE_DIR/db/tmp  \
+     --pid-file=$BASE_DIR/db/tmp/myortho.pid  \
+     --language=$BASE_DIR/db/share/english  \
+     --log-error=$BASE_DIR/db/tmp/myortho.log 2>&1 \
+     >> $BASE_DIR/db/tmp/myortho.log &
+
+count=0
+while [[ ! -S "$SOCKET" && $count -lt 10 ]]; do 
+    sleep 1
+    let "count += 1"
+done
+
+if [[ ! -S "$SOCKET" && $count -ge 10 ]]; then
+    echo "WARN: $THIS unable to start mysql or find its socket"
+    exit 1
+fi
+
+exit 0

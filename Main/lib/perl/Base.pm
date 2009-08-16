@@ -4,6 +4,8 @@ use strict;
 use FindBin;
 use lib "$FindBin::Bin/../lib/perl";
 use DBI;
+use base 'Exporter';
+our @EXPORT = qw(startBuiltInMysql stopBuiltInMysql);
 
 sub new {
   my ($class, $configFile, $loghandle) = @_;
@@ -67,3 +69,24 @@ sub getDbh {
   return $self->{dbh};
 }
 1;
+
+
+sub startBuiltInMysql {
+    my ($dbConnectString) = @_;
+    return if $dbConnectString ne 'builtin';
+
+    my $BIN_DIR = "$FindBin::Bin";
+    my $cmd = "$BIN_DIR/_start_mysql_builtin";
+    my $rt = system($cmd);
+    die "FAIL: unable to continue due to previous errors. Quitting.\n" if ($rt);
+}
+
+sub stopBuiltInMysql {
+    my ($dbConnectString) = @_;
+    return if $dbConnectString ne 'builtin';
+
+    my $BIN_DIR = "$FindBin::Bin";
+    my $cmd = "$BIN_DIR/_stop_mysql_builtin";
+    my $rt = system($cmd);
+    die "FAIL: unable to continue due to previous errors. Quitting.\n" if ($rt);
+}
