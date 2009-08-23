@@ -1,0 +1,15 @@
+--- Makefile.in.dist	2009-08-16 00:57:14.000000000 -0400
++++ Makefile.in	2009-08-16 00:59:17.000000000 -0400
+@@ -408,10 +408,8 @@
+ 			@readline_topdir@ sql-common scripts \
+ 			@pstack_dir@ \
+ 			@sql_union_dirs@ unittest storage plugin \
+-			@sql_server@ @man_dirs@ tests \
+-			netware @libmysqld_dirs@ \
+-			mysql-test support-files sql-bench @tools_dirs@ \
+-			win
++			@sql_server@ @man_dirs@ \
++			@libmysqld_dirs@
+ 
+ DIST_SUBDIRS = . include Docs zlib \
+ 			cmd-line-utils sql-common scripts \
