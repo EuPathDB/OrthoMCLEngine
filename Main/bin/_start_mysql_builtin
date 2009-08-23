@@ -15,13 +15,12 @@ if [[ -e "$MYSQL_SO" ]]; then
 fi
 
 echo $(date) "Starting MySQL server" >> $BASE_DIR/db/tmp/myortho.log
-cd $HOME/OrthoMCL/db
+cd $BASE_DIR/db
 ./bin/mysqld_safe \
      --defaults-file=$BASE_DIR/config/mysql.cnf \
      --basedir=$BASE_DIR/db \
      --skip-networking \
      --skip-grant-tables \
-     --skip-innodb \
      --datadir=$BASE_DIR/db/data \
      --socket=$SOCKET  \
      --key_buffer_size=64M  \
