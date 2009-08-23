@@ -1,12 +1,14 @@
 #!/bin/sh
 
-PATH=/home/mheiges/OrthoMCL/bin:$PATH
-PATH=/home/mheiges/mcl/bin:$PATH
-PATH=/home/mheiges/blast-2.2.21/bin:$PATH
+BIN=$( readlink -f -- "$( dirname -- "$0" )" )
+
+ORTHO_DIST=$( dirname $( readlink -f -- "${0%/*}" ))
+PATH=$ORTHO_DIST/bin:$PATH
+PATH=$HOME/mcl/bin:$PATH
+PATH=$HOME/blast-2.2.21/bin:$PATH
 export PATH
 
-WORK_DIR=/home/mheiges/my_orthomcl_dir
-ORTHO_DIST=/home/mheiges/OrthoMCL
+WORK_DIR=$HOME/my_orthomcl_dir
 
 mkdir $WORK_DIR
 
