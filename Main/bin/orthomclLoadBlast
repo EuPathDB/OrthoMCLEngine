@@ -11,6 +11,9 @@ my $configFile = $ARGV[0];
 my $blastFile = $ARGV[1];
 
 my $base = OrthoMCLEngine::Main::Base->new($configFile);
+
+startBuiltInMysql($base->getConfig('dbConnectString'));
+
 my $dbh = $base->getDbh();
 
 my $dbVendor = $base->getConfig("dbVendor");
@@ -23,6 +26,8 @@ elsif ($dbVendor eq 'oracle') {
 } else {
   die "Config file '$configFile' contains invalid value '$dbVendor' for dbVendor\n";
 }
+
+stopBuiltInMysql($base->getConfig('dbConnectString'));
 
 sub loadBlastMySQL {
   my ($base, $blastFile) = @_;

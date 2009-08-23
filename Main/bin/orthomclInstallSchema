@@ -35,6 +35,9 @@ my $configFile = $ARGV[0];
 my $sqlLog = $ARGV[1];
 
 my $base = OrthoMCLEngine::Main::Base->new($configFile);
+
+startBuiltInMysql($base->getConfig('dbConnectString'));
+
 my $dbh = $base->getDbh();
 
 if ($sqlLog) {
@@ -55,7 +58,7 @@ createInParalogTable();
 createOrthologTable();
 createCoOrthologTable();
 createInterTaxonMatchView();
-
+stopBuiltInMysql($base->getConfig('dbConnectString'));
 ##############################################################
 
 sub dropBaseTables {

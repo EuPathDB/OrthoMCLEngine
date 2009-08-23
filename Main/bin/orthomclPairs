@@ -113,6 +113,8 @@ my $sst = $base->getConfig("similarSequencesTable");
 my $oracleNoLogging = $base->getConfig("dbVendor") eq 'oracle'? " NOLOGGING" : "";
 my $straightJoin = $base->getConfig("dbVendor") eq 'oracle'? "" : "STRAIGHT_JOIN";
 
+startBuiltInMysql($base->getConfig('dbConnectString'));
+
 commonTempTables();
 
 orthologs();
@@ -122,6 +124,8 @@ inparalogs();
 coorthologs();
 
 clean('cleanall') if $clean eq 'all';
+
+stopBuiltInMysql($base->getConfig('dbConnectString'));
 
 print LOGFILE "\nDone\n";
 

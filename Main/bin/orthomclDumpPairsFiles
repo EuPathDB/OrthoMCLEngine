@@ -11,6 +11,9 @@ my $configFile = $ARGV[0];
 &usage() unless $configFile;
 
 my $base = OrthoMCLEngine::Main::Base->new($configFile);
+
+startBuiltInMysql($base->getConfig('dbConnectString'));
+
 my $dbh = $base->getDbh();
 
 my $orthologTable = $base->getConfig("orthologTable");
@@ -32,6 +35,7 @@ printOrthologsFile($dbh, $coOrthologTable, "$dir/coorthologs.txt");
 printMclAbcFile($dbh, $orthologTable, $inParalogTable, $coOrthologTable,
 	       "mclInput");
 
+stopBuiltInMysql($base->getConfig('dbConnectString'));
 
 ################# subroutines #########################
 
