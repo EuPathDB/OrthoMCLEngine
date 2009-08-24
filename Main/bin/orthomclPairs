@@ -106,14 +106,15 @@ print LOGFILE localtime(). " orthomclPairs " . join(' ', @ARGV) . "\n";
 print LOGFILE "=============================================================================================\n\n";
 
 my $base = OrthoMCLEngine::Main::Base->new($configFile, *LOGFILE);
+
+startBuiltInMysql($base->getConfig('dbConnectString'));
+
 my $dbh = $base->getDbh();
 
 my $sst = $base->getConfig("similarSequencesTable");
 
 my $oracleNoLogging = $base->getConfig("dbVendor") eq 'oracle'? " NOLOGGING" : "";
 my $straightJoin = $base->getConfig("dbVendor") eq 'oracle'? "" : "STRAIGHT_JOIN";
-
-startBuiltInMysql($base->getConfig('dbConnectString'));
 
 commonTempTables();
 
