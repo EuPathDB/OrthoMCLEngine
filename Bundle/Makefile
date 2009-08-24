@@ -1,18 +1,21 @@
 
-MYSQL_TAR=/home/mheiges/mysql-5.1.37.tar.gz
+MYSQL_TAR=$(HOME)/mysql-5.1.37.tar.gz
 MYSQL_SRC=$(BUILD_DIR)/mysql
 DBI_SRC=DBI-1.609.tar.gz
 DBD_MYSQL_SRC=DBD-mysql-4.012.tar.gz
 
 BUNDLE_DIR=$(PWD)
 BUILD_DIR=$(PWD)/.BUILD
-DIST_DIR=/home/mheiges/OrthoMCL-dist
+DIST_DIR=$(BUILD_DIR)/OrthoMCL
 
 export LANG :=  en_US
 export PERL5LIB := $(DIST_DIR)/lib/perl
+export GUS_HOME := $(DIST_DIR)
+export PROJECT_HOME := $(shell echo ${PWD} | sed -e 's:\(.*\)/.*/.*:\1:')
+export PATH := $GUS_HOME/bin:$(PROJECT_HOME)/install/bin:$(PATH)
 
 
-all: dbi mysql dbd-mysql mysql-dist
+all: dbi mysql dbd-mysql mysql-dist orthomcl
 
 # tar-1.14 uses --strip-path, tar-1.14.90+ uses --strip-components
 strip_opt = $(shell \
@@ -102,6 +105,11 @@ dbd-mysql:
 	&& make \
 	&& make install
 
+orthomcl:
+	test -d "$(DIST_DIR)/config" || mkdir -p "$(DIST_DIR)/config"
+	cp $(PROJECT_HOME)/install/gus.config.sample $(DIST_DIR)/config/gus.config
+	build OrthoMCLEngine install -append
+	rm -f $(DIST_DIR)/config/gus.config
 
 clean:
 	rm -rf  "$(BUILD_DIR)"
