@@ -6,7 +6,7 @@ DBD_MYSQL_SRC=DBD-mysql-4.012.tar.gz
 
 BUNDLE_DIR=$(PWD)
 BUILD_DIR=$(PWD)/.BUILD
-DIST_DIR=/home/mheiges/OrthoMCL-vBLAH
+DIST_DIR=/home/mheiges/OrthoMCL-dist
 
 export LANG :=  en_US
 export PERL5LIB := $(DIST_DIR)/lib/perl
@@ -14,10 +14,17 @@ export PERL5LIB := $(DIST_DIR)/lib/perl
 
 all: dbi mysql dbd-mysql mysql-dist
 
-	
+# tar-1.14 uses --strip-path, tar-1.14.90+ uses --strip-components
+strip_opt = $(shell \
+    if $$( tar --strip-components 2>&1 | grep -q 'unrecognized option' ); then \
+        echo -n '--strip-path'; \
+    else \
+        echo -n '--strip-components'; \
+    fi)
+
 dbi:
 	test -d "$(BUILD_DIR)/DBI" || mkdir -p "$(BUILD_DIR)/DBI"
-	tar -zxf src/$(DBI_SRC) -C $(BUILD_DIR)/DBI --strip-components 1
+	tar -zxf src/$(DBI_SRC) -C $(BUILD_DIR)/DBI $(strip_opt) 1
 	cd $(BUILD_DIR)/DBI \
 	&& perl Makefile.PL \
 		INSTALLDIRS=perl \
@@ -32,7 +39,7 @@ dbi:
 
 mysql :
 	test -d "$(BUILD_DIR)/mysql" || mkdir -p "$(BUILD_DIR)/mysql"
-	tar -zxf $(MYSQL_TAR) -C $(MYSQL_SRC) --strip-components 1
+	tar -zxf $(MYSQL_TAR) -C $(MYSQL_SRC) $(strip_opt) 1
 	if test "no$$(ldd /usr/lib/libncursesw.so.5 | grep libtinfo)" != "no" ; then \
 		ltinfo="-ltinfo"; \
 	fi; \
@@ -40,12 +47,10 @@ mysql :
 	&& 	patch  -Nb Makefile.in < $(BUNDLE_DIR)/src/Makefile.in.patch \
 	&& CFLAGS="-O3" CXX=gcc CXXFLAGS="-O3 -felide-constructors \
 		-fno-exceptions -fno-rtti" ./configure \
-		--prefix=$(DIST_DIR) --enable-assembler \
-		--libexecdir=$(DIST_DIR)/bin \
-		--datarootdir=$(DIST_DIR)/data \
-		--with-unix-socket-path=$(DIST_DIR)/tmp/my.socket \
+		--enable-assembler \
 		--with-mysqld-ldflags="-all-static" \
 		--with-client-ldflags="-all-static $$ltinfo" \
+		--prefix=/usr/local/mysql \
 		--enable-local-infile \
 		--without-uca \
 		--without-docs \
@@ -62,25 +67,24 @@ mysql :
 		--without-debug \
 		--disable-dependency-tracking \
 		--without-libwrap \
-	&& make \
-	#&& make install
+	&& make 
 
 mysql-dist:
 	test -d "mkdir $(DIST_DIR)/db/data" || mkdir -p $(DIST_DIR)/db/data
 	test -d "mkdir $(DIST_DIR)/db/bin" || mkdir -p $(DIST_DIR)/db/bin
-	test -d "mkdir $(DIST_DIR)/db/share" || mkdir -p $(DIST_DIR)/db/share
+	test -d "mkdir $(DIST_DIR)/db/share" || mkdir -p $(DIST_DIR)/db/share/mysql
 	cp $(BUILD_DIR)/mysql/sql/mysqld $(DIST_DIR)/db/bin
 	cp $(BUILD_DIR)/mysql/extra/my_print_defaults $(DIST_DIR)/db/bin
 	cp $(BUILD_DIR)/mysql/client/mysql $(DIST_DIR)/db/bin
 	cp $(BUILD_DIR)/mysql/scripts/mysqld_safe $(DIST_DIR)/db/bin
-	cp -R $(BUILD_DIR)/mysql/sql/share/english $(DIST_DIR)/db/share
+	cp -R $(BUILD_DIR)/mysql/sql/share/english $(DIST_DIR)/db/share/mysql
 	$(BUILD_DIR)/mysql/scripts/mysql_install_db --srcdir=$(BUILD_DIR)/mysql --datadir=$(BUILD_DIR)/mysql/data
 	cp -R $(BUILD_DIR)/mysql/data/mysql $(DIST_DIR)/db/data
 	test -d "$(DIST_DIR)/db/tmp" || mkdir $(DIST_DIR)/db/tmp
 	
 dbd-mysql:
 	test -d "$(BUILD_DIR)/DBD-mysql" || mkdir -p "$(BUILD_DIR)/DBD-mysql"
-	tar -zxf src/$(DBD_MYSQL_SRC) -C $(BUILD_DIR)/DBD-mysql --strip-components 1
+	tar -zxf src/$(DBD_MYSQL_SRC) -C $(BUILD_DIR)/DBD-mysql $(strip_opt) 1
 	test -d "$(BUILD_DIR)/mysql/libmysql/.libs-static" || mkdir -p "$(BUILD_DIR)/mysql/libmysql/.libs-static"
 	cp $(BUILD_DIR)/mysql/libmysql/.libs/*.a $(BUILD_DIR)/mysql/libmysql/.libs-static
 	cd $(BUILD_DIR)/DBD-mysql \

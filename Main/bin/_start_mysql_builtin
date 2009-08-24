@@ -27,7 +27,7 @@ cd $BASE_DIR/db
      --myisam-recover \
      --tmpdir=$BASE_DIR/db/tmp  \
      --pid-file=$BASE_DIR/db/tmp/myortho.pid  \
-     --language=$BASE_DIR/db/share/english  \
+     --language=$BASE_DIR/db/share/mysql/english  \
      --log-error=$BASE_DIR/db/tmp/myortho.log 2>&1 \
      >> $BASE_DIR/db/tmp/myortho.log &
 
