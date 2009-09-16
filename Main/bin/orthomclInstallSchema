@@ -125,12 +125,13 @@ CREATE TABLE $cot $oracleNoLogging (
 }
 
 sub createInterTaxonMatchView {
+ my $sst = $base->getConfig("similarSequencesTable");
  my $itv = $base->getConfig("interTaxonMatchView");
  my $sql = "
 CREATE OR REPLACE VIEW $itv 
 	AS SELECT ss.query_id, ss.subject_id, ss.subject_taxon_id, 
 	ss.evalue_mant, ss.evalue_exp 
-	FROM SimilarSequences ss 
+	FROM $sst ss 
 	WHERE ss.subject_taxon_id != ss.query_taxon_id
 ";
  runSql($sql);
