@@ -88,12 +88,13 @@ if ($restart) {
 
 my $andTaxonFilter = "";
 my $whereTaxonFilter = "";
+my $taxonFilterTaxon;
 if ($taxonFilter) {
     die "illegal argument '$taxonFilter'\n" unless $taxonFilter =~ /taxonFilter=(.*)/;
-    my $taxon = $1;
-    my $subjFilter = "and subject_taxon_id != '$taxon'";
-    $andTaxonFilter = "and query_taxon_id != '$taxon' $subjFilter";
-    $whereTaxonFilter = "where query_taxon_id != '$taxon' $subjFilter";
+    $taxonFilterTaxon = $1;
+    my $subjFilter = "and s.subject_taxon_id != '$taxonFilterTaxon'";
+    $andTaxonFilter = "and s.query_taxon_id != '$taxonFilterTaxon' $subjFilter";
+    $whereTaxonFilter = "where s.query_taxon_id != '$taxonFilterTaxon' $subjFilter";
 } 
  
 
@@ -574,6 +575,11 @@ create index coortholog_not_ortholog_ix on CoOrthologNotOrtholog(sequence_id_a,s
 
   ######################################################################
 
+  my $tf;
+  if ($taxonFilterTaxon) {
+    $tf = "and ab.query_taxon_id != '$taxonFilterTaxon' and ab.subject_taxon_id != '$taxonFilterTaxon' and ba.query_taxon_id != '$taxonFilterTaxon' and ba.subject_taxon_id != '$taxonFilterTaxon'";
+  }
+
   $sql = "
 create table CoOrthologTemp $oracleNoLogging as
 select candidate.sequence_id_a, candidate.sequence_id_b,
@@ -586,7 +592,7 @@ select candidate.sequence_id_a, candidate.sequence_id_b,
             + ab.evalue_exp + ba.evalue_exp) / -2
        end as unnormalized_score
 from $sst ab, $sst ba, CoOrthologNotOrtholog candidate
-where ab.query_id = candidate.sequence_id_a $taxonFilter
+where ab.query_id = candidate.sequence_id_a $tf
   and ab.subject_id = candidate.sequence_id_b
   and ab.evalue_exp <= $evalueExpThreshold
   and ab.percent_match >= $percentMatchThreshold
