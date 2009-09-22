@@ -8,9 +8,11 @@ my $inputDir = $ARGV[0];
 my $minLength = $ARGV[1];
 my $maxStopPercent = $ARGV[2];
 
-opendir(DIR, $inputDir) || "Can't open input directory '$inputDir'\n";
+opendir(DIR, $inputDir) || die "Can't open input directory '$inputDir'\n";
 my @files = readdir(DIR);
 closedir(DIR);
+
+die "Input directory $inputDir does not contain any files" unless scalar(@files);
 
 my $rejectRates = [];
 open(GOOD, ">goodProteins.fasta");
