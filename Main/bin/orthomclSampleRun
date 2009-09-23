@@ -10,67 +10,84 @@ export PATH
 
 WORK_DIR=$HOME/my_orthomcl_dir
 
+this=$(basename $0)
+
 mkdir $WORK_DIR
 
 cd $WORK_DIR
 
 echo "copying orthomcl.config"
 cp $ORTHO_DIST/doc/OrthoMCLEngine/Main/orthomcl.config.template $WORK_DIR/orthomcl.config 
-[[ "$?" -eq "0" ]] || { echo "FAILED"; exit 1; }
+[[ "$?" -eq "0" ]] || { echo "$this FAILED"; exit 1; }
 
+echo
 echo "copying sample data to compliantFasta/"
 cp -r $ORTHO_DIST/doc/OrthoMCLEngine/Main/sample_data $WORK_DIR/compliantFasta
-[[ "$?" -eq "0" ]] || { echo "FAILED"; exit 1; }
+[[ "$?" -eq "0" ]] || { echo "$this FAILED"; exit 1; }
 
-echo "resetting the builtin database"
-orthomclPairs orthomcl.config log_file cleanup=all
+echo
+echo "running orthomclInstallSchema"
 echo y | orthomclInstallSchema orthomcl.config  --reset
-[[ "$?" -eq "0" ]] || { echo "FAILED"; exit 1; }
+[[ "$?" -eq "0" ]] || { echo "$this FAILED"; exit 1; }
+
+echo
+echo "running orthomclPairs to reset the builtin database"
+orthomclPairs orthomcl.config log_file cleanup=all
 
 cd $WORK_DIR
 
+echo
 echo "running orthomclFilterFasta"
 orthomclFilterFasta $WORK_DIR/compliantFasta 10 20
-[[ "$?" -eq "0" ]] || { echo "FAILED"; exit 1; }
+[[ "$?" -eq "0" ]] || { echo "$this FAILED"; exit 1; }
 
+echo
 echo "running formatdb"
 formatdb -p -i $WORK_DIR/goodProteins.fasta
-[[ "$?" -eq "0" ]] || { echo "FAILED"; exit 1; }
+[[ "$?" -eq "0" ]] || { echo "$this FAILED"; exit 1; }
 
 cd $WORK_DIR
 
+echo
 echo "running blastall"
 blastall -p blastp \
     -i $WORK_DIR/goodProteins.fasta \
     -d goodProteins.fasta \
     -o all_vs_all.out \
     -e 1 -m8 -a 2 -v 1000 -b 1000
-[[ "$?" -eq "0" ]] || { echo "FAILED"; exit 1; }
+[[ "$?" -eq "0" ]] || { echo "$this FAILED"; exit 1; }
 
+echo
 echo "running orthomclBlastParser"
 orthomclBlastParser all_vs_all.out $WORK_DIR/compliantFasta/ > $WORK_DIR/similarSequences.txt
-[[ "$?" -eq "0" ]] || { echo "FAILED"; exit 1; }
+[[ "$?" -eq "0" ]] || { echo "$this FAILED"; exit 1; }
 
+echo
 echo "running orthomclLoadBlast"
 orthomclLoadBlast $WORK_DIR/orthomcl.config $WORK_DIR/similarSequences.txt 
-[[ "$?" -eq "0" ]] || { echo "FAILED"; exit 1; }
+[[ "$?" -eq "0" ]] || { echo "$this FAILED"; exit 1; }
 
+echo
 echo "running orthomclPairs"
 orthomclPairs $WORK_DIR/orthomcl.config log_file cleanup=no
-[[ "$?" -eq "0" ]] || { echo "FAILED"; exit 1; }
+[[ "$?" -eq "0" ]] || { echo "$this FAILED"; exit 1; }
 
+echo
 echo "running orthomclDumpPairsFiles"
 orthomclDumpPairsFiles $WORK_DIR/orthomcl.config
-[[ "$?" -eq "0" ]] || { echo "FAILED"; exit 1; }
+[[ "$?" -eq "0" ]] || { echo "$this FAILED"; exit 1; }
 
 
+echo
 echo "running mcl"
 mcl $WORK_DIR/mclInput  --abc -I 1.5 -o $WORK_DIR/mclOutput
-[[ "$?" -eq "0" ]] || { echo "FAILED"; exit 1; }
+[[ "$?" -eq "0" ]] || { echo "$this FAILED"; exit 1; }
 
 
+echo
 echo "running orthomclMclToGroups"
 orthomclMclToGroups MSH_ 1 $WORK_DIR/mclOutput
-[[ "$?" -eq "0" ]] || { echo "FAILED"; exit 1; }
+[[ "$?" -eq "0" ]] || { echo "$this FAILED"; exit 1; }
 
+echo
 echo "done"
