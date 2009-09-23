@@ -1,0 +1,82 @@
+#!/bin/bash
+
+MYSQL_SRC=/home/mheiges/mysql-5.1.37
+DBI_SRC=DBI-1.609.tar.gz
+DBD_MYSQL_SRC=DBD-mysql-4.012.tar.gz
+
+BUNDLE_DIR=/home/mheiges/project_home/OrthoMCLEngine/Bundle
+BUILD="$BUNDLE_DIR/.BUILD"
+INSTALL_DIR="/home/mheiges/OrthoMCL-vBLAH"
+
+
+unset LANG
+export PERL5LIB="$INSTALL_DIR/lib/perl"
+
+rm -rf  "$BUILD/DBI"
+mkdir -p "$BUILD/DBI"
+
+rm -rf  "$BUILD/DBD-mysql"
+mkdir -p "$BUILD/DBD-mysql"
+
+tar -zxf $BUNDLE_DIR/src/$DBI_SRC -C $BUILD/DBI --strip-components 1
+
+cd $BUILD/DBI
+perl Makefile.PL \
+    INSTALLDIRS=perl \
+    PREFIX=$INSTALL_DIR/lib/perl \
+    INSTALLPRIVLIB=$INSTALL_DIR/lib/perl \
+    INSTALLMAN1DIR=none \
+    INSTALLMAN3DIR=none \
+    INSTALLBIN=none \
+    INSTALLSCRIPT=none \
+    
+make install
+
+tar -zxf $BUNDLE_DIR/src/$DBD_MYSQL_SRC -C $BUILD/DBD-mysql --strip-components 1
+
+mkdir $MYSQL_SRC/libmysql/.libs-static
+cp $MYSQL_SRC/libmysql/.libs/*.a $MYSQL_SRC/libmysql/.libs-static
+
+cd $BUILD/DBD-mysql
+perl Makefile.PL \
+     --mysql_config=$INSTALL_DIR/db/bin/mysql_config \
+     --cflags=-I$MYSQL_SRC/include \
+     --libs="-L$MYSQL_SRC/libmysql/.libs-static -lmysqlclient -lz" \
+    INSTALLDIRS=perl \
+    PREFIX=$INSTALL_DIR/lib/perl \
+    INSTALLPRIVLIB=$INSTALL_DIR/lib/perl \
+    INSTALLMAN1DIR=none \
+    INSTALLMAN3DIR=none \
+    INSTALLBIN=none \
+    INSTALLSCRIPT=none \
+    
+make install
+
+
+
+exit;
+
+
+
+######
+
+CFLAGS="-O3" CXX=gcc CXXFLAGS="-O3 -felide-constructors \
+       -fno-exceptions -fno-rtti" ./configure \
+       --prefix=$INSTALL_DIR/db --enable-assembler \
+       --with-mysqld-ldflags="-all-static" \
+        --with-client-ldflags="-all-static -ltinfo" \
+        --without-uca \
+        --without-docs \
+        --without-debug \
+        --without-ndb-binlog \
+        --without-ndb-debug \
+        --disable-community-features \
+        --with-plugins=none \
+        --without-man \
+        --without-mysqlmanager \
+        --without-geometry \
+        --without-query-cache \
+        --without-embedded-server \
+        --without-debug \
+        --disable-dependency-tracking \
+        
