@@ -10,6 +10,20 @@ use strict;
 
 $|=1;
 
+my %signaled;
+
+sub handle_signals {
+  my($sig) = @_;
+  $signaled{$sig}++;
+  print "\n*** Caught $sig\n";
+  print "stopping builtin mysql\n";
+  system("$FindBin::Bin/_stop_mysql_builtin");
+  exit 1;
+}
+
+$SIG{"KILL"} = "handle_signals";
+$SIG{"TERM"} = "handle_signals";
+$SIG{"INT"} = "handle_signals";
 
 usage() unless (@ARGV >= 1);
 
