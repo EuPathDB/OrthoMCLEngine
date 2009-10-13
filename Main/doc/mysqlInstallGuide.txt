@@ -69,7 +69,7 @@ II. Installing MySQL From Linux/Unix Binary Packages (Root access not required)
       download:
 
                cd mysql
-               cp my_orthomcl_dir/doc/Main/OrthoMCLEngine/mysql.cnf .
+               cp my_orthomcl_dir/doc/OrthoMCLEngine/Main/mysql.cnf .
 
        a) set basedir= to the full path of your new mysql directory
 
