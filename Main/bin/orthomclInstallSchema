@@ -36,7 +36,7 @@ sub createSimilarSequencesTable {
   my $sst = $base->getConfig("similarSequencesTable");
 
   my $sql = "
-CREATE TABLE $sst $oracleNoLogging (
+CREATE TABLE $sst (
  QUERY_ID                 VARCHAR(40),
  SUBJECT_ID               VARCHAR(40),
  QUERY_TAXON_ID           VARCHAR(40),
@@ -45,22 +45,22 @@ CREATE TABLE $sst $oracleNoLogging (
  EVALUE_EXP               $intType,
  PERCENT_IDENTITY         FLOAT,
  PERCENT_MATCH            FLOAT
-)
+) $oracleNoLogging
 ";
   runSql($sql);
 
   $sql = "
-CREATE UNIQUE INDEX ss_qtaxexp_ix $oracleNoLogging
+CREATE UNIQUE INDEX ss_qtaxexp_ix
 ON $sst(query_id, subject_taxon_id,
 evalue_exp, evalue_mant,
-query_taxon_id, subject_id)
+query_taxon_id, subject_id) $oracleNoLogging
 ";
   runSql($sql);
 
   $sql = "
-CREATE UNIQUE INDEX ss_seqs_ix $oracleNoLogging
+CREATE UNIQUE INDEX ss_seqs_ix
 ON $sst(query_id, subject_id,
-evalue_exp, evalue_mant, percent_match)
+evalue_exp, evalue_mant, percent_match) $oracleNoLogging
 ";
   runSql($sql);
 }
@@ -69,7 +69,7 @@ evalue_exp, evalue_mant, percent_match)
 sub createInParalogTable {
  my $ipt = $base->getConfig("inParalogTable");
  my $sql = "
-CREATE TABLE $ipt $oracleNoLogging (
+CREATE TABLE $ipt (
  SEQUENCE_ID_A           VARCHAR(40),
  SEQUENCE_ID_B           VARCHAR(40),
  TAXON_ID                VARCHAR(40),
@@ -84,7 +84,7 @@ CREATE TABLE $ipt $oracleNoLogging (
 sub createOrthologTable  {
  my $olt = $base->getConfig("orthologTable");
  my $sql = " 
-CREATE TABLE $olt $oracleNoLogging (
+CREATE TABLE $olt (
  SEQUENCE_ID_A           VARCHAR(40),
  SEQUENCE_ID_B           VARCHAR(40),
  TAXON_ID_A              VARCHAR(40),
@@ -96,13 +96,13 @@ CREATE TABLE $olt $oracleNoLogging (
   runSql($sql);
 
 $sql = "
-CREATE INDEX ortholog_seq_a_ix  $oracleNoLogging
+CREATE INDEX ortholog_seq_a_ix
 ON $olt(sequence_id_a)
 ";
   runSql($sql);
 
 $sql = "
-CREATE INDEX ortholog_seq_b_ix $oracleNoLogging
+CREATE INDEX ortholog_seq_b_ix 
 ON $olt(sequence_id_b)
 ";
   runSql($sql);
@@ -112,7 +112,7 @@ ON $olt(sequence_id_b)
 sub createCoOrthologTable  {
  my $cot = $base->getConfig("coOrthologTable");
  my $sql = "
-CREATE TABLE $cot $oracleNoLogging (
+CREATE TABLE $cot (
  SEQUENCE_ID_A           VARCHAR(40),
  SEQUENCE_ID_B           VARCHAR(40),
  TAXON_ID_A              VARCHAR(40),
