@@ -37,11 +37,11 @@ sub createSimilarSequencesTable {
 
   my $sql = "
 CREATE TABLE $sst (
- QUERY_ID                 VARCHAR(40),
- SUBJECT_ID               VARCHAR(40),
+ QUERY_ID                 VARCHAR(50),
+ SUBJECT_ID               VARCHAR(50),
  QUERY_TAXON_ID           VARCHAR(40),
  SUBJECT_TAXON_ID         VARCHAR(40),
- EVALUE_MANT              FLOAT, 
+ EVALUE_MANT              FLOAT,
  EVALUE_EXP               $intType,
  PERCENT_IDENTITY         FLOAT,
  PERCENT_MATCH            FLOAT

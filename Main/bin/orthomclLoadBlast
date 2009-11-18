@@ -59,7 +59,7 @@ sub loadBlastOracle {
 LOAD DATA
 INFILE '$blastFile' 
 INTO TABLE $sst
-FIELDS TERMINATED BY \"\\t \" OPTIONALLY ENCLOSED BY '\"'
+FIELDS TERMINATED BY \"\\t\" OPTIONALLY ENCLOSED BY '\"'
 TRAILING NULLCOLS
 (  query_id,
     subject_id,
