@@ -49,7 +49,7 @@ order by taxon_id, sequence_id_a, sequence_id_b asc
   open(F, ">$fileName") || die "Can't open '$fileName' for writing";
   while (my ($taxonId, $sourceIdA, $sourceIdB, $score) = $stmt->fetchrow_array()) {
     $score = int($score * 1000 + .5)/1000;
-    print F "$taxonId|$sourceIdA\t$taxonId|$sourceIdB\t$score\n";
+    print F "$sourceIdA\t$sourceIdB\t$score\n";
   }
   close(F);
 }
@@ -58,7 +58,7 @@ sub printOrthologsFile {
   my ($dbh, $table, $fileName) = @_;
 
   my $sql = "
-select taxon_id_a, sequence_id_a, taxon_id_b, sequence_id_b, normalized_score
+select taxon_id_a, taxon_id_b, sequence_id_a, sequence_id_b, normalized_score
 from $table
 order by taxon_id_a, taxon_id_b, sequence_id_a, sequence_id_b asc
 ";
@@ -68,7 +68,7 @@ order by taxon_id_a, taxon_id_b, sequence_id_a, sequence_id_b asc
   open(F, ">$fileName") || die "Can't open '$fileName' for writing";
   while (my ($taxonIdA, $sourceIdA, $taxonIdB, $sourceIdB, $score) = $stmt->fetchrow_array()) {
     $score = int($score * 1000 + .5)/1000;
-    print F "$taxonIdA|$sourceIdA\t$taxonIdB|$sourceIdB\t$score\n";
+    print F "$sourceIdA\t$sourceIdB\t$score\n";
   }
   close(F);
 }
