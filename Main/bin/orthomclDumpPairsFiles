@@ -66,7 +66,7 @@ order by taxon_id_a, taxon_id_b, sequence_id_a, sequence_id_b asc
   my $stmt = $dbh->prepare($sql) or die DBI::errstr;
   $stmt->execute();
   open(F, ">$fileName") || die "Can't open '$fileName' for writing";
-  while (my ($taxonIdA, $sourceIdA, $taxonIdB, $sourceIdB, $score) = $stmt->fetchrow_array()) {
+  while (my ($taxonIdA, $taxonIdB, $sourceIdA, $sourceIdB, $score) = $stmt->fetchrow_array()) {
     $score = int($score * 1000 + .5)/1000;
     print F "$sourceIdA\t$sourceIdB\t$score\n";
   }
