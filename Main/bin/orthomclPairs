@@ -21,7 +21,7 @@ my @steps = ( # Common
 	     ['bestQueryTaxonScore'],
 	     ['qtscore_ix'],
              # Ortholog
-	     ['bestHit', ['drop table BestQueryTaxonScore']],
+	     ['bestHit'],
              ['best_hit_ix'],
 	     ['ortholog', ['drop table BestHit']],
 	     ['orthologTaxon'],
@@ -29,7 +29,7 @@ my @steps = ( # Common
 	     ['orthologAvgIndex'],
 	     ['orthologsNormalization', ['drop table OrthologAvgScore', 'drop table OrthologTaxon', 'drop table OrthologTemp']],
              # InParalog
-	     ['bestInterTaxonScore'],
+	     ['bestInterTaxonScore', ['drop table BestQueryTaxonScore']],
              ['bis_uids_ix'],
              ['uniqueSimSeqsQueryId'],
              ['ust_qids_ix'],
