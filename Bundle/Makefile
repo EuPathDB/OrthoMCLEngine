@@ -48,6 +48,7 @@ mysql :
 	fi; \
 	cd $(BUILD_DIR)/mysql \
 	&& 	patch  -Nb Makefile.in < $(BUNDLE_DIR)/src/Makefile.in.patch \
+	&& 	patch  -Nb scripts/mysqld_safe.sh < $(BUNDLE_DIR)/src/mysqld_safe.sh.patch \
 	&& CFLAGS="-O3" CXX=gcc CXXFLAGS="-O3 -felide-constructors \
 		-fno-exceptions -fno-rtti" ./configure \
 		--enable-assembler \
