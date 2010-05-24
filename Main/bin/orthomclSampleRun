@@ -17,7 +17,7 @@ mkdir $WORK_DIR
 cd $WORK_DIR
 
 echo "copying orthomcl.config"
-cp $ORTHO_DIST/doc/OrthoMCLEngine/Main/orthomcl.config.template $WORK_DIR/orthomcl.config 
+cp $ORTHO_DIST/doc/OrthoMCLEngine/Main/orthomcl.config.template $WORK_DIR/samplerun.orthomcl.config 
 [[ "$?" -eq "0" ]] || { echo "$this FAILED"; exit 1; }
 
 echo
@@ -27,12 +27,12 @@ cp -r $ORTHO_DIST/doc/OrthoMCLEngine/Main/sample_data $WORK_DIR/compliantFasta
 
 echo
 echo "running orthomclInstallSchema"
-echo y | orthomclInstallSchema orthomcl.config  --reset
+echo y | orthomclInstallSchema $WORK_DIR/samplerun.orthomcl.config  --reset
 [[ "$?" -eq "0" ]] || { echo "$this FAILED"; exit 1; }
 
 echo
 echo "running orthomclPairs to reset the builtin database"
-orthomclPairs orthomcl.config log_file cleanup=all
+orthomclPairs $WORK_DIR/samplerun.orthomcl.config log_file cleanup=all
 
 cd $WORK_DIR
 
@@ -42,19 +42,40 @@ orthomclFilterFasta $WORK_DIR/compliantFasta 10 20
 [[ "$?" -eq "0" ]] || { echo "$this FAILED"; exit 1; }
 
 echo
-echo "running formatdb"
-formatdb -p -i $WORK_DIR/goodProteins.fasta
+if [[ $(which formatdb 2>/dev/null) ]]; then
+  echo "running formatdb"
+  formatdb -p -i $WORK_DIR/goodProteins.fasta
+elif [[ $(which makeblastdb 2>/dev/null) ]]; then
+  echo "running makeblastdb"
+  makeblastdb -dbtype prot -in $WORK_DIR/goodProteins.fasta
+else
+  echo "formatdb or makeblastdb not found"
+  exit 1
+fi
 [[ "$?" -eq "0" ]] || { echo "$this FAILED"; exit 1; }
 
 cd $WORK_DIR
 
 echo
 echo "running blastall"
-blastall -p blastp \
+if [[ $(which  blastall 2>/dev/null) ]]; then
+  blastall -p blastp \
+      -i $WORK_DIR/goodProteins.fasta \
+      -d $WORK_DIR/goodProteins.fasta \
+      -o $WORK_DIR/all_vs_all.out \
+      -e 1 -m8 -a 2 -v 1000 -b 1000
+elif [[ $(which legacy_blast.pl 2>/dev/null) ]]; then
+  blastpath="$(dirname "$(which legacy_blast.pl)")"
+  legacy_blast.pl blastall -p blastp \
     -i $WORK_DIR/goodProteins.fasta \
-    -d goodProteins.fasta \
-    -o all_vs_all.out \
-    -e 1 -m8 -a 2 -v 1000 -b 1000
+    -d $WORK_DIR/goodProteins.fasta \
+    -o $WORK_DIR/all_vs_all.out \
+    -e 1 -m8 -a 2 -v 1000 -b 1000 \
+    --path $blastpath
+else
+  echo "blastall not found"
+  exit 1
+fi
 [[ "$?" -eq "0" ]] || { echo "$this FAILED"; exit 1; }
 
 echo
@@ -64,17 +85,17 @@ orthomclBlastParser all_vs_all.out $WORK_DIR/compliantFasta/ > $WORK_DIR/similar
 
 echo
 echo "running orthomclLoadBlast"
-orthomclLoadBlast $WORK_DIR/orthomcl.config $WORK_DIR/similarSequences.txt 
+orthomclLoadBlast $WORK_DIR/samplerun.orthomcl.config $WORK_DIR/similarSequences.txt 
 [[ "$?" -eq "0" ]] || { echo "$this FAILED"; exit 1; }
 
 echo
 echo "running orthomclPairs"
-orthomclPairs $WORK_DIR/orthomcl.config log_file cleanup=no
+orthomclPairs $WORK_DIR/samplerun.orthomcl.config log_file cleanup=no
 [[ "$?" -eq "0" ]] || { echo "$this FAILED"; exit 1; }
 
 echo
 echo "running orthomclDumpPairsFiles"
-orthomclDumpPairsFiles $WORK_DIR/orthomcl.config
+orthomclDumpPairsFiles $WORK_DIR/samplerun.orthomcl.config
 [[ "$?" -eq "0" ]] || { echo "$this FAILED"; exit 1; }
 
 
