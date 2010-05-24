@@ -1,11 +1,26 @@
+
+# mysql or oracle
 dbVendor=mysql
-dbConnectString=dbi:mysql:orthomcl:mysql_socket=/tmp/mysql_2.sock 
-dbLogin=orthomcl
-dbPassword=orthomcltest 
+
+# If supplying your own database,  
+# dbConnectString=dbi:mysql:orthomcl:3307
+dbConnectString=builtin
+
+dbLogin=null
+dbPassword=null
+
+# 
 similarSequencesTable=SimilarSequences
 orthologTable=Ortholog
 inParalogTable=InParalog
 coOrthologTable=CoOrtholog
 interTaxonMatchView=InterTaxonMatch
+
+# Oracle only
+oracleIndexTblSpc=NONE
+
+# orthomclPairs
 percentMatchCutoff=50
 evalueExponentCutoff=-5
+
+
