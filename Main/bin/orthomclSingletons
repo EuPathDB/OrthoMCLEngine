@@ -1,0 +1,35 @@
+#!/usr/bin/perl
+
+use strict;
+
+usage() unless (@ARGV == 2);
+my $proteinsFile = $ARGV[0];
+my $groupsFile = $ARGV[1];
+
+open(F, $groupsFile) || die "Can't open groups file '$groupsFile'\n";
+my $groups;
+while (<F>) {
+    my @a = split(/\s+/);
+    shift(@a);
+    map {$groups->{$_} = 1} @a;
+}
+
+close(F);
+
+open(F, $proteinsFile) || die "Can't open groups file '$proteinsFile'\n";
+while(<F>) {
+    next unless /\>\s*(\S+)/;
+    print "$1\n" unless $groups->{$1};
+}
+
+sub usage {
+ print "
+Find proteins that are not in the groups.txt file.  Output to standard out.
+
+usage: orthomclSingletons good_proteins groups_file
+
+EXAMPLE: orthomclSoftware/bin/orthomclSingletons my_orthomcl_dir/goodProteins.fasta my_orthomcl_dir/groups.txt > my_orthomcl_dir/singletons.txt
+
+";
+ exit(1);
+}
