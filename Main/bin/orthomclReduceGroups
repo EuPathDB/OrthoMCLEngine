@@ -38,17 +38,17 @@ while(<IN>) {
 
 sub usage {
 print "
-Filter a groups file by taxon.  Input is a groups file and a set of taxa.
+Reduce a groups file by taxon.  Input is a groups file and a set of taxa.
 Output is a groups file that contains only those taxa
 
 Usage:
-  orthomclFilterGroups groups_file taxa
+  orthomclReduceGroups groups_file taxa
 
 where:
   groups_file: a standard orthomcl groups file. (.gz file is ok)
   taxa:        a comma delimited list of taxon abbreviations
 
-EXAMPLE: orthomclSoftware/bin/orthomclFilterGroups groups.txt hsa,pfa,txo
+EXAMPLE: orthomclSoftware/bin/orthomclReduceGroups groups.txt hsa,pfa,txo
 
 ";
 exit(1);
