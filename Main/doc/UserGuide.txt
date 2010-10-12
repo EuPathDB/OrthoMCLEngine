@@ -274,7 +274,8 @@ You must run your own BLAST.  For large datasets you should consider gaining acc
 We expect you to:
   - use NCBI BLAST
   - run with the -m 8 option to provide tab delimited output required by Step 8
-  - see the OrthoMCL Algorithm Document (docs.google.com/Doc?id=dd996jxg_1gsqsp6) for important details about other BLAST arguments
+  - for IMPORTANT DETAILS about other BLAST arguments, see:
+    the OrthoMCL Algorithm Document (http://docs.google.com/Doc?id=dd996jxg_1gsqsp6)
 
 If you are a power user you can deviate from this, so long as you can ultimately provide output in exactly the format provided by NCBI BLAST using the -m 8 option, and expected by Step 8.
 
