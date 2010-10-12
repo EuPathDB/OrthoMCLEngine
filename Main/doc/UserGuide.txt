@@ -106,7 +106,7 @@ All programs except mysql and mcl are provided as part of the OrthoMCL download.
 
 (6) run orthomclFilterFasta to filter away poor quality proteins, and optionally remove alternative proteins. Creates a single large goodProteins.fasta file (and a poorProteins.fasta file)
 
-(7) run all-v-all NCBI BLAST on goodProteins.fasta (output format is tab delimited text).  We do not provide documentation or support for this step.
+(7) run all-v-all NCBI BLAST on goodProteins.fasta (output format is tab delimited text).
 
 (8) run orthomclBlastParser on the NCBI BLAST tab output to create a file of similarities in the required format
 
