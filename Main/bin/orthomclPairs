@@ -157,7 +157,7 @@ where evalue_mant != 0
   $sql = "
 update $sst
 set evalue_exp = ${minEvalueExp}-1
-where evalue_exp = 0
+where evalue_exp = 0 and evalue_mant = 0
 ";
   runSql($sql, "updating $sst, setting 0 evalue_exp to underflow value (${minEvalueExp} - 1)",
 	 'updateMinimumEvalueExponent', '25 min', undef);
