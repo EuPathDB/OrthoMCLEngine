@@ -76,7 +76,7 @@ We base hardware requirements and time estimates on this benchmark dataset.  The
   - DBI libraries
 
 (6) MCL program
-  - more details here...
+  - please see http://www.micans.org/mcl/sec_description1.html
 
 (7) Time
   - The Benchmark Dataset took:
@@ -138,9 +138,9 @@ If you do not have either, please see the mysqlInstallationGuide.txt to install 
 ========== Step 2: install mcl ==========
 Get the latest software from http://www.micans.org/mcl/src/mcl-latest.tar.gz
 
-Follow this install instructions.
+Follow the install instructions.
 
-MORE HERE SOON...
+Also see: http://www.micans.org/mcl/sec_description1.html
 
 
 ========== Step 3: install and configure OrthoMCL programs  ========
@@ -366,6 +366,8 @@ Change to my_orthomcl_dir and run:
   orthomclMclToGroups my_prefix 1000 < mclOutput > groups.txt
 
 my_prefix is an arbitrary string to use as a prefix for your group IDs.
+
+1000 is an arbitrary starting point for your group IDs.
 
 Benchmark time: 1 min
 
