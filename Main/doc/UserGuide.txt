@@ -337,10 +337,15 @@ Benchmark time: 16 hours
 Input:
   - database with populated pairs tables
 Output
-  - pairs/ directory
+  - pairs/ directory.  
   - mclInput file
 
-Run the orthomclDumpPairsFiles
+Run the orthomclDumpPairsFiles.
+
+The pairs/ directory contains three files: ortholog.txt, coortholog.txt, inparalog.txt.  Each of these has three columns:
+   - protein A
+   - protein B
+   - their normalized score (See the Orthomcl Algorithm Document).
 
 Benchmark time: 5 min
 
