@@ -7,6 +7,8 @@ use strict;
 my $inputDir = $ARGV[0];
 my $minLength = $ARGV[1];
 my $maxStopPercent = $ARGV[2];
+my $goodProteinsFile = $ARGV[3]? $ARGV[3] : 'goodProteins.fasta' ;
+my $poorProteinsFile = $ARGV[4]? $ARGV[4] : 'poorProteins.fasta';
 
 opendir(DIR, $inputDir) || die "Can't open input directory '$inputDir'\n";
 my @files = readdir(DIR);
@@ -15,8 +17,8 @@ closedir(DIR);
 die "Input directory $inputDir does not contain any files" unless scalar(@files);
 
 my $rejectRates = [];
-open(GOOD, ">goodProteins.fasta");
-open(BAD, ">poorProteins.fasta");
+open(GOOD, ">$goodProteinsFile");
+open(BAD, ">$poorProteinsFile");
 foreach my $file (@files) {
   next if $file =~ /^\./;
   open(F, "$inputDir/$file") || die "Can't open input file '$file'\n";
@@ -86,12 +88,14 @@ sub usage {
 Create goodProteins.fasta containing all good proteins and rejectProteins.fasta containing all rejects.  Input is a directory containing a set of compliant input .fasta files (as produced by orthomclAdjustFasta).
 
 Usage:
-  orthomclFilterFasta input_dir min_length max_percent_stops
+  orthomclFilterFasta input_dir min_length max_percent_stops [good_proteins_file poor_proteins_file]
 
 where:
-  input_dir:           a directory containing a set of .fasta files
-  min_length:          minimum allowed length of proteins.  (suggested: 10)
-  max_percent_stop:    maximum percent stop codons.  (suggested 20)
+  input_dir:               a directory containing a set of .fasta files
+  min_length:              minimum allowed length of proteins.  (suggested: 10)
+  max_percent_stop:        maximum percent stop codons.  (suggested 20)
+  good_proteins_file:      optional.  By default goodProteins.fasta in the current dir.
+  poor_proteins_file:      optional.  By default poorProteins.fasta in the current dir.
 
 EXAMPLE: orthomclSoftware/bin/orthomclFilterFasta my_orthomcl_dir/compliantFasta 10 20
 
