@@ -43,9 +43,9 @@ close(GROUPS);
 # iterate through score pairs (from ortholog, paralog and coortholog files)
 # for each pair whose proteins are in the same group, add the score to each proteins' sum
 my %protein2scoreSum;  # protein --> its score sum
-addScoresToProteins(\%protein2scoreSum, $orthologsPairsFile, \%protein2group);
-addScoresToProteins(\%protein2scoreSum, $paralogsPairsFile, \%protein2group);
-addScoresToProteins(\%protein2scoreSum, $coorthologsPairsFile, \%protein2group);
+addScoresToProteins(\%protein2scoreSum, $orthologPairsFile, \%protein2group);
+addScoresToProteins(\%protein2scoreSum, $paralogPairsFile, \%protein2group);
+addScoresToProteins(\%protein2scoreSum, $coorthologPairsFile, \%protein2group);
 
 # iterate through big groups.  for each, iterate through proteins, and choose that with highest score
 # put those into repProteins hash
@@ -85,7 +85,7 @@ sub addScoresToProteins {
     my $protein1 = $a[0];
     my $protein2 = $a[1];
     my $score = $a[2];
-    if ($proteins2group->{$protein1} eq $proteins2group->{$protein2} {
+    if ($protein2group->{$protein1} eq $protein2group->{$protein2}) {
       $protein2scoreSum->{$protein1} += $score;
       $protein2scoreSum->{$protein2} += $score;
     }
