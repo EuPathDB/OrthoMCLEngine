@@ -1,0 +1,41 @@
+#!/usr/bin/perl
+
+use strict;
+
+&usage() unless scalar(@ARGV) == 3;
+
+# at risk of using too much memory.
+
+my $repGroupsFile = shift(@ARGV);
+my $targetGroupsFile = shift(@ARGV);
+my @secondaryGroupsFiles = @ARGV;
+
+my %repProtein2Group;
+my $groupId2GroupProteins = {};
+
+# process representative groups file
+# make hash of protein-->group
+# initialize targetGroups file with these groups, sorted by groupId
+open(REP, $repGroupsFile) || die "";
+while(<REP>) {
+  my @a = split(/\s+/);
+  my $groupId = shift(@a);
+  $groupId2GroupProteins->{$groupId} = join(" ", @a);
+  map  { $repProtein2Group{$_} = $groupId} @a;
+}
+close(REP);
+
+open(TARGET, ">$targetGroupsFile") || die "";
+foreach my $groupStr (sort(keys(@$groupId2GroupProteins))) {
+
+}
+
+
+
+# get secondary groups into an array of groups sorted by group id
+open(SEC, $secondaryGroupsFile) || die "";
+while (<SEC>) {
+  my @a = split(/\s+/);
+  
+}
+
