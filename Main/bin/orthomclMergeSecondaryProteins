@@ -51,7 +51,7 @@ foreach my $secondaryGroupsFile (@secondaryGroupsFiles) {
 	chomp;
 	my @a = split(/\s+/);
 	my $groupId = $a[0];
-	print TARGET_TMP "$_ $groupId2SecondaryGroupStr->{$groupId}\n";
+	print TARGET_TMP "$_ $groupId2secondaryGroupStr->{$groupId}\n";
     }
     close(TARGET_TMP);
     rename("$targetGroupsFile.tmp", $targetGroupsFile) || die "Could not rename tmp target file to '$targetGroupsFile'";
