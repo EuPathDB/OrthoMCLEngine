@@ -35,7 +35,7 @@ foreach my $secondaryGroupsFile (@secondaryGroupsFiles) {
 
     #  make hash of groupId-->secondaryGroupString
     my $groupId2secondaryGroupStr = {};
-    open(SEC, $secondaryGroupsFile) || die "";
+    open(SEC, $secondaryGroupsFile) || die "Can't open secondary groups file '$secondaryGroupsFile'";
     while (<SEC>) {
 	chomp;
 	my @a = split(/\s+/);
@@ -45,8 +45,8 @@ foreach my $secondaryGroupsFile (@secondaryGroupsFiles) {
 
     # stream through target file, and cat secondary proteins to their group
     # write to tmp file, and move it back
-    open(TARGET_TMP, ">$targetGroupsFile.tmp") || die "";
-    open(TARGET, $targetGroupsFile) || die "";
+    open(TARGET_TMP, ">$targetGroupsFile.tmp") || die "Can't open tmp target groups file '$targetGroupsFile.tmp' for writing";
+    open(TARGET, $targetGroupsFile) || die "Can't open target groups file '$targetGroupsFile'";
     while(<TARGET>) {
 	chomp;
 	my @a = split(/\s+/);
@@ -72,6 +72,7 @@ Where:
 
   target_groups_file:      the output file.  Contains the same groups as rep_groups_file, but now include the secondary
                            proteins.  Singleton groups are removed.
+
 ";
 }
 
