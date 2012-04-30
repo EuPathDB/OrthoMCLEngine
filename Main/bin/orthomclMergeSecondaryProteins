@@ -10,32 +10,68 @@ my $repGroupsFile = shift(@ARGV);
 my $targetGroupsFile = shift(@ARGV);
 my @secondaryGroupsFiles = @ARGV;
 
-my %repProtein2Group;
+die "" unless -e $repGroupsFile;
+
+my %repProtein2GroupId;
 my $groupId2GroupProteins = {};
 
-# process representative groups file
-# make hash of protein-->group
-# initialize targetGroups file with these groups, sorted by groupId
+# read representative groups file
+# make hash of repProtein-->groupId
+# and hash of groupId-->repProteinsStr
 open(REP, $repGroupsFile) || die "";
 while(<REP>) {
   my @a = split(/\s+/);
   my $groupId = shift(@a);
   $groupId2GroupProteins->{$groupId} = join(" ", @a);
-  map  { $repProtein2Group{$_} = $groupId} @a;
+  map  { $repProtein2GroupId{$_} = $groupId} @a;
 }
 close(REP);
 
-open(TARGET, ">$targetGroupsFile") || die "";
-foreach my $groupStr (sort(keys(@$groupId2GroupProteins))) {
+# initialize targetGroups file with rep groups
+system("cp $repGroupsFile $targetGroupsFile");
 
+# process each secondaryGroupsFile
+foreach my $secondaryGroupsFile (@secondaryGroupsFiles) {
+
+    #  make hash of groupId-->secondaryGroupString
+    my $groupId2secondaryGroupStr = {};
+    open(SEC, $secondaryGroupsFile) || die "";
+    while (<SEC>) {
+	chomp;
+	my @a = split(/\s+/);
+	$groupId2secondaryGroupStr->{$repProtein2GroupId{$a[0]}} = $_;
+    }
+    close(SEC);
+
+    # stream through target file, and cat secondary proteins to their group
+    # write to tmp file, and move it back
+    open(TARGET_TMP, ">$targetGroupsFile.tmp") || die "";
+    open(TARGET, $targetGroupsFile) || die "";
+    while(<TARGET>) {
+	chomp;
+	my @a = split(/\s+/);
+	my $groupId = $a[0];
+	print TARGET_TMP "$_ $groupId2SecondaryGroupStr->{$groupId}\n";
+    }
+    close(TARGET_TMP);
+    rename("$targetGroupsFile.tmp", $targetGroupsFile) || die "Could not rename tmp target file to '$targetGroupsFile'";
 }
 
+sub usage {
+    die "
 
+Merge secondary proteins into OrthoMCL groups.  The OrthoMCL groups are made from \"representative\" proteins.
+The secondary proteins are in groups where each group is associated with one represntative protein.  
+Add the secondary proteins into the group that contains their representative.
 
-# get secondary groups into an array of groups sorted by group id
-open(SEC, $secondaryGroupsFile) || die "";
-while (<SEC>) {
-  my @a = split(/\s+/);
-  
+Usage: $0 rep_groups_file target_groups_file secondary_groups_file1, secondary_groups_file2, ...
+
+Where:
+  rep_groups_file:         a standard OrthoMCL groups file, but including singletons (each with a group ID).  space
+                           delimited, column contains group ID.  Contains representative proteins only.
+
+  target_groups_file:      the output file.  Contains the same groups as rep_groups_file, but now include the secondary
+                           proteins.  Singleton groups are removed.
+";
 }
 
