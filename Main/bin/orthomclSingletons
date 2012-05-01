@@ -2,9 +2,11 @@
 
 use strict;
 
-usage() unless (@ARGV == 2);
+usage() unless (scalar(@ARGV) == 2 || scalar(@ARGV) == 4);
 my $proteinsFile = $ARGV[0];
 my $groupsFile = $ARGV[1];
+my $idPrefix = $ARGV[2];
+my $startIdNumber = $ARGV[3];
 
 open(F, $groupsFile) || die "Can't open groups file '$groupsFile'\n";
 my $groups;
@@ -19,14 +21,22 @@ close(F);
 open(F, $proteinsFile) || die "Can't open groups file '$proteinsFile'\n";
 while(<F>) {
     next unless /\>\s*(\S+)/;
-    print "$1\n" unless $groups->{$1};
+    if ($startIdNumber) {
+	my $id = "$idPrefix$startIdNumber: ";
+	$startIdNumber++;
+    }
+    print "$id$1\n" unless $groups->{$1};
 }
 
 sub usage {
  print "
-Find proteins that are not in the groups.txt file.  Output to standard out.
+Find proteins that are not in the groups.txt file.  Output those protein IDs to standard out.
 
-usage: orthomclSingletons good_proteins groups_file
+usage: orthomclSingletons good_proteins groups_file [id_prefix start_id_number]
+
+If optional id_prefix and start_id_number are provided, start each line with a generated group
+id that begins with the start_id_number, in the format of a standard orthomcl groups file, like this:
+  OG_124445: some_protein_id
 
 EXAMPLE: orthomclSoftware/bin/orthomclSingletons my_orthomcl_dir/goodProteins.fasta my_orthomcl_dir/groups.txt > my_orthomcl_dir/singletons.txt
 
