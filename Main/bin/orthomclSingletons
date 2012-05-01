@@ -21,8 +21,9 @@ close(F);
 open(F, $proteinsFile) || die "Can't open groups file '$proteinsFile'\n";
 while(<F>) {
     next unless /\>\s*(\S+)/;
+    my $id;
     if ($startIdNumber) {
-	my $id = "$idPrefix$startIdNumber: ";
+	$id = "$idPrefix$startIdNumber: ";
 	$startIdNumber++;
     }
     print "$id$1\n" unless $groups->{$1};
