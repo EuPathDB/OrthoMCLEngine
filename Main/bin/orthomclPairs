@@ -780,6 +780,7 @@ usage: orthomclPairs config_file log_file cleanup=[yes|no|only|all] <startAfter=
 
 where:
   config_file : see below
+  log_file    : where to write the log
   cleanup     : clean up temp tables? 
                    yes=clean as we go; 
                    no=don't clean as we go; 
@@ -793,9 +794,6 @@ Database Input:
 
 Database Output:
   - Populated InParalog, Ortholog and CoOrtholog tables
-
-Standard Error:
-  - logging info
 
 NOTE: the database login in the config file must have update/insert/truncate privileges on the tables specified in the config file.
 
