@@ -10,6 +10,7 @@ use strict;
 usage() unless (@ARGV >= 1);
 my $configFile = $ARGV[0];
 my $sqlLog = $ARGV[1];
+my $prefix = $ARGV[2];
 
 my $base = OrthoMCLEngine::Main::Base->new($configFile);
 my $dbh = $base->getDbh();
@@ -20,9 +21,16 @@ if ($sqlLog) {
 
 my $dbVendor;
 my $intType = ($dbVendor eq 'oracle') ? 'NUMBER' : 'INT';
-my $oracleNoLogging = $base->getConfig("dbVendor") eq 'oracle'? " NOLOGGING" : "";
-my $oracleIndexTblSpc = $base->getConfig("oracleIndexTblSpc");
-$oracleIndexTblSpc =~ s/\s//g;
+
+my $oracleNoLogging;
+my $oracleIndexTablespace;
+
+if ($base->getConfig("dbVendor") eq 'oracle') {
+  $oracleNoLogging = " NOLOGGING ";
+  $oracleIndexTablespace = $base->getConfig("oracleIndexTablespace");
+  $oracleIndexTablespace = " TABLESPACE " . $oracleIndexTablespace
+    if $oracleIndexTablespace;
+}
 
 createSimilarSequencesTable();
 createInParalogTable();
@@ -33,10 +41,11 @@ createInterTaxonMatchView();
 ##############################################################
 
 sub createSimilarSequencesTable {
+
   my $sst = $base->getConfig("similarSequencesTable");
 
   my $sql = "
-CREATE TABLE $sst (
+CREATE TABLE $prefix$sst (
  QUERY_ID                 VARCHAR(60),
  SUBJECT_ID               VARCHAR(60),
  QUERY_TAXON_ID           VARCHAR(40),
@@ -50,26 +59,27 @@ CREATE TABLE $sst (
   runSql($sql);
 
   $sql = "
-CREATE UNIQUE INDEX ss_qtaxexp_ix
-ON $sst(query_id, subject_taxon_id,
+CREATE UNIQUE INDEX ss_qtaxexp_ix$prefix
+ON $prefix$sst(query_id, subject_taxon_id,
 evalue_exp, evalue_mant,
-query_taxon_id, subject_id) $oracleNoLogging
+query_taxon_id, subject_id) $oracleNoLogging $oracleIndexTablespace
 ";
   runSql($sql);
 
   $sql = "
-CREATE UNIQUE INDEX ss_seqs_ix
-ON $sst(query_id, subject_id,
-evalue_exp, evalue_mant, percent_match) $oracleNoLogging
+CREATE UNIQUE INDEX ss_seqs_ix$prefix
+ON $prefix$sst(query_id, subject_id,
+evalue_exp, evalue_mant, percent_match) $oracleNoLogging $oracleIndexTablespace
 ";
   runSql($sql);
 }
 
 
 sub createInParalogTable {
+
  my $ipt = $base->getConfig("inParalogTable");
  my $sql = "
-CREATE TABLE $ipt (
+CREATE TABLE $prefix$ipt (
  SEQUENCE_ID_A           VARCHAR(60),
  SEQUENCE_ID_B           VARCHAR(60),
  TAXON_ID                VARCHAR(40),
@@ -82,9 +92,10 @@ CREATE TABLE $ipt (
 
 
 sub createOrthologTable  {
+
  my $olt = $base->getConfig("orthologTable");
  my $sql = " 
-CREATE TABLE $olt (
+CREATE TABLE $prefix$olt (
  SEQUENCE_ID_A           VARCHAR(60),
  SEQUENCE_ID_B           VARCHAR(60),
  TAXON_ID_A              VARCHAR(40),
@@ -96,23 +107,24 @@ CREATE TABLE $olt (
   runSql($sql);
 
 $sql = "
-CREATE INDEX ortholog_seq_a_ix
-ON $olt(sequence_id_a)
+CREATE INDEX ortholog_seq_a_ix$prefix
+ON $prefix$olt(sequence_id_a) $oracleNoLogging $oracleIndexTablespace
 ";
   runSql($sql);
 
 $sql = "
-CREATE INDEX ortholog_seq_b_ix 
-ON $olt(sequence_id_b)
+CREATE INDEX ortholog_seq_b_ix$prefix
+ON $prefix$olt(sequence_id_b) $oracleNoLogging $oracleIndexTablespace
 ";
   runSql($sql);
 }
 
 
 sub createCoOrthologTable  {
+
  my $cot = $base->getConfig("coOrthologTable");
  my $sql = "
-CREATE TABLE $cot (
+CREATE TABLE $prefix$cot (
  SEQUENCE_ID_A           VARCHAR(60),
  SEQUENCE_ID_B           VARCHAR(60),
  TAXON_ID_A              VARCHAR(40),
@@ -125,13 +137,14 @@ CREATE TABLE $cot (
 }
 
 sub createInterTaxonMatchView {
+
  my $sst = $base->getConfig("similarSequencesTable");
  my $itv = $base->getConfig("interTaxonMatchView");
  my $sql = "
-CREATE OR REPLACE VIEW $itv 
-	AS SELECT ss.query_id, ss.subject_id, ss.subject_taxon_id, 
-	ss.evalue_mant, ss.evalue_exp 
-	FROM $sst ss 
+CREATE OR REPLACE VIEW $prefix$itv
+	AS SELECT ss.query_id, ss.subject_id, ss.subject_taxon_id,
+	ss.evalue_mant, ss.evalue_exp
+	FROM $prefix$sst ss
 	WHERE ss.subject_taxon_id != ss.query_taxon_id
 ";
  runSql($sql);
@@ -156,15 +169,16 @@ sub usage {
  print "
 Create OrthoMCL schema in an Oracle or Mysql database.
 
-usage: orthomclInstallSchema config_file sql_log_file
+usage: orthomclInstallSchema config_file sql_log_file table_prefix
 
 where:
   config_file : see below
   sql_log_file : optional log of sql executed
+  table_prefix : optional string to prepend to database object names
 
 EXAMPLE: orthomclSoftware/bin/orthomclInstallSchema my_orthomcl_dir/orthomcl.config my_orthomcl_dir/install_schema.log
 
-NOTE: the database login in the config file must have update/insert/truncate privileges on the tables specified in the config file.
+NOTE: the database login in the config file must have the required database privileges on the tables specified in the config file.
 
 Sample Config File:
 
@@ -172,7 +186,8 @@ dbVendor=oracle  (or mysql)
 dbConnectString=dbi:Oracle:orthomcl
 dbLogin=my_db_login
 dbPassword=my_db_password
-blastResultsTable=BlastResults
+oracleIndexTablespace=
+similarSequencesTable=SimilarSequences
 orthologTable=Ortholog
 inParalogTable=InParalog
 coOrthologTable=CoOrtholog
