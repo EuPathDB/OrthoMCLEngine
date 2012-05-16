@@ -10,7 +10,7 @@ use strict;
 usage() unless (@ARGV >= 1);
 my $configFile = $ARGV[0];
 my $sqlLog = $ARGV[1];
-my $prefix = $ARGV[2];
+my $suffix = $ARGV[2];
 
 my $base = OrthoMCLEngine::Main::Base->new($configFile);
 my $dbh = $base->getDbh();
@@ -20,11 +20,11 @@ if ($sqlLog) {
 }
 
 
-runSql("drop table $prefix" . $base->getConfig("similarSequencesTable"));
-runSql("drop table $prefix" . $base->getConfig("inParalogTable"));
-runSql("drop table $prefix" . $base->getConfig("orthologTable"));
-runSql("drop table $prefix" . $base->getConfig("coOrthologTable"));
-runSql("drop view $prefix" . $base->getConfig("interTaxonMatchView"));
+runSql("drop table " . $base->getConfig("similarSequencesTable") . $suffix);
+runSql("drop table " . $base->getConfig("inParalogTable") . $suffix);
+runSql("drop table " . $base->getConfig("orthologTable") . $suffix);
+runSql("drop table " . $base->getConfig("coOrthologTable") . $suffix);
+runSql("drop view " . $base->getConfig("interTaxonMatchView") . $suffix);
 
 ##############################################################
 
@@ -48,12 +48,11 @@ sub usage {
  print "
 Drop OrthoMCL schema
 
-usage: orthomclDropSchema config_file sql_log_file table_prefix
+usage: orthomclDropSchema config_file sql_log_file
 
 where:
   config_file : see below
   sql_log_file : optional log of sql executed
-  table_prefix : optional string to prepend to database object names
 
 EXAMPLE: orthomclDropSchema my_orthomcl_dir/orthomcl.config my_orthomcl_dir/drop_schema.log
 
