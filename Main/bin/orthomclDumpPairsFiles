@@ -7,6 +7,7 @@ use OrthoMCLEngine::Main::Base;
 use strict;
 
 my $configFile = $ARGV[0];
+my $suffix = $ARGV[1];
 
 &usage() unless $configFile;
 
@@ -40,7 +41,7 @@ sub printInparalogsFile {
 
   my $sql = "
 select taxon_id, sequence_id_a, sequence_id_b, normalized_score
-from $inparalogTable
+from $inparalogTable$suffix
 order by taxon_id, sequence_id_a, sequence_id_b asc
 ";
 
@@ -59,7 +60,7 @@ sub printOrthologsFile {
 
   my $sql = "
 select taxon_id_a, taxon_id_b, sequence_id_a, sequence_id_b, normalized_score
-from $table
+from $table$suffix
 order by taxon_id_a, taxon_id_b, sequence_id_a, sequence_id_b asc
 ";
 
@@ -78,13 +79,13 @@ sub printMclAbcFile {
 
   my $sql = "
   select sequence_id_a, sequence_id_b, normalized_score
-  from $inParalogTable
+  from $inParalogTable$suffix
   union
   select sequence_id_a, sequence_id_b, normalized_score
-  from $orthologTable
+  from $orthologTable$suffix
   union
   select sequence_id_a, sequence_id_b, normalized_score
-  from $coOrthologTable
+  from $coOrthologTable$suffix
 ";
 
   my $stmt = $dbh->prepare($sql) or die DBI::errstr;
