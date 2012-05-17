@@ -438,7 +438,7 @@ create table InParalogAvgScore$suffix $oracleNoLogging as
 
   ################################################################
 
-  $sql = "create unique index inparalog_avg_ix$suffix on InParalogAvgScore(taxon_id,avg_score)";
+  $sql = "create unique index inparalog_avg_ix$suffix on InParalogAvgScore$suffix(taxon_id,avg_score)";
 
 
   runSql($sql, "create InParalogAvgScore index", 'inParalogAvgIndex', '1 min', "InParalogAvgScore$suffix");
