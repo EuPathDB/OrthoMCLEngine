@@ -189,7 +189,7 @@ group by im.query_id, im.subject_taxon_id, low_exp.evalue_exp
 create unique index qtscore_ix$suffix on BestQueryTaxonScore$suffix(query_id, subject_taxon_id, evalue_exp, evalue_mant)
 ";
   
-  runSql($sql, "create qtscore_ix index on BestQueryTaxonScore", 'qtscore_ix', '15 min', 'BestQueryTaxonScore$suffix');
+  runSql($sql, "create qtscore_ix index on BestQueryTaxonScore", 'qtscore_ix', '15 min', "BestQueryTaxonScore$suffix");
 }
 
 
@@ -227,7 +227,7 @@ where s.query_id = cutoff.query_id
 create unique index best_hit_ix$suffix on BestHit$suffix(query_id,subject_id)
 ";
 
-  runSql($sql, "create best_hit_ix index on BestHit", 'best_hit_ix', '15 min', 'BestHit$suffix');
+  runSql($sql, "create best_hit_ix index on BestHit", 'best_hit_ix', '15 min', "BestHit$suffix");
 
   ######################################################################
 
@@ -248,7 +248,7 @@ where bh1.query_id < bh1.subject_id
   and bh1.subject_id = bh2.query_id
 ";
     
-  runSql($sql, "create OrthologTemp table", 'ortholog', '5 min', 'OrthologTemp$suffix');
+  runSql($sql, "create OrthologTemp table", 'ortholog', '5 min', "OrthologTemp$suffix");
 
   ######################################################################
 
@@ -292,7 +292,7 @@ group by im.query_id, low_exp.evalue_exp
 create unique index bis_uids_ix$suffix on BestInterTaxonScore$suffix (query_id)
 ";
 
-  runSql($sql, "create bis_uids_ix index on BestQueryTaxonScore", 'bis_uids_ix', '1 min', 'BestQueryTaxonScore$suffix');
+  runSql($sql, "create bis_uids_ix index on BestQueryTaxonScore", 'bis_uids_ix', '1 min', "BestQueryTaxonScore$suffix");
 
   ###########################################################################
 
@@ -309,7 +309,7 @@ select distinct s.query_id from $sst$suffix s $whereTaxonFilter
 create unique index ust_qids_ix$suffix on UniqueSimSeqsQueryId$suffix (query_id)
 ";
 
-  runSql($sql, "create ust_qids_ix index on UniqueSimSeqsQueryId", 'ust_qids_ix', '1 min', 'UniqueSimSeqsQueryId$suffix');
+  runSql($sql, "create ust_qids_ix index on UniqueSimSeqsQueryId", 'ust_qids_ix', '1 min', "UniqueSimSeqsQueryId$suffix");
 
 
   ###########################################################################
@@ -352,7 +352,7 @@ where s.query_taxon_id = s.subject_taxon_id $andTaxonFilter
 create unique index better_hit_ix$suffix on BetterHit$suffix (query_id,subject_id)
 ";
 
-  runSql($sql, "create better_hit_ix index on BetterHit", 'better_hit_ix', '25 min', 'BetterHit$suffix');
+  runSql($sql, "create better_hit_ix index on BetterHit", 'better_hit_ix', '25 min', "BetterHit$suffix");
 
   ###########################################################################
 
@@ -403,7 +403,7 @@ select sequence_id_b as sequence_id from $orthologTable$suffix) i
   $sql = "create unique index ortholog_unique_id_ix$suffix on OrthologUniqueId$suffix (sequence_id)";
 
 
-  runSql($sql, "create unique ortholog_unique_id_ix index", 'orthologUniqueIdIndex', '1 min', 'OrthologUniqueId$suffix');
+  runSql($sql, "create unique ortholog_unique_id_ix index", 'orthologUniqueIdIndex', '1 min', "OrthologUniqueId$suffix");
 
   ################################################################
 
@@ -441,7 +441,7 @@ create table InParalogAvgScore$suffix $oracleNoLogging as
   $sql = "create unique index inparalog_avg_ix$suffix on InParalogAvgScore(taxon_id,avg_score)";
 
 
-  runSql($sql, "create InParalogAvgScore index", 'inParalogAvgIndex', '1 min', 'InParalogAvgScore$suffix');
+  runSql($sql, "create InParalogAvgScore index", 'inParalogAvgIndex', '1 min', "InParalogAvgScore$suffix");
 
   ################################################################
 
@@ -493,7 +493,7 @@ create unique index in2a_ix$suffix on InParalog2Way$suffix(sequence_id_a, sequen
 create unique index in2b_ix$suffix on InParalog2Way$suffix(sequence_id_b, sequence_id_a)
 ";
   
-  runSql($sql, "index in2b_ix", 'in2b_ix', '45 min', 'InParalog2Way$suffix');
+  runSql($sql, "index in2b_ix", 'in2b_ix', '45 min', "InParalog2Way$suffix");
 
   ######################################################################
 
@@ -513,7 +513,7 @@ select sequence_id_b as sequence_id_a, sequence_id_a as sequence_id_b from $orth
 create unique index ortholog2way_ix$suffix on Ortholog2Way$suffix(sequence_id_a, sequence_id_b)
 ";
 
-  runSql($sql, "index ortholog2way_ix", 'ortholog2WayIndex', '5 min', 'Ortholog2Way$suffix');
+  runSql($sql, "index ortholog2way_ix", 'ortholog2WayIndex', '5 min', "Ortholog2Way$suffix");
 
   ######################################################################
 
@@ -573,7 +573,7 @@ SELECT cc.sequence_id_a, cc.sequence_id_b
 create index coortholog_not_ortholog_ix$suffix on CoOrthologNotOrtholog$suffix(sequence_id_a,sequence_id_b)
 ";
 
-  runSql($sql, "index coortholog_not_ortholog_ix", 'coOrthologNotOrthologIndex', '1 min', 'CoOrthologNotOrtholog$suffix');
+  runSql($sql, "index coortholog_not_ortholog_ix", 'coOrthologNotOrthologIndex', '1 min', "CoOrthologNotOrtholog$suffix");
 
 
   ######################################################################
