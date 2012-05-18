@@ -111,7 +111,7 @@ Database Input:
   - InParalog, Ortholog, CoOrtholog tables - populated by orthomclPairs
 
 Output files:
-  orthomclMclInput                       - file required by the mcl program
+  mclInput                               - file required by the mcl program
   pairs/                                 - dir holding relationship files
     potentialOrthologs.txt               - ortholog relationships
     potentialInparalogs.txt              - inparalog relationships
@@ -127,7 +127,7 @@ more sensitive and less selective relationships then the final ortholog groups.
 Standard Error:
   - logging info
 
-EXAMPLE: orthomclSoftware/bin/orthomclDumpPairsFile my_orthomcl_dir/orthomcl.config 
+EXAMPLE: orthomclSoftware/bin/orthomclDumpPairsFile my_orthomcl_dir/orthomcl.config
 
 Sample Config File:
 
