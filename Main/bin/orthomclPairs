@@ -39,8 +39,8 @@ my @steps = ( # Common
  	     ['inParalogTaxonAvg'],
              ['orthologUniqueId'],
              ['orthologUniqueIdIndex'],
-             ['inParalogOrthologTaxonAvg', ['drop table OrthologUniqueId']],
-	     ['inParalogAvg',['drop table InParalogTaxonAvg', 'drop table InParalogOrthologTaxonAvg']],
+             ['inplgOrthTaxonAvg', ['drop table OrthologUniqueId']],
+	     ['inParalogAvg',['drop table InParalogTaxonAvg', 'drop table InplgOrthTaxonAvg']],
 	     ['inParalogAvgIndex'],
 	     ['inParalogsNormalization', ['drop table InParalogAvgScore', 'drop table InParalogTemp']],
              # CoOrtholog
@@ -49,9 +49,9 @@ my @steps = ( # Common
 	     ['in2b_ix'],
 	     ['ortholog2Way'],
 	     ['ortholog2WayIndex'],
-             ['inParalogOrthologInParalog'],
+             ['inplgOrthoInplg'],
              ['inParalogOrtholog'],
-	     ['coOrthologCandidate', ['drop table Ortholog2Way', 'drop table InParalog2Way', 'drop table InParalogOrthologInParalog', 'drop table InParalogOrtholog']],
+	     ['coOrthologCandidate', ['drop table Ortholog2Way', 'drop table InParalog2Way', 'drop table InplgOrthoInplg', 'drop table InParalogOrtholog']],
 	     ['coOrthologNotOrtholog', ['drop table CoOrthologCandidate']],
 	     ['coOrthologNotOrthologIndex'],
 	     ['coOrtholog', ['drop table CoOrthologNotOrtholog']],
@@ -408,7 +408,7 @@ select sequence_id_b as sequence_id from $orthologTable$suffix) i
   ################################################################
 
   $sql = "
- create table InParalogOrthologTaxonAvg$suffix $oracleNoLogging as
+ create table InplgOrthTaxonAvg$suffix $oracleNoLogging as
  select avg(i.unnormalized_score) average, i.taxon_id
          from InParalogTemp$suffix i
          where i.sequence_id_a in
@@ -418,7 +418,7 @@ select sequence_id_b as sequence_id from $orthologTable$suffix) i
          group by i.taxon_id
 ";
 
-  runSql($sql, "create InParalogOrthologTaxonAvg table", 'inParalogOrthologTaxonAvg', '10 min', undef);
+  runSql($sql, "create InplgOrthTaxonAvg table", 'inplgOrthTaxonAvg', '10 min', undef);
 
   ################################################################
 
@@ -430,7 +430,7 @@ create table InParalogAvgScore$suffix $oracleNoLogging as
               else orth_i.average
             end as avg_score,
             all_i.taxon_id
-       from InParalogTaxonAvg$suffix all_i LEFT OUTER JOIN InParalogOrthologTaxonAvg$suffix orth_i
+       from InParalogTaxonAvg$suffix all_i LEFT OUTER JOIN InplgOrthTaxonAvg$suffix orth_i
        ON all_i.taxon_id = orth_i.taxon_id
 ";
 
@@ -518,14 +518,14 @@ create unique index ortholog2way_ix$suffix on Ortholog2Way$suffix(sequence_id_a,
   ######################################################################
 
   $sql = "
-create table InParalogOrthologInParalog$suffix $oracleNoLogging as
+create table InplgOrthoInplg$suffix $oracleNoLogging as
       select ip1.sequence_id_a, ip2.sequence_id_b
       from  Ortholog2Way$suffix o, InParalog2Way$suffix ip2, InParalog2Way$suffix ip1
       where ip1.sequence_id_b = o.sequence_id_a
         and o.sequence_id_b = ip2.sequence_id_a
 ";
   
-   runSql($sql, "create InParalogOrthologInParalog", 'inParalogOrthologInParalog', '20 min', undef);
+   runSql($sql, "create InplgOrthoInplg", 'inplgOrthoInplg', '20 min', undef);
 
   ##################################################################
 
@@ -535,7 +535,7 @@ create table InParalogOrtholog$suffix $oracleNoLogging as
       from InParalog2Way$suffix ip, Ortholog2Way$suffix o
       where ip.sequence_id_b = o.sequence_id_a
 ";
-  
+
    runSql($sql, "create InParalogOrtholog", 'inParalogOrtholog', '15 min', undef);
 
   ##################################################################
@@ -545,11 +545,11 @@ create table CoOrthologCandidate$suffix $oracleNoLogging as
 select distinct
        least(sequence_id_a, sequence_id_b) as sequence_id_a,
        greatest(sequence_id_a, sequence_id_b) as sequence_id_b
-from (select sequence_id_a, sequence_id_b from InParalogOrthologInParalog$suffix
+from (select sequence_id_a, sequence_id_b from InplgOrthoInplg$suffix
       union
       select sequence_id_a, sequence_id_b from InParalogOrtholog$suffix) t
 ";
-  
+
    runSql($sql, "create CoOrthologCandidate", 'coOrthologCandidate', '1 hour', undef);
 
   ######################################################################
@@ -570,10 +570,10 @@ SELECT cc.sequence_id_a, cc.sequence_id_b
   #####################################################################
 
   $sql = "
-create index coortholog_not_ortholog_ix$suffix on CoOrthologNotOrtholog$suffix(sequence_id_a,sequence_id_b)
+create index cno_ix$suffix on CoOrthologNotOrtholog$suffix(sequence_id_a,sequence_id_b)
 ";
 
-  runSql($sql, "index coortholog_not_ortholog_ix", 'coOrthologNotOrthologIndex', '1 min', "CoOrthologNotOrtholog$suffix");
+  runSql($sql, "index cno_ix", 'coOrthologNotOrthologIndex', '1 min', "CoOrthologNotOrtholog$suffix");
 
 
   ######################################################################
