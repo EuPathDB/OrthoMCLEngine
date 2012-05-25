@@ -8,6 +8,10 @@ use strict;
 
 my $configFile = $ARGV[0];
 my $suffix = $ARGV[1];
+my $parentDir = $ARGV[2];
+
+chdir $parentDir
+  if $parentDir;
 
 &usage() unless $configFile;
 
