@@ -33,7 +33,7 @@ my @steps = ( # Common
              ['bis_uids_ix'],
              ['uniqueSimSeqsQueryId'],
              ['ust_qids_ix'],
-	     ['betterHit', ['drop table BestInterTaxonScore', 'drop table UniqueSimSeqsQueryId']],
+	     ['betterHit', ['drop table BestInterTaxonScore', 'drop table UniqSimSeqsQueryId']],
              ['better_hit_ix'],
 	     ['inParalog', ['drop table BetterHit']],
  	     ['inParalogTaxonAvg'],
@@ -54,7 +54,7 @@ my @steps = ( # Common
 	     ['coOrthologCandidate', ['drop table Ortholog2Way', 'drop table InParalog2Way', 'drop table InplgOrthoInplg', 'drop table InParalogOrtholog']],
 	     ['coOrthologNotOrtholog', ['drop table CoOrthologCandidate']],
 	     ['coOrthologNotOrthologIndex'],
-	     ['coOrtholog', ['drop table CoOrthologNotOrtholog']],
+	     ['coOrtholog', ['drop table CoOrthNotOrtholog']],
 	     ['coOrthologTaxon'],
 	     ['coOrthologAvg'],
 	     ['coOrthologAvgIndex'],
@@ -89,6 +89,8 @@ if ($restart) {
       die "invalid restart arg $restart" unless $skipPast;
   }
 }
+
+die "Error: Suffix '$suffix' is greater than 11 characters." if length($suffix) > 11;
 
 my $andTaxonFilter = "";
 my $whereTaxonFilter = "";
@@ -297,19 +299,19 @@ create unique index bis_uids_ix$suffix on BestInterTaxonScore$suffix (query_id)
   ###########################################################################
 
    $sql = "
-create table UniqueSimSeqsQueryId$suffix $oracleNoLogging as
+create table UniqSimSeqsQueryId$suffix $oracleNoLogging as
 select distinct s.query_id from $sst$suffix s $whereTaxonFilter
 ";
 
-  runSql($sql, "create UniqueSimSeqsQueryId", 'uniqueSimSeqsQueryId', '25 min', undef);
+  runSql($sql, "create UniqSimSeqsQueryId", 'uniqueSimSeqsQueryId', '25 min', undef);
 
   ###########################################################################
 
   $sql = "
-create unique index ust_qids_ix$suffix on UniqueSimSeqsQueryId$suffix (query_id)
+create unique index ust_qids_ix$suffix on UniqSimSeqsQueryId$suffix (query_id)
 ";
 
-  runSql($sql, "create ust_qids_ix index on UniqueSimSeqsQueryId", 'ust_qids_ix', '1 min', "UniqueSimSeqsQueryId$suffix");
+  runSql($sql, "create ust_qids_ix index on UniqSimSeqsQueryId", 'ust_qids_ix', '1 min', "UniqSimSeqsQueryId$suffix");
 
 
   ###########################################################################
@@ -339,7 +341,7 @@ where s.query_taxon_id = s.subject_taxon_id $andTaxonFilter
   and s.percent_match >= $percentMatchThreshold
   and s.query_id in 
      (SELECT distinct ust.query_id
-      from UniqueSimSeqsQueryId$suffix ust
+      from UniqSimSeqsQueryId$suffix ust
       LEFT OUTER JOIN BestInterTaxonScore$suffix bis ON bis.query_id = ust.query_id
       WHERE bis.query_id IS NULL)
 ";
@@ -555,7 +557,7 @@ from (select sequence_id_a, sequence_id_b from InplgOrthoInplg$suffix
   ######################################################################
 
   $sql = "
-create table CoOrthologNotOrtholog$suffix $oracleNoLogging as
+create table CoOrthNotOrtholog$suffix $oracleNoLogging as
 SELECT cc.sequence_id_a, cc.sequence_id_b
       FROM CoOrthologCandidate$suffix cc
       LEFT OUTER JOIN $orthologTable$suffix o
@@ -564,16 +566,16 @@ SELECT cc.sequence_id_a, cc.sequence_id_b
       WHERE o.sequence_id_a IS NULL
 ";
 
-   runSql($sql, "create CoOrthologNotOrtholog table", 'coOrthologNotOrtholog', '10 min', undef);
+   runSql($sql, "create CoOrthNotOrtholog table", 'coOrthologNotOrtholog', '10 min', undef);
 
 
   #####################################################################
 
   $sql = "
-create index cno_ix$suffix on CoOrthologNotOrtholog$suffix(sequence_id_a,sequence_id_b)
+create index cno_ix$suffix on CoOrthNotOrtholog$suffix(sequence_id_a,sequence_id_b)
 ";
 
-  runSql($sql, "index cno_ix", 'coOrthologNotOrthologIndex', '1 min', "CoOrthologNotOrtholog$suffix");
+  runSql($sql, "index cno_ix", 'coOrthologNotOrthologIndex', '1 min', "CoOrthNotOrtholog$suffix");
 
 
   ######################################################################
@@ -594,7 +596,7 @@ select candidate.sequence_id_a, candidate.sequence_id_b,
            (log(10, ab.evalue_mant * ba.evalue_mant)
             + ab.evalue_exp + ba.evalue_exp) / -2
        end as unnormalized_score
-from $sst$suffix ab, $sst$suffix ba, CoOrthologNotOrtholog$suffix candidate
+from $sst$suffix ab, $sst$suffix ba, CoOrthNotOrtholog$suffix candidate
 where ab.query_id = candidate.sequence_id_a $tf
   and ab.subject_id = candidate.sequence_id_b
   and ab.evalue_exp <= $evalueExpThreshold
