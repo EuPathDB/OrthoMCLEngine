@@ -81,7 +81,7 @@ TRAILING NULLCOLS
 }
 
 sub usage {
- print "
+ print STDERR "
 Load Blast results into an Oracle or Mysql database.
 
 usage: orthomclLoadBlast config_file similar_seqs_file

@@ -108,7 +108,7 @@ sub addScoresToProteins {
 
 sub usage {
 
-die "
+die STDERR "
 Post-process an orthomcl groups file to find one representative protein from each group.  Choose the most 'central' protein
 from each group.  For each group compute each protein's centrality score by summing its edge scores with the other proteins
 in the group.

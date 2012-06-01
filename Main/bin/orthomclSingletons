@@ -42,7 +42,7 @@ while(<F>) {
 }
 
 sub usage {
- print "
+ print STDERR "
 Find proteins that are not in the groups.txt file.  Output those protein IDs to standard out.
 
 usage: orthomclSingletons good_proteins groups_file [id_prefix]

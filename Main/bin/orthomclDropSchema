@@ -45,7 +45,7 @@ sub logSql {
 }
 
 sub usage {
- print "
+ print STDERR "
 Drop OrthoMCL schema
 
 usage: orthomclDropSchema config_file sql_log_file

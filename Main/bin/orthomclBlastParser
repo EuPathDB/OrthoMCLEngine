@@ -167,7 +167,7 @@ sub getStartEnd {
 }
 
 sub usage {
-  print "
+  print STDERR "
 
 orthomclBlastParser blast_file fasta_files_dir
 

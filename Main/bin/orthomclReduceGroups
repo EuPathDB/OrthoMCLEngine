@@ -37,7 +37,7 @@ while(<IN>) {
 
 
 sub usage {
-print "
+print STDERR "
 Reduce a groups file by taxon.  Input is a groups file and a set of taxa.
 Output is a groups file that contains only those taxa
 

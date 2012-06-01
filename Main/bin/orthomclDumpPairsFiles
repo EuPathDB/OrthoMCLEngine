@@ -103,7 +103,7 @@ sub printMclAbcFile {
 }
 
 sub usage {
-  print "
+  print STDERR "
 Dump files from the database produced by the orthomclPairs program.
 
 usage: orthomclDumpPairsFiles config_file

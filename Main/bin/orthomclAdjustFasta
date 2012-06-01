@@ -26,7 +26,7 @@ while(<IN>) {
 
 
 sub usage {
-print "
+print STDERR "
 Create an OrthoMCL compliant .fasta file, by adjusting definition lines.
 
 Usage:

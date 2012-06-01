@@ -12,7 +12,7 @@ while (<STDIN>) {
 }
 
 sub usage {
-  print "
+  print STDERR "
 mclOutput2groupsFile prefix starting_id_num
 
 create an orthomcl groups file from an mcl output file. just generate a group ID for each group, and prepend it to that group's line.

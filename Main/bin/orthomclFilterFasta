@@ -84,7 +84,7 @@ sub handleSeq {
 }
 
 sub usage {
-  print "
+  print STDERR "
 Create goodProteins.fasta containing all good proteins and rejectProteins.fasta containing all rejects.  Input is a directory containing a set of compliant input .fasta files (as produced by orthomclAdjustFasta).
 
 Usage:

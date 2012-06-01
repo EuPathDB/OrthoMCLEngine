@@ -34,7 +34,7 @@ while (<IN>) {
 print $currentSeq if $taxa->{$currentTaxon};
 
 sub usage {
-print "
+print STDERR "
 Reduce a fasta file by taxon.  Input is a fasta file and a set of taxa.
 Output is a fasta file that contains only those taxa
 

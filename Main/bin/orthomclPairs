@@ -776,7 +776,7 @@ sub usage {
   my $stepsString;
   map { $stepsString .= "  $_->[0]\n" } @steps;
 
-  print "
+  print STDERR "
 Find pairs for OrthoMCL.
 
 usage: orthomclPairs config_file log_file cleanup=[yes|no|only|all] <startAfter=TAG>

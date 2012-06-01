@@ -180,7 +180,7 @@ sub logSql {
 }
 
 sub usage {
- print "
+ print STDERR "
 Create OrthoMCL schema in an Oracle or Mysql database.
 
 usage: orthomclInstallSchema config_file sql_log_file table_suffix
