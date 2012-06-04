@@ -9,13 +9,25 @@ use strict;
 
 my $debug=0;
 
-my $configFile = $ARGV[0];
-my $logFile = $ARGV[1];
-my $clean = $ARGV[2];
-my $restart = $ARGV[3];
-my $taxonFilter = $ARGV[4];
+my @args = @ARGV;
+my $configFile = shift(@args);
+my $logFile = shift(@args);
+my $clean = shift(@args);
 
-my $stepCount = 1;
+my %allowedOptArgs = ('restart'=>1, 'taxonFilter'=>1, 'suffix'=>1); 
+my %optArgs;
+map {
+    ($k,$v) = split(/=/);
+    die "Argument '$_' not in k=v format\n" unless $k && $v;
+    usage() unless $allowedOptArgs{$k};
+    $optArgs{$k}=$v;
+} @args;
+
+my $skipPast;
+my $suffix = $optArgs{'suffix'};
+
+die "Error: Suffix '$suffix' is greater than 11 characters." if length($suffix) > 11;
+
 my @steps = ( # Common
              ['updateMinimumEvalueExponent'],
 	     ['bestQueryTaxonScore'],
@@ -23,26 +35,26 @@ my @steps = ( # Common
              # Ortholog
 	     ['bestHit'],
              ['best_hit_ix'],
-	     ['ortholog', ['drop table BestHit']],
+	     ['ortholog', ["drop table BestHit$suffix"]],
 	     ['orthologTaxon'],
 	     ['orthologAvg'],
 	     ['orthologAvgIndex'],
-	     ['orthologsNormalization', ['drop table OrthologAvgScore', 'drop table OrthologTaxon', 'drop table OrthologTemp']],
+	     ['orthologsNormalization', ["drop table OrthologAvgScore$suffix", "drop table OrthologTaxon$suffix", "drop table OrthologTemp$suffix"]],
              # InParalog
-	     ['bestInterTaxonScore', ['drop table BestQueryTaxonScore']],
+	     ['bestInterTaxonScore', ["drop table BestQueryTaxonScore$suffix"]],
              ['bis_uids_ix'],
              ['uniqueSimSeqsQueryId'],
              ['ust_qids_ix'],
-	     ['betterHit', ['drop table BestInterTaxonScore', 'drop table UniqSimSeqsQueryId']],
+	     ['betterHit', ["drop table BestInterTaxonScore$suffix", "drop table UniqSimSeqsQueryId$suffix"]],
              ['better_hit_ix'],
-	     ['inParalog', ['drop table BetterHit']],
+	     ['inParalog', ["drop table BetterHit$suffix"]],
  	     ['inParalogTaxonAvg'],
              ['orthologUniqueId'],
              ['orthologUniqueIdIndex'],
-             ['inplgOrthTaxonAvg', ['drop table OrthologUniqueId']],
-	     ['inParalogAvg',['drop table InParalogTaxonAvg', 'drop table InplgOrthTaxonAvg']],
+             ['inplgOrthTaxonAvg', ["drop table OrthologUniqueId$suffix"]],
+	     ['inParalogAvg',["drop table InParalogTaxonAvg$suffix", "drop table InplgOrthTaxonAvg$suffix"]],
 	     ['inParalogAvgIndex'],
-	     ['inParalogsNormalization', ['drop table InParalogAvgScore', 'drop table InParalogTemp']],
+	     ['inParalogsNormalization', ["drop table InParalogAvgScore$suffix", "drop table InParalogTemp$suffix"]],
              # CoOrtholog
 	     ['inParalog2Way'],
 	     ['in2a_ix'],
@@ -51,15 +63,15 @@ my @steps = ( # Common
 	     ['ortholog2WayIndex'],
              ['inplgOrthoInplg'],
              ['inParalogOrtholog'],
-	     ['coOrthologCandidate', ['drop table Ortholog2Way', 'drop table InParalog2Way', 'drop table InplgOrthoInplg', 'drop table InParalogOrtholog']],
-	     ['coOrthologNotOrtholog', ['drop table CoOrthologCandidate']],
+	     ['coOrthologCandidate', ["drop table Ortholog2Way$suffix", "drop table InParalog2Way$suffix", "drop table InplgOrthoInplg$suffix", "drop table InParalogOrtholog$suffix"]],
+	     ['coOrthologNotOrtholog', ["drop table CoOrthologCandidate$suffix"]],
 	     ['coOrthologNotOrthologIndex'],
-	     ['coOrtholog', ['drop table CoOrthNotOrtholog']],
+	     ['coOrtholog', ["drop table CoOrthNotOrtholog$suffix"]],
 	     ['coOrthologTaxon'],
 	     ['coOrthologAvg'],
 	     ['coOrthologAvgIndex'],
-	     ['coOrthologsNormalization', ['drop table CoOrthologAvgScore', 'drop table CoOrthologTaxon', 'drop table CoOrthologTemp']],
-	     ['cleanall', ['truncate table InParalog', 'truncate table Ortholog', 'truncate table CoOrtholog']],
+	     ['coOrthologsNormalization', ["drop table CoOrthologAvgScore$suffix", "drop table CoOrthologTaxon$suffix", "drop table CoOrthologTemp$suffix"]],
+	     ['cleanall', ["truncate table InParalog$suffix", "truncate table Ortholog$suffix", "truncate table CoOrtholog$suffix"]],
 	    );
 
 my $stepsHash;
@@ -75,27 +87,15 @@ for (my $i=0; $i<scalar(@steps); $i++) {
 
 $clean = $1;
 
-my $skipPast;
-my $suffix;
-
-if ($restart) {
-  if ($restart =~ /taxonFilter=/) {
-      $taxonFilter = $restart;
-  } elsif ($restart =~ /suffix=(.*)/) {
-      $suffix = $1;
-  } else {
-      usage() unless $restart =~ /startAfter=(.*)/;
-      $skipPast = $stepsHash->{$1};
-      die "invalid restart arg $restart" unless $skipPast;
-  }
+if ($optArgs{restart}) {
+    $skipPast = $stepsHash->{$optArgs{restart}};
+    die "invalid restart arg $restart" unless $skipPast;
 }
-
-die "Error: Suffix '$suffix' is greater than 11 characters." if length($suffix) > 11;
 
 my $andTaxonFilter = "";
 my $whereTaxonFilter = "";
 my $taxonFilterTaxon;
-if ($taxonFilter) {
+if ($optArgs{taxonFilter}) {
     die "illegal argument '$taxonFilter'\n" unless $taxonFilter =~ /taxonFilter=(.*)/;
     $taxonFilterTaxon = $1;
     my $subjFilter = "and s.subject_taxon_id != '$taxonFilterTaxon'";
