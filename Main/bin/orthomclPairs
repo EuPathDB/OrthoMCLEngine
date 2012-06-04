@@ -17,7 +17,7 @@ my $clean = shift(@args);
 my %allowedOptArgs = ('restart'=>1, 'taxonFilter'=>1, 'suffix'=>1); 
 my %optArgs;
 map {
-    ($k,$v) = split(/=/);
+    my ($k,$v) = split(/=/);
     die "Argument '$_' not in k=v format\n" unless $k && $v;
     usage() unless $allowedOptArgs{$k};
     $optArgs{$k}=$v;
@@ -89,15 +89,14 @@ $clean = $1;
 
 if ($optArgs{restart}) {
     $skipPast = $stepsHash->{$optArgs{restart}};
-    die "invalid restart arg $restart" unless $skipPast;
+    die "invalid restart arg $optArgs{restart}" unless $skipPast;
 }
 
 my $andTaxonFilter = "";
 my $whereTaxonFilter = "";
 my $taxonFilterTaxon;
 if ($optArgs{taxonFilter}) {
-    die "illegal argument '$taxonFilter'\n" unless $taxonFilter =~ /taxonFilter=(.*)/;
-    $taxonFilterTaxon = $1;
+    $taxonFilterTaxon = $optArgs{taxonFilter};
     my $subjFilter = "and s.subject_taxon_id != '$taxonFilterTaxon'";
     $andTaxonFilter = "and s.query_taxon_id != '$taxonFilterTaxon' $subjFilter";
     $whereTaxonFilter = "where s.query_taxon_id != '$taxonFilterTaxon' $subjFilter";
