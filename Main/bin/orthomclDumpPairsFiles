@@ -7,8 +7,9 @@ use OrthoMCLEngine::Main::Base;
 use strict;
 
 my $configFile = $ARGV[0];
-my $suffix = $ARGV[1];
-my $parentDir = $ARGV[2];
+
+my $parentDir = $ARGV[1];  # undocumented:  for workflow applications
+my $suffix = $ARGV[2];     # same
 
 chdir $parentDir
   if $parentDir;

@@ -2,7 +2,7 @@
 
 use strict;
 
-&usage() unless scalar(@ARGV) == 3 || scalar(@ARGV) == 5);
+&usage() unless scalar(@ARGV) == 3 || scalar(@ARGV) == 5;
 
 my $inputDir = $ARGV[0];
 my $minLength = $ARGV[1];

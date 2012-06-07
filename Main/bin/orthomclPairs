@@ -28,6 +28,12 @@ my $suffix = $optArgs{'suffix'};
 
 die "Error: Suffix '$suffix' is greater than 11 characters." if length($suffix) > 11;
 
+my $base = OrthoMCLEngine::Main::Base->new($configFile, *LOGFILE);
+my $inParalogTable = $base->getConfig("inParalogTable");
+my $orthologTable = $base->getConfig("orthologTable");
+my $coOrthologTable = $base->getConfig("coOrthologTable");
+
+
 my @steps = ( # Common
              ['updateMinimumEvalueExponent'],
 	     ['bestQueryTaxonScore'],
@@ -71,7 +77,7 @@ my @steps = ( # Common
 	     ['coOrthologAvg'],
 	     ['coOrthologAvgIndex'],
 	     ['coOrthologsNormalization', ["drop table CoOrthologAvgScore$suffix", "drop table CoOrthologTaxon$suffix", "drop table CoOrthologTemp$suffix"]],
-	     ['cleanall', ["truncate table InParalog$suffix", "truncate table Ortholog$suffix", "truncate table CoOrtholog$suffix"]],
+	     ['cleanall', ["truncate table $inParalogTable$suffix", "truncate table $orthologTable$suffix", "truncate table $coOrthologTable$suffix"]],
 	    );
 
 my $stepsHash;
@@ -110,7 +116,6 @@ print LOGFILE "\n\n=============================================================
 print LOGFILE localtime(). " orthomclPairs " . join(' ', @ARGV) . "\n";
 print LOGFILE "=============================================================================================\n\n";
 
-my $base = OrthoMCLEngine::Main::Base->new($configFile, *LOGFILE);
 my $dbh = $base->getDbh();
 
 my $sst = $base->getConfig("similarSequencesTable");
@@ -401,10 +406,10 @@ select sequence_id_b as sequence_id from $orthologTable$suffix) i
 
   ################################################################
 
-  $sql = "create unique index ortholog_unique_id_ix$suffix on OrthologUniqueId$suffix (sequence_id)";
+  $sql = "create unique index ortho_uniq_id_ix$suffix on OrthologUniqueId$suffix (sequence_id)";
 
 
-  runSql($sql, "create unique ortholog_unique_id_ix index", 'orthologUniqueIdIndex', '1 min', "OrthologUniqueId$suffix");
+  runSql($sql, "create unique ortho_uniq_id_ix index", 'orthologUniqueIdIndex', '1 min', "OrthologUniqueId$suffix");
 
   ################################################################
 

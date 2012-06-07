@@ -2,7 +2,7 @@
 
 use strict;
 
-&usage() unless scalar(@ARGV) == 4;
+&usage() unless scalar(@ARGV) == 5;
 
 my $inputGroupsDir = shift(@ARGV);
 my $inputProteinsFile = shift(@ARGV);
@@ -10,10 +10,10 @@ my $outputRepresentativeProteinsFile = shift(@ARGV);
 my $outputGroupsFile = shift(@ARGV);
 my $proteinIdPrefix = shift(@ARGV);
 
-my $groupsFile = "$inputGroupsDir/groups.txt";
-my $orthologPairsFile = "$inputGroupsDir/orthologs.txt";
-my $paralogPairsFile = "$inputGroupsDir/paralogs.txt";
-my $coorthologPairsFile = "$inputGroupsDir/coortholog.txt";
+my $groupsFile = "$inputGroupsDir/orthomclGroups.txt";
+my $orthologPairsFile = "$inputGroupsDir/pairs/orthologs.txt";
+my $paralogPairsFile = "$inputGroupsDir/pairs/inparalogs.txt";
+my $coorthologPairsFile = "$inputGroupsDir/pairs/coorthologs.txt";
 
 die "groups dir '' does not exist" unless -e $inputGroupsDir;
 die "proteins file '$inputProteinsFile' does not exist" unless -e $inputProteinsFile;
@@ -80,7 +80,7 @@ my $thisSeqIsRep;
 while (<INPUT>) {
   if (/>(\S+)/) {
     $thisSeqIsRep = $representativeProteins{$1};
-    s/^>/>$proteinIdPrefix/;
+    s/^>/>$proteinIdPrefix|/;
   }
   print REPS $_ if $thisSeqIsRep;
 }
@@ -107,13 +107,12 @@ sub addScoresToProteins {
 }
 
 sub usage {
-
-die STDERR "
+  die "
 Post-process an orthomcl groups file to find one representative protein from each group.  Choose the most 'central' protein
 from each group.  For each group compute each protein's centrality score by summing its edge scores with the other proteins
 in the group.
 
-Usage: $0 groups_dir proteins_file output_fasta_file output_groups_file protein_id_prefix
+Usage: orthomclFindRepresentativeProteins groups_dir proteins_file output_fasta_file output_groups_file protein_id_prefix
 
 Input:
  - groups_dir: a directory containing these files:
