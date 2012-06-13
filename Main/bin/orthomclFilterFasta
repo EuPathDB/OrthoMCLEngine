@@ -35,8 +35,9 @@ foreach my $file (@files) {
   while (<F>) {
     chomp;
     # handle prev seq
-    if (/\>(\S+)|/) {
-      die "The ID on def line '$_' is missing the prefix '$abbrev|'\n" unless $1 eq $abbrev;	
+    if (/\>/) {
+      (/\>([^|]+)|/ && $1 eq $abbrev) ||
+	die "The ID on def line '$_' is missing the prefix '$abbrev|' '$1'\n" unless $1 eq $abbrev;
       if ($currentSeq) {
 	$seqCount++;
 	$rejectSeqCount += &handleSeq($currentSeq, $currentLen, $currentStopCnt);
