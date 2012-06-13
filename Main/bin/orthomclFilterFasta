@@ -20,7 +20,9 @@ my $rejectRates = [];
 open(GOOD, ">$goodProteinsFile");
 open(BAD, ">$poorProteinsFile");
 foreach my $file (@files) {
-  next if $file =~ /^\./;
+  next unless $file =~ /\.fasta$/;
+  $file =~ /(\w+)\.fasta/ || die "File '$file' does not have a name in xxxx.fasta format\n";;
+  my $abbrev = $1;
   open(F, "$inputDir/$file") || die "Can't open input file '$file'\n";
   print STDERR "processing file $file\n";
   my $seqCount;
@@ -33,7 +35,8 @@ foreach my $file (@files) {
   while (<F>) {
     chomp;
     # handle prev seq
-    if (/\>/) {
+    if (/\>(\S+)|/) {
+      die "The ID on def line '$_' is missing the prefix '$abbrev|'\n" unless $1 eq $abbrev;	
       if ($currentSeq) {
 	$seqCount++;
 	$rejectSeqCount += &handleSeq($currentSeq, $currentLen, $currentStopCnt);
