@@ -8,9 +8,7 @@ use strict;
 
 my $repGroupsFile = shift(@ARGV);
 my $targetGroupsFile = shift(@ARGV);
-my @secondaryGroupsFiles = @ARGV;
-
-die "" unless -e $repGroupsFile;
+my $secondaryGroupsDir = shift(@ARGV);
 
 my %repProtein2GroupId;
 my $groupId2GroupProteins = {};
@@ -18,7 +16,7 @@ my $groupId2GroupProteins = {};
 # read representative groups file
 # make hash of repProtein-->groupId
 # and hash of groupId-->repProteinsStr
-open(REP, $repGroupsFile) || die "";
+open(REP, $repGroupsFile) || die "Can't open repGroupsFile '$repGroupsFile'\n";
 while(<REP>) {
   my @a = split(/\s+/);
   my $groupId = shift(@a);
@@ -31,15 +29,24 @@ close(REP);
 system("cp $repGroupsFile $targetGroupsFile");
 
 # process each secondaryGroupsFile
-foreach my $secondaryGroupsFile (@secondaryGroupsFiles) {
-
+opendir(DIR, $secondaryGroupsDir) || die "Can't open secondar groups directory '$secondaryGroupsDir'\n";
+my @files = readdir(DIR);
+closedir(DIR);
+die "Secondary groups directory $secondaryGroupsDir does not contain any files" unless scalar(@files);
+foreach my $secondaryGroupsFile (@files) {
+    next if /^\./;
+    $secondaryGroupsFile =~ /^([^_]+)/;
+    my $prefix = $1;
     #  make hash of groupId-->secondaryGroupString
     my $groupId2secondaryGroupStr = {};
-    open(SEC, $secondaryGroupsFile) || die "Can't open secondary groups file '$secondaryGroupsFile'";
+    open(SEC, "$secondaryGroupsDir/$secondaryGroupsFile") || die "Can't open secondary groups file '$secondaryGroupsDir/$secondaryGroupsFile'";
     while (<SEC>) {
 	chomp;
 	my @a = split(/\s+/);
-	$groupId2secondaryGroupStr->{$repProtein2GroupId{$a[0]}} = $_;
+	my @b = map {"$prefix|$_"} @a;
+	my $rep = shift(@b);
+	my $s = join(" ", @b);
+	$groupId2secondaryGroupStr->{$repProtein2GroupId{$rep}} = $s;
     }
     close(SEC);
 
@@ -61,7 +68,7 @@ sub usage {
     die "
 
 Merge secondary proteins into OrthoMCL groups.  The OrthoMCL groups are made from \"representative\" proteins.
-The secondary proteins are in groups where each group is associated with one represntative protein.  
+The secondary proteins are in groups where each group is associated with one representative protein.  
 Add the secondary proteins into the group that contains their representative.
 
 Usage: $0 rep_groups_file target_groups_file secondary_groups_file1, secondary_groups_file2, ...
@@ -73,6 +80,7 @@ Where:
   target_groups_file:      the output file.  Contains the same groups as rep_groups_file, but now include the secondary
                            proteins.  Singleton groups are removed.
 
+  secondary_groups_file:   contains groups from previous tier.  No group IDs.  First protein in the list is the representative
 ";
 }
 
