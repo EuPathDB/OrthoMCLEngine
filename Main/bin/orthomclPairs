@@ -14,7 +14,7 @@ my $configFile = shift(@args);
 my $logFile = shift(@args);
 my $clean = shift(@args);
 
-my %allowedOptArgs = ('restart'=>1, 'taxonFilter'=>1, 'suffix'=>1); 
+my %allowedOptArgs = ('startAfter'=>1, 'taxonFilter'=>1, 'suffix'=>1); 
 my %optArgs;
 map {
     my ($k,$v) = split(/=/);
@@ -94,8 +94,8 @@ for (my $i=0; $i<scalar(@steps); $i++) {
 $clean = $1;
 
 if ($optArgs{restart}) {
-    $skipPast = $stepsHash->{$optArgs{restart}};
-    die "invalid restart arg $optArgs{restart}" unless $skipPast;
+    $skipPast = $stepsHash->{$optArgs{startAfter}};
+    die "invalid restart arg $optArgs{startAfter}" unless $skipPast;
 }
 
 my $andTaxonFilter = "";
