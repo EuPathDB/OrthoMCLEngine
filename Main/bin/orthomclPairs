@@ -93,9 +93,9 @@ for (my $i=0; $i<scalar(@steps); $i++) {
 
 $clean = $1;
 
-if ($optArgs{restart}) {
+if ($optArgs{startAfter}) {
     $skipPast = $stepsHash->{$optArgs{startAfter}};
-    die "invalid restart arg $optArgs{startAfter}" unless $skipPast;
+    die "invalid startAfter arg $optArgs{startAfter}" unless $skipPast;
 }
 
 my $andTaxonFilter = "";
