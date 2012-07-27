@@ -6,7 +6,6 @@ use lib "$FindBin::Bin/../lib/perl";
 use OrthoMCLEngine::Main::Base;
 use strict;
 
-
 my $debug=0;
 
 my @args = @ARGV;
@@ -186,6 +185,18 @@ where im.query_id = low_exp.query_id
   and im.evalue_exp = low_exp.evalue_exp
 group by im.query_id, im.subject_taxon_id, low_exp.evalue_exp
 ";
+
+  if ($base->getConfig("dbVendor") eq 'oracle') {
+      $sql = "
+create table BestQueryTaxonScore$suffix $oracleNoLogging as
+select query_id, subject_taxon_id,
+       max(evalue_exp) keep (dense_rank first order by evalue_exp, evalue_mant) as evalue_exp,
+       max(evalue_mant) keep (dense_rank first order by evalue_exp, evalue_mant) as evalue_mant
+from $sst
+where query_taxon_id != subject_taxon_id
+group by query_id, subject_taxon_id
+"
+  }
   
   runSql($sql, "create BestQueryTaxonScore", 'bestQueryTaxonScore', '1.5 hours', undef);
 
@@ -698,8 +709,8 @@ sub runSql {
 
       print LOGFILE localtime() . "   $msg  (Benchmark dataset took $sampleTime for this step)\n";
 
-      my $stmt = $dbh->prepare($sql) or die DBI::errstr;
-      $stmt->execute() or die DBI::errstr;
+      my $stmt = $dbh->prepare($sql) or die "Failed preparing\n$sql\n" . $DBI::errstr};
+      $stmt->execute() or die "Failed executing\n$sql\n" . $DBI::errstr;
 
       &analyzeStats($tableToAnalyze) if ($tableToAnalyze);
 
