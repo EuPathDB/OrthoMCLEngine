@@ -846,6 +846,8 @@ NOTE: the database login in the config file must have update/insert/truncate pri
 
 EXAMPLE: orthomclSoftware/bin/orthomclPairs my_orthomcl_dir/orthomcl.config my_orthomcl_dir/orthomcl_pairs.log cleanup=no
 
+WARNING: if using startAfter=useLog, be sure to delete the log if you have run cleanup=all to reset this run of orthomclPairs.
+         Otherwise when you start running again orthomclPairs will attempt to startAfter an invalid last step.
 
 Sample Config File:
 
