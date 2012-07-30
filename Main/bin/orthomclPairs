@@ -740,6 +740,7 @@ sub getSkipPast {
 		$lastDoneLine = $_;
 	    }
 	}
+	close(LOG);
 	if ($lastDone) {
 	    $skipPast = $stepsHash->{$lastDone};
 	    die "Error: could not find valid startAfter value in log '$logFile' on line $_\n" unless $skipPast;
