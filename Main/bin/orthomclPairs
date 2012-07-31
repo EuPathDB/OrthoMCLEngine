@@ -153,8 +153,8 @@ where evalue_mant != 0
   my $minEvalueExp;
   if ($clean ne 'only' && $clean ne 'all' && !$skipPast) {
       print LOGFILE localtime() . "   Find min evalue exp  (OrthoMCL-DB V2 took ??? for this step)\n";
-      my $stmt = $dbh->prepare("$sql") or die DBI::errstr;
-      $stmt->execute() or die DBI::errstr;
+      my $stmt = $dbh->prepare("$sql");
+      $stmt->execute();
       ($minEvalueExp) = $stmt->fetchrow_array();
       print LOGFILE localtime() . "   done\n";
   }
@@ -705,8 +705,8 @@ sub runSql {
 
       print LOGFILE localtime() . "   $msg  (Benchmark dataset took $sampleTime for this step)\n";
 
-      my $stmt = $dbh->prepare($sql) or die "Failed preparing\n$sql\n" . $DBI::errstr;
-      $stmt->execute() or die "Failed executing\n$sql\n" . $DBI::errstr;
+      my $stmt = $dbh->prepare($sql);
+      $stmt->execute();
 
       &analyzeStats($tableToAnalyze) if ($tableToAnalyze);
 
@@ -730,7 +730,8 @@ sub getSkipPast {
     my ($startAfter, $logFile) = @_;   # argument from command line
 
     my $skipPast;
-    if ($startAfter eq 'useLog' && -e $logFile) {
+    if ($startAfter eq 'useLog') {
+      if (-e $logFile) {
 	my $lastDone;
 	my $lastDoneLine;
 	open(LOG, "$logFile") || die "Can't open logfile '$logFile' to read startAfter\n";
@@ -745,6 +746,7 @@ sub getSkipPast {
 	    $skipPast = $stepsHash->{$lastDone};
 	    die "Error: could not find valid startAfter value in log '$logFile' on line $_\n" unless $skipPast;
 	}
+      }
     } elsif ($startAfter) {
 	$skipPast = $stepsHash->{$startAfter};
 	die "invalid startAfter arg '$startAfter'\n" unless $skipPast;
@@ -757,14 +759,14 @@ sub analyzeStats {
 
     if ($base->getConfig("dbVendor") eq 'oracle') {
 	my $sql = "analyze table $tableToAnalyze compute statistics";
-	my $stmt = $dbh->prepare($sql) or die DBI::errstr;
-	$stmt->execute() or die DBI::errstr;
-	$stmt = $dbh->prepare("$sql for all indexes") or die DBI::errstr;
-	$stmt->execute() or die DBI::errstr;
+	my $stmt = $dbh->prepare($sql);
+	$stmt->execute();
+	$stmt = $dbh->prepare("$sql for all indexes");
+	$stmt->execute();
     } else {
 	my $sql = "analyze table $tableToAnalyze";
-	my $stmt = $dbh->prepare($sql) or die DBI::errstr;
-	$stmt->execute() or die DBI::errstr;
+	my $stmt = $dbh->prepare($sql);
+	$stmt->execute();
     }
 }
 
@@ -778,9 +780,9 @@ sub clean {
       my $action = $1;
       my $table = $2;
       next if ($action eq 'drop' && &tableAlreadyDropped($table));
-      my $stmt = $dbh->prepare($cleanSql) or die DBI::errstr;
+      my $stmt = $dbh->prepare($cleanSql);
       print LOGFILE localtime() . "   cleaning: $cleanSql\n";
-      $stmt->execute() or die DBI::errstr;
+      $stmt->execute();
       print LOGFILE localtime() . "   done\n";
     }
   }
@@ -804,7 +806,7 @@ sub tableAlreadyDropped {
     $sql = "show tables like '$table'";
   }
   my $stmt = $dbh->prepare($sql);
-  $stmt->execute() or die DBI::errstr;
+  $stmt->execute();
   while ($stmt->fetchrow()) { return 0};
   return 1;
 }

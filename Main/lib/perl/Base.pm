@@ -55,7 +55,8 @@ sub getDbh {
 
     $self->{dbh} = DBI->connect($self->getConfig("dbConnectString"),
 				$self->getConfig("dbLogin"),
-				$self->getConfig("dbPassword")) or die DBI::errstr;
+				$self->getConfig("dbPassword"),
+	                        {PrintError => 0, RaiseError => 1}) or die DBI::errstr;
   }
   return $self->{dbh};
 }
