@@ -11,22 +11,21 @@ my $targetGroupsFile = shift(@ARGV);
 my $secondaryGroupsDir = shift(@ARGV);
 
 my %repProtein2GroupId;
-my $groupId2GroupProteins = {};
 
 # read representative groups file
 # make hash of repProtein-->groupId
-# and hash of groupId-->repProteinsStr
 open(REP, $repGroupsFile) || die "Can't open repGroupsFile '$repGroupsFile'\n";
 while(<REP>) {
   my @a = split(/\s+/);
   my $groupId = shift(@a);
-  $groupId2GroupProteins->{$groupId} = join(" ", @a);
   map  { $repProtein2GroupId{$_} = $groupId} @a;
 }
 close(REP);
 
 # initialize targetGroups file with rep groups
 system("cp $repGroupsFile $targetGroupsFile");
+
+my $groupId2SecondaryProteins = {};
 
 # process each secondaryGroupsFile
 opendir(DIR, $secondaryGroupsDir) || die "Can't open secondar groups directory '$secondaryGroupsDir'\n";
@@ -38,15 +37,14 @@ foreach my $secondaryGroupsFile (@files) {
     $secondaryGroupsFile =~ /^([^_]+)/;
     my $prefix = $1;
     #  make hash of groupId-->secondaryGroupString
-    my $groupId2secondaryGroupStr = {};
     open(SEC, "$secondaryGroupsDir/$secondaryGroupsFile") || die "Can't open secondary groups file '$secondaryGroupsDir/$secondaryGroupsFile'";
     while (<SEC>) {
 	chomp;
 	my @a = split(/\s+/);
 	my @b = map {"$prefix|$_"} @a;
 	my $rep = shift(@b);
-	my $s = join(" ", @b);
-	$groupId2secondaryGroupStr->{$repProtein2GroupId{$rep}} = $s;
+	my $groupId = $repProtein2GroupId{$rep};
+	push(@{$groupId2secondaryProteins->{$groupId}}, @b);
     }
     close(SEC);
 
@@ -58,7 +56,7 @@ foreach my $secondaryGroupsFile (@files) {
 	chomp;
 	my @a = split(/\s+/);
 	my $groupId = $a[0];
-	print TARGET_TMP "$_ $groupId2secondaryGroupStr->{$groupId}\n";
+	print TARGET_TMP "$_ " . join(" ", $groupId2secondaryProteins->{$groupId}) . "\n";
     }
     close(TARGET_TMP);
     rename("$targetGroupsFile.tmp", $targetGroupsFile) || die "Could not rename tmp target file to '$targetGroupsFile'";

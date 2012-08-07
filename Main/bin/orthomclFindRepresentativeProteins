@@ -68,6 +68,7 @@ foreach my $bigGroup (@bigGroups) {
       $repProteinScore = $protein2scoreSum{$protein};
     }
   }
+  delete $bigGroupHash{$repProtein};
   $representativeProteins{$repProtein} = 1;
   undef $bigGroupHash{$repProtein};
   print OUTGROUPS "$repProtein " . join(" ", keys(%bigGroupHash)) . "\n";
