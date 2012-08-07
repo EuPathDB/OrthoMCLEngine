@@ -44,7 +44,7 @@ foreach my $secondaryGroupsFile (@files) {
 	my @b = map {"$prefix|$_"} @a;
 	my $rep = shift(@b);
 	my $groupId = $repProtein2GroupId{$rep};
-	push(@{$groupId2secondaryProteins->{$groupId}}, @b);
+	push(@{$groupId2SecondaryProteins->{$groupId}}, @b);
     }
     close(SEC);
 
@@ -56,7 +56,7 @@ foreach my $secondaryGroupsFile (@files) {
 	chomp;
 	my @a = split(/\s+/);
 	my $groupId = $a[0];
-	print TARGET_TMP "$_ " . join(" ", $groupId2secondaryProteins->{$groupId}) . "\n";
+	print TARGET_TMP "$_ " . join(" ", $groupId2SecondaryProteins->{$groupId}) . "\n";
     }
     close(TARGET_TMP);
     rename("$targetGroupsFile.tmp", $targetGroupsFile) || die "Could not rename tmp target file to '$targetGroupsFile'";
