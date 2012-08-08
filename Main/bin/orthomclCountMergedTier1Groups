@@ -1,0 +1,40 @@
+#!/usr/bin/perl
+use strict;
+my $repProteins = $ARGV[0];
+my $allGroups = $ARGV[1];
+my $diffGroups = $ARGV[2];
+
+open(REP,$repProteins) || die "can't open $repProteins\n";
+
+my %reps;
+while(<REP>) {
+  chomp;
+  $reps{$_} = 1;
+}
+close(REP);
+
+open(ALL, $allGroups) || die "cant open $allGroups\n";
+my $count;
+while(<ALL>) {
+  my $repCnt;
+  chomp;
+  my @a = split(/ /);
+  shift @a;
+  map { $repCnt++ if $reps{$_} } @a;
+  $count++ if $repCnt > 1;
+}
+close(ALL);
+print "All: $count\n";
+
+open(DIFF, $diffGroups) || die "cant open $allGroups\n";
+$count = 0;
+while(<DIFF>) {
+  my $repCnt;
+  chomp;
+  my @a = split(/ /);
+  shift @a;
+  map { $repCnt++ if $reps{$_} } @a;
+  $count++ if $repCnt > 1;
+}
+close(DIFF);
+print "Diff: $count\n";
