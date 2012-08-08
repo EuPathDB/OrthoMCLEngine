@@ -4,6 +4,8 @@ my $repProteins = $ARGV[0];
 my $allGroups = $ARGV[1];
 my $diffGroups = $ARGV[2];
 
+usage() unless scalar(@ARGV) == 3;
+
 open(REP,$repProteins) || die "can't open $repProteins\n";
 
 my %reps;
@@ -20,8 +22,13 @@ while(<ALL>) {
   chomp;
   my @a = split(/ /);
   shift @a;
-  map { $repCnt++ if $reps{$_} } @a;
+  my @r;
+  map { $repCnt++ if $reps{$_}; push(@r, $_) if $reps{$_}; } @a;
   $count++ if $repCnt > 1;
+  if (scalar(@r) > 1 && scalar(@a) == 10) {
+    print "$_\n";
+    print join(" ", @r) . "\n";exit;
+  }
 }
 close(ALL);
 print "All: $count\n";
@@ -38,3 +45,13 @@ while(<DIFF>) {
 }
 close(DIFF);
 print "Diff: $count\n";
+
+sub usage {
+  die "
+
+Count the number of Tier 2 groups that include more than one Tier 1 representative proteins.
+
+Provide counts for both groups
+";
+
+}
