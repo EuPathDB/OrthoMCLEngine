@@ -13,7 +13,7 @@ my $ADD_SING = 1;
 my $REMOVE_SING = 2;
 my $ADD_REMOVE_SING = 3;
 
-open(F, $refGroupsFile) || die "Can't open ref groups file '$refGroupsFile'\n";
+open(REF, $refGroupsFile) || die "Can't open ref groups file '$refGroupsFile'\n";
 
 my %refProtein2refGroupId;
 my %refGroupId2refProteins;
@@ -30,15 +30,15 @@ mkdir("$outputDir/one") || die "Can't mkdir $outputDir/one\n" unless -d "$output
 mkdir("$outputDir/two") || die "Can't mkdir $outputDir/two\n" unless -d "$outputDir/two";
 
 open(GRP, $groupsFile) || die "Can't open groups file '$groupsFile'\n";
-open(NONE, ">$outputDir/none") || die "Can't open file $outputDir/none for writing\n"
-open(EXACT, ">$outputDir/one/exact") || die "Can't open file $outputDir/one/exact for writing\n"
-open(ADD_SING, ">$outputDir/one/add") || die "Can't open file $outputDir/one/add for writing\n"
-open(REMOVE_SING, ">$outputDir/one/remove") || die "Can't open file $outputDir/one/remove for writing\n"
-open(ADD_REMOVE_SING, ">$outputDir/one/add_remove") || die "Can't open file $outputDir/one/add_remove for writing\n"
-open(TWO_EXACT, ">$outputDir/two/exact") || die "Can't open file $outputDir/two/exact for writing\n"
-open(TWO_ADD_SING, ">$outputDir/two/add") || die "Can't open file $outputDir/two/add for writing\n"
-open(TWO_REMOVE_SING, ">$outputDir/two/remove") || die "Can't open file $outputDir/two/remove for writing\n"
-open(TWO_ADD_REMOVE_SING, ">$outputDir/two/add_remove") || die "Can't open file $outputDir/two/add_remove for writing\n"
+open(NONE, ">$outputDir/none") || die "Can't open file $outputDir/none for writing\n";
+open(EXACT, ">$outputDir/one/exact") || die "Can't open file $outputDir/one/exact for writing\n";
+open(ADD_SING, ">$outputDir/one/add") || die "Can't open file $outputDir/one/add for writing\n";
+open(REMOVE_SING, ">$outputDir/one/remove") || die "Can't open file $outputDir/one/remove for writing\n";
+open(ADD_REMOVE_SING, ">$outputDir/one/add_remove") || die "Can't open file $outputDir/one/add_remove for writing\n";
+open(TWO_EXACT, ">$outputDir/two/exact") || die "Can't open file $outputDir/two/exact for writing\n";
+open(TWO_ADD_SING, ">$outputDir/two/add") || die "Can't open file $outputDir/two/add for writing\n";
+open(TWO_REMOVE_SING, ">$outputDir/two/remove") || die "Can't open file $outputDir/two/remove for writing\n";
+open(TWO_ADD_REMOVE_SING, ">$outputDir/two/add_remove") || die "Can't open file $outputDir/two/add_remove for writing\n";
 while(<GRP>) {
   chomp;
   my @a = split(/\s/);
@@ -46,25 +46,26 @@ while(<GRP>) {
   my $groupSize = scalar(@a);
   my %matchedRefGroups;
   foreach my $member (@a) {
-    my $refGroupId = $refProtein2groupId{$member};
-    push(@{$matchedRefGroups{$refGroupId}}, $member);
+    my $refGroupId = $refProtein2refGroupId{$member};
+    push(@{$matchedRefGroups{$refGroupId}}, $member) if $refGroupId;
   }
   # matched no group
   if (scalar(keys(%matchedRefGroups)) == 0) {
-    print NONE "$_\n";
+    print NONE "$groupId\n";
   }
 
   # matched one group
   if (scalar(keys(%matchedRefGroups)) == 1) {
     my ($refGroupId) = keys(%matchedRefGroups);
     my $refGroupSize = scalar(@{$refGroupId2refProteins{$refGroupId}});
-    my @matchedMembers = @{%matchedRefGroups{$refGroupId}};
+    my @matchedMembers = @{$matchedRefGroups{$refGroupId}};
 
-    my $class = classify($groupSize, $regGroupSize, \@matchedMembers);
-    print EXACT "$groupId $refGroupId" if $class == $EXACT;
-    print REMOVE_SING "$groupId $refGroupId" if $class == $REMOVE_SING;
-    print ADD_SING "$groupId $refGroupId" if $class == $ADD_SING;
-    print ADD_REMOVE_SING "$groupId $refGroupId" if $class == $ADD_REMOVE_SING;
+
+    my $class = classify($groupSize, $refGroupSize, \@matchedMembers);
+    print EXACT "$groupId $refGroupId\n" if $class == $EXACT;
+    print REMOVE_SING "$groupId $refGroupId\n" if $class == $REMOVE_SING;
+    print ADD_SING "$groupId $refGroupId\n" if $class == $ADD_SING;
+    print ADD_REMOVE_SING "$groupId $refGroupId\n" if $class == $ADD_REMOVE_SING;
   }
 
   # matched two groups
@@ -72,13 +73,13 @@ while(<GRP>) {
   if (scalar(keys(%matchedRefGroups)) == 2) {
     my ($refGroupId1, $refGroupId2) = keys(%matchedRefGroups);
     my $refGroupSize = scalar(@{$refGroupId2refProteins{$refGroupId1}}) + scalar(@{$refGroupId2refProteins{$refGroupId2}});
-    my @matchedMembers = (@{%matchedRefGroups{$refGroupId1}}, @{%matchedRefGroups{$refGroupId2}});
+    my @matchedMembers = (@{$matchedRefGroups{$refGroupId1}}, @{$matchedRefGroups{$refGroupId2}});
 
-    my $class = classify($groupSize, $regGroupSize, \@matchedMembers);
-    print TWO_EXACT "$groupId $refGroupId1 $refGroupId2" if $class == $EXACT;
-    print TWO_REMOVE_SING "$groupId $refGroupId1 $refGroupId2" if $class == $REMOVE_SING;
-    print TWO_ADD_SING "$groupId $refGroupId1 $refGroupId2" if $class == $ADD_SING;
-    print TWO_ADD_REMOVE_SING "$groupId $refGroupId1 $refGroupId2" if $class == $ADD_REMOVE_SING;
+    my $class = classify($groupSize, $refGroupSize, \@matchedMembers);
+    print TWO_EXACT "$groupId $refGroupId1 $refGroupId2\n" if $class == $EXACT;
+    print TWO_REMOVE_SING "$groupId $refGroupId1 $refGroupId2\n" if $class == $REMOVE_SING;
+    print TWO_ADD_SING "$groupId $refGroupId1 $refGroupId2\n" if $class == $ADD_SING;
+    print TWO_ADD_REMOVE_SING "$groupId $refGroupId1 $refGroupId2\n" if $class == $ADD_REMOVE_SING;
 
   }
 }
