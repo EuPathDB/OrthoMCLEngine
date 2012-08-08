@@ -25,7 +25,7 @@ close(REP);
 # initialize targetGroups file with rep groups
 system("cp $repGroupsFile $targetGroupsFile");
 
-my $groupId2SecondaryProteins = {};
+my %groupId2SecondaryProteins;
 
 # process each secondaryGroupsFile
 opendir(DIR, $secondaryGroupsDir) || die "Can't open secondar groups directory '$secondaryGroupsDir'\n";
@@ -44,23 +44,26 @@ foreach my $secondaryGroupsFile (@files) {
 	my @b = map {"$prefix|$_"} @a;
 	my $rep = shift(@b);
 	my $groupId = $repProtein2GroupId{$rep};
-	push(@{$groupId2SecondaryProteins->{$groupId}}, @b);
+	push(@{$groupId2SecondaryProteins{$groupId}}, @b);
     }
     close(SEC);
 
-    # stream through target file, and cat secondary proteins to their group
-    # write to tmp file, and move it back
-    open(TARGET_TMP, ">$targetGroupsFile.tmp") || die "Can't open tmp target groups file '$targetGroupsFile.tmp' for writing";
-    open(TARGET, $targetGroupsFile) || die "Can't open target groups file '$targetGroupsFile'";
-    while(<TARGET>) {
-	chomp;
-	my @a = split(/\s+/);
-	my $groupId = $a[0];
-	print TARGET_TMP "$_ " . join(" ", $groupId2SecondaryProteins->{$groupId}) . "\n";
-    }
-    close(TARGET_TMP);
-    rename("$targetGroupsFile.tmp", $targetGroupsFile) || die "Could not rename tmp target file to '$targetGroupsFile'";
 }
+
+# stream through target file, and cat secondary proteins to their group
+# write to tmp file, and move it back
+open(TARGET_TMP, ">$targetGroupsFile.tmp") || die "Can't open tmp target groups file '$targetGroupsFile.tmp' for writing";
+open(TARGET, $targetGroupsFile) || die "Can't open target groups file '$targetGroupsFile'";
+while (<TARGET>) {
+  chomp;
+  my @a = split(/\s+/);
+  my $groupId = $a[0];
+  my $secondaries = $groupId2SecondaryProteins{$groupId};
+  my $sec = " " . join(" ", @{$secondaries}) if ($secondaries);
+  print TARGET_TMP "$_$sec\n";
+}
+close(TARGET_TMP);
+rename("$targetGroupsFile.tmp", $targetGroupsFile) || die "Could not rename tmp target file to '$targetGroupsFile'";
 
 sub usage {
     die "
