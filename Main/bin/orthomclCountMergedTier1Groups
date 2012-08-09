@@ -1,34 +1,26 @@
 #!/usr/bin/perl
 use strict;
-my $repProteins = $ARGV[0];
-my $allGroups = $ARGV[1];
-my $diffGroups = $ARGV[2];
+my $allGroups = $ARGV[0];
+my $diffGroups = $ARGV[1];
 
-usage() unless scalar(@ARGV) == 3;
-
-open(REP,$repProteins) || die "can't open $repProteins\n";
-
-my %reps;
-while(<REP>) {
-  chomp;
-  $reps{$_} = 1;
-}
-close(REP);
+usage() unless scalar(@ARGV) == 2;
 
 open(ALL, $allGroups) || die "cant open $allGroups\n";
 my $count;
+my %protein2clade;
 while(<ALL>) {
-  my $repCnt;
   chomp;
   my @a = split(/ /);
   shift @a;
-  my @r;
-  map { $repCnt++ if $reps{$_}; push(@r, $_) if $reps{$_}; } @a;
-  $count++ if $repCnt > 1;
-  if (scalar(@r) > 1 && scalar(@a) == 10) {
-    print "$_\n";
-    print join(" ", @r) . "\n";exit;
+  my %clades;
+  my $isMerged;
+  foreach my $member (@a) {
+      my @b = split(/\|/, @a);
+      $protein2clade{"$b[1]|$b[2]"} = $b[0];
+      $isMerged = $clades{$b[0]};
+      $clades{$b[0]} = 1 ;
   }
+  $count++ if $isMerged;
 }
 close(ALL);
 print "All: $count\n";
@@ -36,12 +28,17 @@ print "All: $count\n";
 open(DIFF, $diffGroups) || die "cant open $allGroups\n";
 $count = 0;
 while(<DIFF>) {
-  my $repCnt;
   chomp;
   my @a = split(/ /);
   shift @a;
-  map { $repCnt++ if $reps{$_} } @a;
-  $count++ if $repCnt > 1;
+  my %clades;
+  my $isMerged;
+  foreach my $member (@a) {
+      my $clade = $protein2clade{$member};
+      $isMerged = $clades{$clade};
+      $clades{$clade} = 1 ;
+  }
+  $count++ if $isMerged;
 }
 close(DIFF);
 print "Diff: $count\n";
@@ -51,7 +48,9 @@ sub usage {
 
 Count the number of Tier 2 groups that include more than one Tier 1 representative proteins.
 
-Provide counts for both groups
+Provide counts for all groups and those that differ from a reference build.
+
+Usage: orthomclCountMergedTier1
 ";
 
 }
