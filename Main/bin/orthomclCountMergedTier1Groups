@@ -17,7 +17,7 @@ while(<ALL>) {
   foreach my $member (@a) {
       my @b = split(/\|/, @a);
       $protein2clade{"$b[1]|$b[2]"} = $b[0];
-      $isMerged = $clades{$b[0]};
+      $isMerged  = 1 if $clades{$b[0]};
       $clades{$b[0]} = 1 ;
   }
   $count++ if $isMerged;
