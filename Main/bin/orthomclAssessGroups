@@ -1,0 +1,77 @@
+#!/usr/bin/perl
+
+use DBI;
+use strict;
+
+usage unless scalar(@ARGV) == 3;
+
+my $groupFile = $ARGV[0];
+my $groupScoresOutputFile = $ARGV[1];
+my $proteinScoresOutputFile = $ARGV[2];
+
+$dbh = DBI->connect("dbi:Oracle:orth500n", "sfischer", "",
+		    {PrintError => 0, RaiseError => 1}) or die DBI::errstr;
+
+my $sql = "
+select TAXON_ID_A, TAXON_ID_B, NORMALIZING_DIVISOR
+from apidb.norm
+";
+
+my %norms;
+my $stmt = $dbh->prepare($sql);
+$stmt->execute();
+while(my ($a, $b, $d) = $stmt->fetchrow_array()) {
+    $norms{"$a_$b"} = $d;
+}
+
+$sql = "
+select evalue_exp
+from apidb.similarity
+where query_id = ?
+and subject_id = ?
+";
+my $stmt = $dbh->prepare($sql);
+open(G, $groupFile) || die "can't open $groupFile\n";
+open(GG, ">$groupScoresOutputFile") || die "can't open $groupScoresOutputFile\n";
+open(P, ">$proteinScoresOutputFile") || die "can't open $proteinScoresOutputFile\n";
+
+my $totalScore;
+while(<G>){
+    my @a = split(/ /);
+    my $groupId = shift(@a);
+    my $groupScore;
+    my %membersScore;
+    my $edgeCount;
+    foreach my $member1 (@a) {
+	foreach my $member2 (@a) {
+	    next if $member1 gt $member2;
+	    $edgeCount++;
+	    my $pairScore = getPairScore($member1, $member2);
+	    $groupScore += $pairScore;
+	    $membersScore{$member1} += $pairScore;
+	    $membersScore{$member2} += $pairScore;
+	}
+    }
+    foreach my $member (@a) {
+	print P "$member $membersScore{$member}";
+    }
+    $groupScore /= $edgeCount;
+    $totalScore += $groupScore;
+    print GG "$groupId $groupScore\n";
+}
+print "total score: $totalScore\n";
+
+sub getPairScore {
+    my ($stmt, $member1, $member2) = @_;
+    $stmt->execute($member1, $member2);
+    my $score = 0;
+    ($score) = $stmt->fetchrow_array();
+    return $score;
+}
+
+sub usage {
+die "
+ usage: orthomclAssessGroups groups_file output_groups_score_file output_proteins_score_file
+";
+}
+
