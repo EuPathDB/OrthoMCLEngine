@@ -3,13 +3,13 @@
 use DBI;
 use strict;
 
-usage unless scalar(@ARGV) == 3;
+usage() unless scalar(@ARGV) == 3;
 
 my $groupFile = $ARGV[0];
 my $groupScoresOutputFile = $ARGV[1];
 my $proteinScoresOutputFile = $ARGV[2];
 
-$dbh = DBI->connect("dbi:Oracle:orth500n", "sfischer", "",
+my $dbh = DBI->connect("dbi:Oracle:orth500n", "sfischer", "",
 		    {PrintError => 0, RaiseError => 1}) or die DBI::errstr;
 
 my $sql = "
@@ -21,12 +21,14 @@ my %norms;
 my $stmt = $dbh->prepare($sql);
 $stmt->execute();
 while(my ($a, $b, $d) = $stmt->fetchrow_array()) {
-    $norms{"$a_$b"} = $d;
+  $d =~ /(\d+)\.(\d)/;
+  my $key = "${a}_$b";
+  $norms{$key} = "$1.$2";
 }
 
 $sql = "
 select evalue_exp
-from apidb.similarity
+from apidb.similarsequences
 where query_id = ?
 and subject_id = ?
 ";
@@ -39,34 +41,46 @@ my $totalScore;
 while(<G>){
     my @a = split(/ /);
     my $groupId = shift(@a);
+    my $size = scalar(@a);
     my $groupScore;
     my %membersScore;
     my $edgeCount;
+    print STDERR "." . scalar(@a);
     foreach my $member1 (@a) {
+        my @b = split(/\|/, $member1);
+	my $taxon1 = shift(@b);
 	foreach my $member2 (@a) {
-	    next if $member1 gt $member2;
+	    next unless $member1 lt $member2;
+	    my @c = split(/\|/, $member2);
+	    my $taxon2 = shift(@c);
 	    $edgeCount++;
-	    my $pairScore = getPairScore($member1, $member2);
+	    if ($norms{"${taxon1}_$taxon2"}) {
+	      $pairScore =
+		(getPairScore($member1, $member2) + getPairScore($member2, $member1)) / (2 * $norms{"${taxon1}_$taxon2"});
+	      $pairScore = int($pairScore * 10) / 10;
+	    }
 	    $groupScore += $pairScore;
 	    $membersScore{$member1} += $pairScore;
 	    $membersScore{$member2} += $pairScore;
 	}
     }
     foreach my $member (@a) {
-	print P "$member $membersScore{$member}";
+      my $s1 = $membersScore{$member} / ($size - 1);
+      my $s = sprintf("%.2f %.3f", $membersScore{$member}, $s1);
+      print P "$member $s\n";
     }
     $groupScore /= $edgeCount;
     $totalScore += $groupScore;
-    print GG "$groupId $groupScore\n";
+    print GG "$groupId $groupScore ($edgeCount)\n";
 }
-print "total score: $totalScore\n";
+print GG "total score: $totalScore\n";
 
 sub getPairScore {
-    my ($stmt, $member1, $member2) = @_;
+    my ($member1, $member2) = @_;
     $stmt->execute($member1, $member2);
     my $score = 0;
     ($score) = $stmt->fetchrow_array();
-    return $score;
+    return $score * -1;
 }
 
 sub usage {
