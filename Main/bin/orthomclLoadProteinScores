@@ -1,0 +1,49 @@
+#!/usr/bin/perl
+
+use DBI;
+use strict;
+
+usage unless scalar(@ARGV) == 2;
+
+my $newGroupsFile = $ARGV[0];
+my $proteinScoresFile = $ARGV[1];
+
+open(N, $newGroupsFile) || die "Could not open file '$newGroupsFile'\n";
+%proteinGroup;
+
+while(<N>) {
+  chomp;
+
+  my @a = split;
+  my $id = shift @a;
+  map { $proteinGroup{$_} = $id} @a;
+}
+close(N);
+
+
+$dbh = DBI->connect("dbi:Oracle:orth500n", "sfischer", "",
+		    {PrintError => 0, RaiseError => 1}) or die DBI::errstr;
+
+my $sql = "
+insert into apidb.ProteinToPlanAGroupId
+protein_id = ?
+plan_a_group_id = ?
+score = ?
+score_div = ?
+";
+
+open(F, $proteinScoresFile) || die "can't open file $proteinScoresFile\n";
+
+my $stmt = $dbh->prepare($sql);
+while(<F>) {
+    chomp;
+    my @a = split;
+    $stmt->execute($a[0], $proteinGroup{$a[0]}, $a[1], $a[2]) if $proteinGroup{$a[0]};
+}
+
+sub usage {
+die "
+ usage: orthomclLoadProteinScores new_groups_file scores_file
+";
+}
+
