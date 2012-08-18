@@ -39,6 +39,7 @@ open(P, ">$proteinScoresOutputFile") || die "can't open $proteinScoresOutputFile
 
 my $totalScore;
 while(<G>){
+    chomp;
     my @a = split(/ /);
     my $groupId = shift(@a);
     my $size = scalar(@a);
