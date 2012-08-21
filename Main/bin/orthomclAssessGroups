@@ -21,9 +21,8 @@ my %norms;
 my $stmt = $dbh->prepare($sql);
 $stmt->execute();
 while(my ($a, $b, $d) = $stmt->fetchrow_array()) {
-  $d =~ /(\d+)\.(\d)/;
   my $key = "${a}_$b";
-  $norms{$key} = "$1.$2";
+  $norms{$key} = $d;
 }
 
 $sql = "
@@ -55,10 +54,10 @@ while(<G>){
 	    my @c = split(/\|/, $member2);
 	    my $taxon2 = shift(@c);
 	    $edgeCount++;
+	    my $pairScore = 0;
 	    if ($norms{"${taxon1}_$taxon2"}) {
 	      $pairScore =
 		(getPairScore($member1, $member2) + getPairScore($member2, $member1)) / (2 * $norms{"${taxon1}_$taxon2"});
-	      $pairScore = int($pairScore * 10) / 10;
 	    }
 	    $groupScore += $pairScore;
 	    $membersScore{$member1} += $pairScore;
@@ -72,9 +71,9 @@ while(<G>){
     }
     $groupScore /= $edgeCount;
     $totalScore += $groupScore;
-    print GG "$groupId $groupScore ($edgeCount)\n";
+    print GG sprintf("$groupId %.3f ($edgeCount)\n",$groupScore);
 }
-print GG "total score: $totalScore\n";
+print GG sprintf("total score: %.3f\n", $totalScore);
 
 sub getPairScore {
     my ($member1, $member2) = @_;
