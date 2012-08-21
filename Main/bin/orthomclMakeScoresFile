@@ -6,14 +6,14 @@ usage() unless scalar(@ARGV) == 2;
 my ($newFile, $refFile) = @ARGV;
 
 open(N, $newFile) || die "Could not open file '$newFile'\n";
-%proteinScores;
+my %proteinScores;
 
 while(<N>) {
   chomp;
 
   my @a = split;
   my $id = shift @a;
-  %proteinScore{$id} = \@a;
+  $proteinScores{$id} = \@a;
 }
 close(N);
 
