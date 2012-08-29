@@ -188,7 +188,7 @@ create table BestQueryTaxonScore$suffix $oracleNoLogging as
 select query_id, subject_taxon_id,
        max(evalue_exp) keep (dense_rank first order by evalue_exp, evalue_mant) as evalue_exp,
        max(evalue_mant) keep (dense_rank first order by evalue_exp, evalue_mant) as evalue_mant
-from $sst
+from $sst$suffix
 where query_taxon_id != subject_taxon_id
 group by query_id, subject_taxon_id
 "
