@@ -3,11 +3,12 @@
 use DBI;
 use strict;
 
-usage() unless scalar(@ARGV) == 3;
+usage() unless scalar(@ARGV) == 4;
 
 my $groupFile = $ARGV[0];
-my $groupScoresOutputFile = $ARGV[1];
-my $proteinScoresOutputFile = $ARGV[2];
+my $singletonsFile = $ARGV[1];
+my $groupScoresOutputFile = $ARGV[2];
+my $proteinScoresOutputFile = $ARGV[3];
 
 my $dbh = DBI->connect("dbi:Oracle:orth500n", "sfischer", "",
 		    {PrintError => 0, RaiseError => 1}) or die DBI::errstr;
@@ -35,6 +36,11 @@ my $stmt = $dbh->prepare($sql);
 open(G, $groupFile) || die "can't open $groupFile\n";
 open(GG, ">$groupScoresOutputFile") || die "can't open $groupScoresOutputFile\n";
 open(P, ">$proteinScoresOutputFile") || die "can't open $proteinScoresOutputFile\n";
+open(S, $singletonsFile) || die "could't open singletons file\n";
+while(<S>) {
+    print P;
+}
+close(S);
 
 my $totalScore;
 while(<G>){
@@ -85,7 +91,7 @@ sub getPairScore {
 
 sub usage {
 die "
- usage: orthomclAssessGroups groups_file output_groups_score_file output_proteins_score_file
+ usage: orthomclAssessGroups groups_file singletons_file output_groups_score_file output_proteins_score_file
 ";
 }
 
