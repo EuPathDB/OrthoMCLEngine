@@ -3,24 +3,27 @@
 use DBI;
 use strict;
 
-usage unless scalar(@ARGV) == 1;
+usage() unless scalar(@ARGV) == 1;
 
 my $changedGroupsFile = $ARGV[0];
 
-$dbh = DBI->connect("dbi:Oracle:orth500n", "sfischer", "",
+my $dbh = DBI->connect("dbi:Oracle:orth500n", "sfischer", "",
 		    {PrintError => 0, RaiseError => 1}) or die DBI::errstr;
 
 my $sql = "
-insert into apidb.GroupsChangedInPlanA
-group_id = ?
+insert into apidb.GroupsChangedInPlanA (group_id, min_score, max_score, sum_score, avg_score)
+values (?, ?, ?, ?, ?)
 ";
 
-open(F, $changedGroupsFile) || die "can't open file $changeGroupsFile\n";
+open(F, $changedGroupsFile) || die "can't open file $changedGroupsFile\n";
 
 my $stmt = $dbh->prepare($sql);
 while(<F>) {
     chomp;
-    $stmt->execute($_);
+    s/\://;
+    my @a = split;
+    
+    $stmt->execute(@a);
 }
 
 sub usage {
