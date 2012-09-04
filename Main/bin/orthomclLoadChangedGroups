@@ -3,15 +3,16 @@
 use DBI;
 use strict;
 
-usage() unless scalar(@ARGV) == 1;
+usage() unless scalar(@ARGV) == 2;
 
 my $changedGroupsFile = $ARGV[0];
+my $planLetter = $ARGV[1];
 
 my $dbh = DBI->connect("dbi:Oracle:orth500n", "sfischer", "",
 		    {PrintError => 0, RaiseError => 1}) or die DBI::errstr;
 
 my $sql = "
-insert into apidb.GroupsChangedInPlanA (group_id, min_score, max_score, sum_score, avg_score)
+insert into apidb.GroupsChangedInPlan$planLetter (group_id, min_score, max_score, sum_score, avg_score)
 values (?, ?, ?, ?, ?)
 ";
 
@@ -28,7 +29,7 @@ while(<F>) {
 
 sub usage {
 die "
- usage: orthomclAssessGroups groups_file output_groups_score_file output_proteins_score_file
+ usage: orthomclLoadChangedGroups group_scores_file
 ";
 }
 
