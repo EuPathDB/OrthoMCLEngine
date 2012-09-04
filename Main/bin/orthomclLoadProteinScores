@@ -3,10 +3,14 @@
 use DBI;
 use strict;
 
-usage() unless scalar(@ARGV) == 2;
+usage() unless scalar(@ARGV) == 4;
 
 my $newGroupsFile = $ARGV[0];
 my $proteinScoresFile = $ARGV[1];
+my $repProteinIDsFile = $ARGV[2];
+my $planLetter = $ARGV[3];
+
+die "plan_letter arg '$planLetter' must be A or B" unless $planLetter eq 'A' || $planLetter eq 'B';
 
 open(N, $newGroupsFile) || die "Could not open file '$newGroupsFile'\n";
 my %proteinNewGroup;
@@ -20,13 +24,19 @@ while(<N>) {
 }
 close(N);
 
+my %repProteins;
+open(R, $repProteinIDsFile) || die "can't open file '$repProteinIDsFile'\n";
+while(<R>) {
+    chomp;
+    $repProteins{$_} = 1;
+}
 
 my $dbh = DBI->connect("dbi:Oracle:orth500n", "sfischer", "heathersofia",
 		    {PrintError => 0, RaiseError => 1}) or die DBI::errstr;
 
 my $sql = "
-insert into apidb.ProteinToPlanAGroupId (protein_id, plan_a_group_id, score, avg_score)
-values (?, ?, ?, ?)
+insert into apidb.ProteinToPlan${planLetter}GroupId (protein_id, plan_${planLetter}_group_id, score, avg_score, is_rep)
+values (?, ?, ?, ?, ?)
 ";
 
 open(F, $proteinScoresFile) || die "can't open file $proteinScoresFile\n";
@@ -35,7 +45,9 @@ my $stmt = $dbh->prepare($sql);
 while(<F>) {
     chomp;
     my @a = split;
-    $stmt->execute($a[0], $proteinNewGroup{$a[0]}, $a[1], $a[2]) if $proteinNewGroup{$a[0]};
+    my $isRep = 0;
+    $isRep = 1 if $repProteins{$a[0]};
+    $stmt->execute($a[0], $proteinNewGroup{$a[0]}, $a[1], $a[2], $isRep);
 }
 
 sub usage {
