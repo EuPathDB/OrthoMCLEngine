@@ -1,24 +1,29 @@
+#!/usr/bin/perl
 
-my ($refDir, $newDir, $compareDir, $planLetter, $repProteinsFile, $secondaryProteinsFile) = @ARGV;
+use strict;
 
-usage() unless scalar(@ARGV) == 5;
+my ($outputDir, $planLetter, $refProteinsFile, $refGroupsFile, $newGroupsFile, $repProteinsFile, $singleCladeProteinsFile) = @ARGV;
 
-die "dir $refDir does not exist" unless -d $refDir;
-die "dir $newDir does not exist" unless -d $newDir;
-die "dir $compareDir does not exist" unless -d $compareDir;
-die "file $newdir/proteinIDs does not exist" unless -e "$newdir/proteinIDs";
+usage() unless scalar(@ARGV) >= 5;
+
+die "dir $outputDir does not exist" unless -d $outputDir;
+die "file $refProteinsFile does not exist" unless -e $refProteinsFile;
+die "file $refGroupsFile does not exist" unless -e $refGroupsFile;
+die "file $newGroupsFile does not exist" unless -e $newGroupsFile;
 die "file $repProteinsFile does not exist" unless -e "$repProteinsFile";
+die "plan letter '$planLetter' must be A or B" unless $planLetter eq 'A' || $planLetter eq 'B';
 
-# refDir needs:
-# - proteinIDs (sorted)
-# - groups
+my $refDir = "$outputDir/ref";
+my $newDir = "$outputDir/new";
+my $compareDir = $outputDir;
 
-# newDir needs:
-#  - rep proteins
-#  - groups
+mkdir($refDir);
+mkdir($newDir);
 
-stage1($newDir, "$refDir/proteinsIDs", $secondaryProteinsFile);
-stage1($refDir, "$refDir/proteinsIDs");
+my $cmdCount = 0;
+
+stage1($newDir, $newGroupsFile, $refProteinsFile, $singleCladeProteinsFile);
+stage1($refDir, $refGroupsFile, $refProteinsFile);
 
 stage2($newDir, $refDir);
 stage2($refDir, $newDir);
@@ -30,7 +35,7 @@ stage3($refDir, $newDir);
 runCmd("orthomclMakeScoresFile $newDir/proteins_conn_scores $refDir/proteins_conn_scores  > $compareDir/protein_conn_scores_delta");
 
 # load PlanX proteins table
-runCmd("orthomclLoadProteinScores $newDir/groups.txt $compareDir/protein_conn_scores_delta $repProteinsFile $planLetter");
+runCmd("orthomclLoadProteinScores $newGroupsFile $compareDir/protein_conn_scores_delta $repProteinsFile $planLetter");
 
 # load PlanX groups table
 runCmd("orthomclLoadChangedGroups  $newDir/group_conn_scores $planLetter");
@@ -38,46 +43,47 @@ runCmd("orthomclLoadChangedGroups  $newDir/group_conn_scores $planLetter");
 
 
 sub stage1 {
-  my ($dir, $proteinIDsFile, $secondaryProteinsFile) = @_;
+  my ($dir, $groupsFile, $proteinIDsFile, $singleCladeProteinsFile) = @_;
 
-  chdir $dir;
+  # remove singleton groups
+  &runCmd("cat $groupsFile | perl -e 'while(<>) { \@a = split; print if scalar(\@a) > 2;}' > $dir/groups_no_singletons");
 
   # make group_proteins_sorted (protein IDs found in groups, sorted)
-  &runCmd("orthomclExtractProteinIdsFromGroupsFile groups.txt | sort > group_proteins_sorted");
+  &runCmd("orthomclExtractProteinIdsFromGroupsFile $dir/groups_no_singletons | sort > $dir/group_proteins_sorted");
 
   # us it to find singletons, sort them
-  &runCmd("diff $proteinIDsFile group_proteins_sorted | grep \\<| cut -d \" \" -f2|sort > singletons_sorted");
+  &runCmd("diff $proteinIDsFile $dir/group_proteins_sorted | grep \\<| cut -d \" \" -f2|sort > $dir/singletons_sorted");
 
   # sort groups file (for comparison with other groups file)
-  &runCmd("orthomclSortGroupsFile groups.txt | sort > groups_sorted");
+  &runCmd("orthomclSortGroupsFile $dir/groups_no_singletons | sort > $dir/groups_sorted");
 
-  # make groups file including only secondary proteins
-  &runCmd("orthomclFilterGroupProteins groups_sorted $secondaryProteinsFile > groups_secondary_only") if $secondaryProteinsFile;
+  # make groups file including only single-clade proteins
+  &runCmd("orthomclFilterGroupProteins $dir/groups_sorted $singleCladeProteinsFile > $dir/groups_singleclade_only") if $singleCladeProteinsFile;
 
   # sort secondary only groups file
-  &runCmd("orthomclSortGroupsFile groups_secondary_only | sort > groups_secondary_sorted");
+  &runCmd("orthomclSortGroupsFile $dir/groups_singleclade_only | sort > $dir/groups_singleclade_sorted") if $singleCladeProteinsFile;
 
 }
 
 sub stage2 {
-  my ($dir, $otherDir, $secondaryProteinsFile) = @_;
+  my ($dir, $otherDir, $singleCladeProteinsFile) = @_;
 
   # find non-identical groups
-  runCmd("orthomclRemoveIdenticalGroups $dir/groups_sorted $otherDir/groups_sorted > different_groups");
+  runCmd("orthomclRemoveIdenticalGroups $dir/groups_sorted $otherDir/groups_sorted > $dir/different_groups");
 
   # find non-identical secondary groups
-  if ($secondaryProteinsFile) {
-    runCmd("orthomclRemoveIdenticalGroups $dir/groups_secondary_sorted $otherDir/groups_secondary_sorted > different_secondary_groups");
+  if ($singleCladeProteinsFile) {
+    runCmd("orthomclRemoveIdenticalGroups $dir/groups_singleclade_sorted $otherDir/groups_singleclade_sorted > $dir/different_singleclade_groups");
   }
 
   # find pairs in non-identical groups
-  &runCmd("orthomclExtractProteinPairsFromGroupsFile different_groups | sort > pairs_sorted");
+  &runCmd("orthomclExtractProteinPairsFromGroupsFile $dir/different_groups | sort > $dir/pairs_sorted");
 
   # find different singletons (singletons here but not in other)
-  runCmd("diff $dir/singletons_sorted $otherDir/singletons_sorted | grep \\>| cut -d \" \" -f2|m > different_singletons");
+  runCmd("diff $dir/singletons_sorted $otherDir/singletons_sorted | grep \\>| cut -d \" \" -f2|m > $dir/different_singletons");
 
   # find protein and group connectivity scores
-  &runCmd("orthomclAssessGroups different_groups different_singletons groups_conn_scores proteins_conn_scores");
+  &runCmd("orthomclAssessGroups different_groups $dir/different_singletons $dir/groups_conn_scores $dir/proteins_conn_scores");
 
 }
 
@@ -85,18 +91,19 @@ sub stage3 {
   my ($dir, $otherDir) = @_;
 
   # find missing pairs (pairs in other but not found here)
-  runCmd("diff $dir/pairs_sorted $otherDir/pairs_sorted | grep \\> | cut -d \" \" -f2,3 > missing_pairs");
+  runCmd("diff $dir/pairs_sorted $otherDir/pairs_sorted | grep \\> | cut -d \" \" -f2,3 > $dir/missing_pairs");
 
 }
 
 sub runCmd {
   my ($cmd) = @_;
-  print STDERR "running: $cmd\n";
+  $cmdCount++;
+  print STDERR "\n$cmdCount running: $cmd\n";
   system($cmd) && die "failed";
 }
 
 sub usage {
   die "
-usage: orthomclPostProcessPlanX refDir newDir planLetter
+usage: orthomclPostProcessPlanX outputDir planLetter refProteinsFile refGroupsFile newGroupsFile [repProteinsFile singleCladeProteinsFile]
 ";
 }

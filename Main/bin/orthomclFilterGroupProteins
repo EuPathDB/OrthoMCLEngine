@@ -1,8 +1,9 @@
 #!/usr/bin/perl
 
+use strict;
 my ($groupsFile, $proteinsFile) = @ARGV;
 
-usage() unless scalar(@ARGV) == 1;
+usage() unless scalar(@ARGV) == 2;
 
 open(P, $proteinsFile) || die "can't open file '$proteinsFile'\n";
 my %proteins;
@@ -18,7 +19,7 @@ while(<G>) {
   my @a = split;
   my $id = shift(@a);
   my @b = map { if ($proteins{$_}) { $_; } else {}} @a;
-  print join(" ", @b, "\n");
+  print join(" ", $id, @b, "\n");
 }
 
 sub usage {
