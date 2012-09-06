@@ -63,7 +63,7 @@ while(<S>) {
     my ($summed_conn_score, $avg_conn_score) = @{$proteinConnScores{$id}};
     my $isRep = 0;
     $isRep = 1 if $repProteins{$id};
-    $stmt->execute($id, $proteinNewGroup{$id}, $summed_conn_score, $avg_conn_score, $synScore, $isRep);
+    $stmt->execute($id, $proteinNewGroup{$id}, $summed_conn_score, $avg_conn_score, $syn_score, $isRep);
 }
 
 sub usage {
