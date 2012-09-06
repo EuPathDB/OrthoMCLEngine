@@ -8,7 +8,8 @@ usage() unless scalar(@ARGV) == 4;
 my $newGroupsFile = $ARGV[0];
 my $proteinScoresFile = $ARGV[1];
 my $repProteinIDsFile = $ARGV[2];
-my $planLetter = $ARGV[3];
+my $synScoresFile = $ARGV[3];
+my $planLetter = $ARGV[4];
 
 die "plan_letter arg '$planLetter' must be A or B" unless $planLetter eq 'A' || $planLetter eq 'B';
 
@@ -31,23 +32,38 @@ while(<R>) {
     $repProteins{$_} = 1;
 }
 
-my $dbh = DBI->connect("dbi:Oracle:orth500n", "sfischer", "heathersofia",
-		    {PrintError => 0, RaiseError => 1}) or die DBI::errstr;
-
-my $sql = "
-insert into apidb.ProteinToPlan${planLetter}GroupId (protein_id, plan_${planLetter}_group_id, score, avg_score, is_rep)
-values (?, ?, ?, ?, ?)
-";
-
 open(F, $proteinScoresFile) || die "can't open file $proteinScoresFile\n";
-
-my $stmt = $dbh->prepare($sql);
+my %proteinConnScores;
 while(<F>) {
     chomp;
     my @a = split;
+    my $id = shift @a;
+    $proteinConnScores{$id} = \@a;
+}
+close(F);
+
+my $dbh = DBI->connect("dbi:Oracle:orth500n", "sfischer", "",
+		    {PrintError => 0, RaiseError => 1}) or die DBI::errstr;
+
+my $sql = "
+insert into apidb.ProteinToPlan${planLetter}GroupId (protein_id, plan_${planLetter}_group_id, score, avg_score, syn_score, is_rep)
+values (?, ?, ?, ?, ?, ?)
+";
+
+
+my $stmt = $dbh->prepare("truncate table apidb.ProteinToPlan${planLetter}GroupId");
+$stmt->execute();
+
+$stmt = $dbh->prepare($sql);
+open(S, $synScoresFile) || die "can't open file '$synScoresFile'\n";
+while(<S>) {
+    chomp;
+    my @a = split;
+    my ($id, $syn_score) = @a;
+    my ($summed_conn_score, $avg_conn_score) = @{$proteinConnScores{$id}};
     my $isRep = 0;
-    $isRep = 1 if $repProteins{$a[0]};
-    $stmt->execute($a[0], $proteinNewGroup{$a[0]}, $a[1], $a[2], $isRep);
+    $isRep = 1 if $repProteins{$id};
+    $stmt->execute($id, $proteinNewGroup{$id}, $summed_conn_score, $avg_conn_score, $synScore, $isRep);
 }
 
 sub usage {

@@ -25,21 +25,29 @@ my $cmdCount = 0;
 stage1($newDir, $newGroupsFile, $refProteinsFile, $singleCladeProteinsFile);
 stage1($refDir, $refGroupsFile, $refProteinsFile);
 
-stage2($newDir, $refDir);
-stage2($refDir, $newDir);
+stage2($newDir, $refDir, $newGroupsFile, $refGroupsFile, $singleCladeProteinsFile);
+stage2($refDir, $newDir, $refGroupsFile, $newGroupsFile);
 
 stage3($newDir, $refDir);
 stage3($refDir, $newDir);
 
 # find protein connectivity score deltas (new minus ref)
-runCmd("orthomclMakeScoresFile $newDir/proteins_conn_scores $refDir/proteins_conn_scores  > $compareDir/protein_conn_scores_delta");
+runCmd("orthomclMakeScoresFile $newDir/protein_conn_scores $refDir/protein_conn_scores  > $compareDir/protein_conn_scores_delta");
+
+# find protein synteny score deltas (new minus ref)
+runCmd("orthomclMakeScoresFile $newDir/protein_syn_scores $refDir/protein_syn_scores  > $compareDir/protein_syn_scores_delta");
+
+# find group connectivity deltas
+runCmd("orthomclMakeGroupScoresFile $refDir/different_groups $compareDir/protein_conn_scores_delta > $compareDir/group_conn_scores_delta");
 
 # load PlanX proteins table
-runCmd("orthomclLoadProteinScores $newGroupsFile $compareDir/protein_conn_scores_delta $repProteinsFile $planLetter");
+runCmd("orthomclLoadProteinScores $newGroupsFile $compareDir/protein_conn_scores_delta $repProteinsFile $compareDir/protein_syn_scores_delta $planLetter");
 
 # load PlanX groups table
-runCmd("orthomclLoadChangedGroups  $newDir/group_conn_scores $planLetter");
+runCmd("orthomclLoadChangedGroups  $compareDir/group_conn_scores_delta $planLetter");
 
+
+#################################################################################################
 
 
 sub stage1 {
@@ -54,26 +62,23 @@ sub stage1 {
   # us it to find singletons, sort them
   &runCmd("diff $proteinIDsFile $dir/group_proteins_sorted | grep \\<| cut -d \" \" -f2|sort > $dir/singletons_sorted");
 
-  # sort groups file (for comparison with other groups file)
-  &runCmd("orthomclSortGroupsFile $dir/groups_no_singletons | sort > $dir/groups_sorted");
-
   # make groups file including only single-clade proteins
   &runCmd("orthomclFilterGroupProteins $dir/groups_sorted $singleCladeProteinsFile > $dir/groups_singleclade_only") if $singleCladeProteinsFile;
 
-  # sort secondary only groups file
-  &runCmd("orthomclSortGroupsFile $dir/groups_singleclade_only | sort > $dir/groups_singleclade_sorted") if $singleCladeProteinsFile;
+  # find synteny scores
+  &runCmd("syntenicity $groupsFile --proteinScoreFile $dir/protein_syn_scores");
 
 }
 
 sub stage2 {
-  my ($dir, $otherDir, $singleCladeProteinsFile) = @_;
+  my ($dir, $otherDir, $groups, $otherGroups, $singleCladeProteinsFile) = @_;
 
   # find non-identical groups
-  runCmd("orthomclRemoveIdenticalGroups $dir/groups_sorted $otherDir/groups_sorted > $dir/different_groups");
+  runCmd("orthomclRemoveIdenticalGroups $groups $otherGroups > $dir/different_groups");
 
-  # find non-identical secondary groups
+  # find non-identical single-clade groups
   if ($singleCladeProteinsFile) {
-    runCmd("orthomclRemoveIdenticalGroups $dir/groups_singleclade_sorted $otherDir/groups_singleclade_sorted > $dir/different_singleclade_groups");
+    runCmd("orthomclRemoveIdenticalGroups $dir/groups_singleclade_only $otherDir/groups_singleclade_only > $dir/different_singleclade_groups");
   }
 
   # find pairs in non-identical groups
@@ -83,7 +88,7 @@ sub stage2 {
   runCmd("diff $dir/singletons_sorted $otherDir/singletons_sorted | grep \\>| cut -d \" \" -f2|m > $dir/different_singletons");
 
   # find protein and group connectivity scores
-  &runCmd("orthomclAssessGroups different_groups $dir/different_singletons $dir/groups_conn_scores $dir/proteins_conn_scores");
+  &runCmd("orthomclAssessGroups different_groups $dir/different_singletons $dir/group_conn_scores $dir/protein_conn_scores");
 
 }
 
