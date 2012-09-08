@@ -22,28 +22,28 @@ mkdir($newDir);
 
 my $cmdCount = 0;
 
-print STDERR "\n--- Stage 1 - new ---";
+print STDERR "\n=== Stage 1 - new ===";
 stage1($newDir, $newGroupsFile, $refProteinsFile, $singleCladeProteinsFile);
 
-print STDERR "\n--- Stage 1 - ref ---";
+print STDERR "\n=== Stage 1 - ref ===";
 stage1($refDir, $refGroupsFile, $refProteinsFile, $singleCladeProteinsFile);
 
 
-print STDERR "\n--- Stage 2 - new ---";
+print STDERR "\n=== Stage 2 - new ===";
 stage2($newDir, $refDir, $singleCladeProteinsFile);
 
-print STDERR "\n--- Stage 2 - ref ---";
+print STDERR "\n=== Stage 2 - ref ===";
 stage2($refDir, $newDir, $singleCladeProteinsFile);
 
 
-print STDERR "\n--- Stage 3 - new ---";
+print STDERR "\n=== Stage 3 - new ===";
 stage3($newDir, $refDir);
 
-print STDERR "\n--- Stage 3 - ref ---";
+print STDERR "\n=== Stage 3 - ref ===";
 stage3($refDir, $newDir);
 
 
-print STDERR "\n--- Stage 4 - compare ---\n";
+print STDERR "\n=== Stage 4 - compare ===\n";
 # find protein connectivity score deltas (new minus ref)
 runCmd("orthomclMakeScoresFile $newDir/protein_conn_scores $refDir/protein_conn_scores  > $compareDir/protein_conn_scores_delta");
 
