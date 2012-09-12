@@ -51,7 +51,10 @@ runCmd("orthomclMakeScoresFile $newDir/protein_conn_scores $refDir/protein_conn_
 runCmd("orthomclMakeScoresFile $newDir/protein_syn_scores $refDir/protein_syn_scores  > $compareDir/protein_syn_scores_delta");
 
 # find group connectivity deltas
-runCmd("orthomclMakeGroupScoresFile $refDir/different_groups $compareDir/protein_conn_scores_delta > $compareDir/group_conn_scores_delta");
+runCmd("orthomclMakeGroupScoresFile $refDir/different_groups $compareDir/protein_conn_scores_delta 2 > $compareDir/group_conn_scores_delta");
+
+# find group synteny deltas
+runCmd("orthomclMakeGroupScoresFile $refDir/different_groups $compareDir/protein_syn_scores_delta 1 > $compareDir/group_syn_scores_delta");
 
 # load PlanX proteins table
 runCmd("orthomclLoadProteinScores $newGroupsFile $compareDir/protein_conn_scores_delta $repProteinsFile $compareDir/protein_syn_scores_delta $planLetter");
