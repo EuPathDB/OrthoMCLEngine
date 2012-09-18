@@ -98,10 +98,10 @@ sub stage2 {
   }
 
   # find different singletons (singletons here but not in other)
-  runCmd("diff $dir/singletons_sorted $otherDir/singletons_sorted | grep \\>| cut -d \" \" -f2 > $dir/different_singletons");
+  runCmd("diff $dir/singletons_sorted $otherDir/singletons_sorted | grep \\<| cut -d \" \" -f2 > $dir/different_singletons");
 
   # find protein and group connectivity scores
-#  &runCmd("orthomclAssessGroups different_groups $dir/different_singletons $dir/group_conn_scores $dir/protein_conn_scores");
+  &runCmd("orthomclAssessGroups $dir/different_groups $dir/different_singletons $dir/group_conn_scores $dir/protein_conn_scores");
 
   # find pairs in non-identical groups
   &runCmd("orthomclExtractProteinPairsFromGroupsFile $dir/different_groups | sort > $dir/pairs_sorted");
