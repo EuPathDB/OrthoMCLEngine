@@ -1,0 +1,112 @@
+#!/usr/bin/perl
+use strict;
+my ($planLetter, $newDir, $refDir) = @ARGV;
+
+my %newStats = getStats($newDir);
+my %refStats = getStats($refDir);
+my $newStatsStr = printStats(\%newStats);
+my $refStatsStr = printStats(\%refStats);
+
+my $totalProteins = `wc -l $newDir/protein_syn_scores | cut -d " " -f1`;
+chomp $totalProteins;
+
+my $cmpDir = "$newDir/..";
+my $synProteinsBetter = `cat $cmpDir/protein_syn_scores_delta | perl -e 'while(<>){\@a = split; print if \$a[1] > 0;}'|wc -l`;
+chomp $synProteinsBetter;
+my $synProteinsWorse = `cat $cmpDir/protein_syn_scores_delta | perl -e 'while(<>){\@a = split; print if \$a[1] < 0;}'|wc -l`;
+chomp $synProteinsWorse;
+
+my $synGroupsBetter = `cat $cmpDir/group_syn_scores_delta | perl -e 'while(<>){chomp; \@a = split; print "$_\n" if \$a[3] >0}'|wc -l`;
+chomp $synGroupsBetter;
+
+my $synGroupsWorse = `cat $cmpDir/group_syn_scores_delta | perl -e 'while(<>){chomp; \@a = split; print "$_\n" if \$a[3] <0}'|wc -l`;
+chomp $synGroupsWorse;
+
+my $notEqualProteinSumScores = `cut -d " " -f2 $cmpDir/protein_conn_scores_delta| perl -e 'while(<>){next if /^0\n/; print;}' |wc -l`;
+chomp $notEqualProteinSumScores;
+
+my $negativeProteinSumScores = `cut -d " " -f2 $cmpDir/protein_conn_scores_delta |grep \- | wc -l`;
+chomp $negativeProteinSumScores;
+
+my $notEqualProteinAvgScores = `cut -d " " -f3 $cmpDir/protein_conn_scores_delta| perl -e 'while(<>){next if /^0\n/; print;}' |wc -l`;
+
+my $negativeProteinAvgScores = `cut -d " " -f3 $cmpDir/protein_conn_scores_delta |grep \- | wc -l`;
+chomp $negativeProteinAvgScores;
+
+my $summedBetterPct = sprintf("%.2f", ($notEqualProteinSumScores - $negativeProteinSumScores) /$newStats{diff_proteins}  * 100);
+
+my $summedEqualPct = sprintf("%.2f", ($newStats{diff_proteins} - $notEqualProteinSumScores) /$newStats{diff_proteins}  * 100);
+my $summedWorsePct = sprintf("%.2f", $negativeProteinSumScores /$newStats{diff_proteins}  * 100);
+
+my $avgBetterPct = sprintf("%.2f", ($notEqualProteinAvgScores - $negativeProteinAvgScores) /$newStats{diff_proteins}  * 100);
+
+my $avgEqualPct = sprintf("%.2f", ($newStats{diff_proteins} - $notEqualProteinAvgScores) /$newStats{diff_proteins}  * 100);
+my $avgWorsePct = sprintf("%.2f", $negativeProteinAvgScores /$newStats{diff_proteins}  * 100);
+
+print "
+Total proteins:      $totalProteins
+Different proteins:  $newStats{diff_proteins}
+
+Plan $planLetter$newStatsStr
+Rel 5$refStatsStr
+Connectivity Comparison (deltas):
+ summed:
+   better: $summedBetterPct%
+   equal:  $summedEqualPct%
+   worse:  $summedWorsePct%
+ averaged:
+   better: $avgBetterPct%
+   equal:  $avgEqualPct%
+   worse:  $avgWorsePct%
+
+Synteny Comparison:
+  better proteins:   $synProteinsBetter
+  worse proteins:    $synProteinsWorse
+  better groups:     $synGroupsBetter
+  worse groups:      $synGroupsWorse
+";
+
+
+sub getStats {
+  my ($dir) = @_;
+
+  my %stats;
+  $stats{groups} = `wc -l $dir/groups_no_singletons | cut -d " " -f1`;
+  $stats{singletons} = `wc -l $dir/singletons_sorted | cut -d " " -f1`;
+  $stats{diff_groups} = `wc -l $dir/different_groups | cut -d " " -f1`;
+  $stats{diff_sing_clade_groups} = `wc -l $dir/different_singleclade_groups | cut -d " " -f1`;
+  $stats{diff_group_proteins} = `orthomclExtractProteinIdsFromGroupsFile $dir/different_groups|wc -l`;
+  $stats{diff_singletons} = `wc -l $dir/different_singletons | cut -d " " -f1`;
+  $stats{pairs} = `wc -l $dir/pairs_sorted | cut -d " " -f1`;
+  $stats{pairs_missing} = `wc -l $dir/missing_pairs | cut -d " " -f1`;
+  $stats{tot_group_conn_score} = `tail -n1 $dir/group_conn_scores|cut -d " " -f3`;
+  foreach my $k (keys(%stats)) { chomp $stats{$k}}
+
+  $stats{diff_proteins} = $stats{diff_group_proteins} + $stats{diff_singletons};
+  $stats{avg_group_conn_score} = sprintf("%.2f", $stats{tot_group_conn_score} / $stats{diff_groups});
+  my $prot_scores = `perl -e 'while(<>){chomp;(\$a,\$b,\$c) = split; \$bb += \$b; \$cc += \$c;} print "\$bb \$cc\n";' < $dir/protein_conn_scores`;
+  my ($summed, $avg) = split(/ /, $prot_scores);
+  $stats{avg_s_protein_score} = sprintf("%.2f", $summed/$stats{diff_proteins});
+  $stats{avg_a_protein_score} = sprintf("%.2f", $avg/$stats{diff_proteins});
+
+  return %stats;
+}
+
+sub printStats {
+
+  my ($stats) = @_;
+
+return "
+  groups:                   $stats->{groups}
+  singletons:               $stats->{singletons}
+  pairs:                    $stats->{pairs}
+  different groups:         $stats->{diff_groups}
+  different singletons:     $stats->{diff_singletons}
+  missing pairs:            $stats->{pairs_missing}
+  groups conn score:        $stats->{tot_group_conn_score}
+  groups conn score avg:    $stats->{avg_group_conn_score}
+  diff 1 clade groups:      $stats->{diff_singletons}
+  summed protein score:     $stats->{avg_s_protein_score} (avg)
+  averaged protein score:   $stats->{avg_a_protein_score} (avg)
+";
+}
