@@ -59,11 +59,37 @@ Connectivity Comparison (deltas):
    equal:  $avgEqualPct%
    worse:  $avgWorsePct%
 
-Synteny Comparison:
+Synteny Comparison (deltas):
   better proteins:   $synProteinsBetter
   worse proteins:    $synProteinsWorse
   better groups:     $synGroupsBetter
   worse groups:      $synGroupsWorse
+
+
+Definitions:
+  - Different proteins:  the number of proteins that are not in groups identical between Rel 5 and Plan $planLetter.
+
+  - different groups:  groups in a build that are not identical to a group in the other build.
+
+  - different singletons:  singletons in a build that are not singletons in the other build.
+
+  - pairs:  two proteins are in a 'pair' if they are both members of a 'different group'
+
+  - missing pairs:  pairs in the other build that are absent in this build
+
+  - groups conn score:  the sum of the connectivity scores of all different groups.  a group's connectivity score is computed by summing the normalized scores of all the edges of the group and dividing by the number of possible edges.  the normalized scores are the average of the e-values of a pair of proteins, divided by the normalization factor for the taxa of the two proteins.  the normalization factor was derived using Rel 5 data [i forget how... will look into it later].
+
+  - groups con score avg:  the groups conn score divided by the number of different groups
+
+  - diff 1 clade groups:  the number of 'single clade only' groups that are not identical to those in the other build.  computed by filtering out of all different groups the proteins that are not from single clade groups.  the residue is single-clade only groups.  compare those against the same from the other build, and count those that are not identical.
+
+  - summed protein score (avg):  the total of all summed proteins scores for different proteins divided by the number of different proteins.  the summed protein score is the sum of all normalized scores for this protein.
+
+  - averaged protein score (avg):  the total of all averaged proteins scores for different proteins divided by the number of different proteins.  the averaged protein score is the summed protein score divided by the number of possible edges for a protein.
+
+  - Connectivity comparison (deltas):  for the summed and averaged protein scores (described above), subtract the Rel 5 value for a protein from the Plan $planLetter value.
+
+  - Synteny comparison (deltas):  [ugh, too tired to explain this now.]
 ";
 
 
