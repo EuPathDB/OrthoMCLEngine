@@ -22,8 +22,8 @@ while(<G>) {
 
   my @g = split;
   my $id = shift @g;
-  my $maxScore = 0;
-  my $minScore = 0;
+  my $maxScore = -1000000;
+  my $minScore = 10000000;
   my $scoreSum;
   foreach my $member (@g) {
     next unless $proteinScores{$member};
