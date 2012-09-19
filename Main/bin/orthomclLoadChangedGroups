@@ -11,6 +11,9 @@ my $planLetter = $ARGV[1];
 my $dbh = DBI->connect("dbi:Oracle:orth500n", "sfischer", "",
 		    {PrintError => 0, RaiseError => 1}) or die DBI::errstr;
 
+my $stmt = $dbh->prepare("truncate table apidb.GroupsChangedInPlan$planLetter");
+$stmt->execute();
+
 my $sql = "
 insert into apidb.GroupsChangedInPlan$planLetter (group_id, min_score, max_score, sum_score, avg_score)
 values (?, ?, ?, ?, ?)
@@ -26,6 +29,13 @@ while(<F>) {
     
     $stmt->execute(@a);
 }
+
+$sql = "insert into APIDB.groupschangedinplan$planLetter (group_id)
+select name from apidb.orthologgroup
+minus select group_id from APIDB.groupschangedinplana";
+
+my $stmt = $dbh->prepare($sql);
+$stmt->execute();
 
 sub usage {
 die "
