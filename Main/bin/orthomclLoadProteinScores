@@ -17,7 +17,7 @@ my %cladeHash = makeCladeHash();
 my %tierOneClades;
 my %tmpHash;
 foreach my $genusId (values(%cladeHash)) {
-    $teirOneClades{$genusId} = 1 if $tmpHash{$genusId};
+    $tierOneClades{$genusId} = $genusId if $tmpHash{$genusId};
     $tmpHash{$genusId} = 1;
 }
 
@@ -30,6 +30,7 @@ while(<N>) {
   my @a = split;
   my $id = shift @a;
   $id =~ s/\://;
+  my $groupSize = scalar(@a);
   map { $proteinNewGroup{$_} = $id; $groupsizes{$_} = $groupSize} @a;
 }
 close(N);

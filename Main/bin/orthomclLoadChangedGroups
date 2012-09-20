@@ -12,8 +12,8 @@ my $changedInSingleCladeFile = $ARGV[2];
 my %singleCladeChange;
 open(S, $changedInSingleCladeFile) || die "can't open file $changedInSingleCladeFile\n";
 while(<S>) {
-    chomp;
-    $singleCladeChange{$_} = 1;
+    my @a = split(/:/);
+    $singleCladeChange{$a[0]} = 1;
 }
 close(S);
 

@@ -60,7 +60,7 @@ runCmd("orthomclMakeGroupScoresFile $refDir/different_groups $compareDir/protein
 runCmd("orthomclLoadProteinScores $newGroupsFile $compareDir/protein_conn_scores_delta $repProteinsFile $compareDir/protein_syn_scores_delta $planLetter");
 
 # load PlanX groups table
-runCmd("orthomclLoadChangedGroups  $compareDir/group_conn_scores_delta $planLetter");
+runCmd("orthomclLoadChangedGroups  $compareDir/group_conn_scores_delta $planLetter $refDir/different_singleclade_groups");
 
 
 #################################################################################################
