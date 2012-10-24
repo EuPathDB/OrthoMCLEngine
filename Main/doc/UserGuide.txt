@@ -9,7 +9,11 @@ UNDER CONSTRUCTION:
 =========== Introduction ==========================
 ===================================================
 
-For details on the orthomcl algorithm, please read the OrthoMCL Algorithm Document available at: http://docs.google.com/Doc?id=dd996jxg_1gsqsp6
+For alternate documentation online, please read Unit 6.12 of the Current Protocols of Bioinformatics available at:
+  http://onlinelibrary.wiley.com/doi/10.1002/0471250953.bi0612s35/full
+   
+For details on the orthomcl algorithm, please read the OrthoMCL Algorithm Document available at: 
+  http://docs.google.com/Doc?id=dd996jxg_1gsqsp6
 
 The input to OrthoMCL is a set of proteomes.
 
