@@ -1,0 +1,62 @@
+#!/usr/bin/perl
+
+# uniprotXmlToFasta
+
+# convert the UniProt XML download format to a FASTA format suitable for BLAST,
+# so we can apply UniProt EC numbers to OrthoMCL proteins
+
+use strict;
+
+# use DBI;
+use Data::Dumper;
+use XML::Simple;
+
+my $simple = XML::Simple->new();
+my $xmlString;
+
+my $entryInProgress;
+while (<STDIN>) {
+  $entryInProgress = 1 if /<entry/;
+
+  $xmlString .= $_ if $entryInProgress;
+
+  if (/<\/entry/) {
+    processEntry($xmlString);
+    $xmlString = "";
+    $entryInProgress = undef;
+  }
+}
+
+sub processEntry {
+
+  my ($xmlString) = @_;
+
+  my $entry = $simple->XMLin($xmlString, forcearray => 1, KeyAttr => [] );
+
+  # print "entry:\n" . Dumper($entry). "\n";
+  my $sequence = $entry->{sequence}->[0]->{content};
+  my $length = $entry->{sequence}->[0]->{length};
+  my $entryName = $entry->{name}->[0];
+
+  my @ecNumbers;
+  foreach my $dbRef (@{$entry->{dbReference}}) {
+    if ($dbRef->{type} eq 'EC') {
+      push (@ecNumbers, $dbRef->{id});
+    }
+  }
+  my $ecNumbers = join(",", @ecNumbers);
+
+  my $organism; # the string
+  my $organismElement; # the whole structure
+
+  $organismElement = $entry->{organism};
+  foreach my $taxonName (@{$organismElement->[0]->{name}}) {
+    $organism = $taxonName->{content}
+      if ($taxonName->{type} eq 'scientific');
+  }
+
+  # FASTA output
+  print ">$entryName organism=\"$organism\" ecNumbers=\"$ecNumbers\" length=$length$sequence";
+}
+
+
