@@ -1,15 +1,22 @@
 #!/usr/bin/perl
 
-# uniprotXmlToFasta
+# usage: uniprotXmlToFasta { <taxonFile> }
 
 # convert the UniProt XML download format to a FASTA format suitable for BLAST,
 # so we can apply UniProt EC numbers to OrthoMCL proteins
+
+# if a taxon file is supplied as an argument, then only proteins whose NCBI taxon IDs appear in that file will be included
 
 use strict;
 
 # use DBI;
 use Data::Dumper;
 use XML::Simple;
+
+my %taxonOfInterest;
+
+loadTaxonList($ARGV[0], \%taxonOfInterest)
+  if $ARGV[0];
 
 my $simple = XML::Simple->new();
 my $xmlString;
@@ -21,7 +28,7 @@ while (<STDIN>) {
   $xmlString .= $_ if $entryInProgress;
 
   if (/<\/entry/) {
-    processEntry($xmlString);
+    processEntry($xmlString, \%taxonOfInterest);
     $xmlString = "";
     $entryInProgress = undef;
   }
@@ -29,7 +36,7 @@ while (<STDIN>) {
 
 sub processEntry {
 
-  my ($xmlString) = @_;
+  my ($xmlString, $taxonHashRef) = @_;
 
   my $entry = $simple->XMLin($xmlString, forcearray => 1, KeyAttr => [] );
 
@@ -37,6 +44,13 @@ sub processEntry {
   my $sequence = $entry->{sequence}->[0]->{content};
   my $length = $entry->{sequence}->[0]->{length};
   my $entryName = $entry->{name}->[0];
+
+  if ($ARGV[0]) { # filtering by taxon
+    die "can't find NCBI taxonomy for entry $entryName"
+      unless $entry->{organism}->[0]->{dbReference}->[0]->{type} eq "NCBI Taxonomy";
+    my $taxonomyId = $entry->{organism}->[0]->{dbReference}->[0]->{id};
+    return unless $$taxonHashRef{$taxonomyId};
+  }
 
   my @ecNumbers;
   foreach my $dbRef (@{$entry->{dbReference}}) {
@@ -59,4 +73,14 @@ sub processEntry {
   print ">$entryName organism=\"$organism\" ecNumbers=\"$ecNumbers\" length=$length$sequence";
 }
 
+sub loadTaxonList {
+  my ($taxonFile, $taxonHashRef) = @_;
 
+  open(F, $taxonFile) || die "Can't open taxon file '$taxonFile'\n";
+  while (<F>) {
+    my $tax = $_;
+    chomp($tax);
+    $$taxonHashRef{$tax} = 1;
+  }
+  close(F);
+}
