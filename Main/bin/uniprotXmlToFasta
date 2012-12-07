@@ -1,28 +1,40 @@
 #!/usr/bin/perl
 
-# usage: uniprotXmlToFasta { <taxonFile> }
-
 # convert the UniProt XML download format to a FASTA format suitable for BLAST,
 # so we can apply UniProt EC numbers to OrthoMCL proteins
 
-# if a taxon file is supplied as an argument, then only proteins whose NCBI taxon IDs appear in that file will be included
+# if a taxon file is supplied, then only proteins whose NCBI taxon IDs appear in that file will be included
 
 use strict;
 
 # use DBI;
 use Data::Dumper;
 use XML::Simple;
+use Getopt::Long;
+
+my ($xmlFile, $taxonFile, $fastaFile, $ecMappingFile);
+&GetOptions('xmlFile=s' => \$xmlFile,
+	    'taxonFile=s' => \$taxonFile,
+	    'fastaFile=s' => \$fastaFile,
+	    'ecMappingFile=s' => \$ecMappingFile,
+	   );
+
+&usage unless $xmlFile && $fastaFile && $ecMappingFile;
 
 my %taxonOfInterest;
 
-loadTaxonList($ARGV[0], \%taxonOfInterest)
-  if $ARGV[0];
+loadTaxonList($taxonFile, \%taxonOfInterest)
+  if $taxonFile;
 
 my $simple = XML::Simple->new();
 my $xmlString;
 
+open(XML, $xmlFile) || die "Can't open XML file \"$xmlFile\"\n";
+open(FASTA, ">", $fastaFile) || die "Can't open FASTA file \"$fastaFile\" for writing.";
+open(EC, ">", $ecMappingFile) || die "Can't open output file \"$ecMappingFile\" forEC mappings.";
+
 my $entryInProgress;
-while (<STDIN>) {
+while (<XML>) {
   $entryInProgress = 1 if /<entry/;
 
   $xmlString .= $_ if $entryInProgress;
@@ -33,6 +45,9 @@ while (<STDIN>) {
     $entryInProgress = undef;
   }
 }
+
+close(FASTA);
+close(EC);
 
 sub processEntry {
 
@@ -45,7 +60,7 @@ sub processEntry {
   my $length = $entry->{sequence}->[0]->{length};
   my $entryName = $entry->{name}->[0];
 
-  if ($ARGV[0]) { # filtering by taxon
+  if (%{$taxonHashRef}) { # filtering by taxon
     die "can't find NCBI taxonomy for entry $entryName"
       unless $entry->{organism}->[0]->{dbReference}->[0]->{type} eq "NCBI Taxonomy";
     my $taxonomyId = $entry->{organism}->[0]->{dbReference}->[0]->{id};
@@ -69,18 +84,28 @@ sub processEntry {
       if ($taxonName->{type} eq 'scientific');
   }
 
-  # FASTA output
-  print ">$entryName organism=\"$organism\" ecNumbers=\"$ecNumbers\" length=$length$sequence";
+  print FASTA ">$entryName organism=\"$organism\" ecNumbers=\"$ecNumbers\" length=$length$sequence";
+  print EC "$entryName\t$ecNumbers\n";
 }
 
 sub loadTaxonList {
   my ($taxonFile, $taxonHashRef) = @_;
 
-  open(F, $taxonFile) || die "Can't open taxon file '$taxonFile'\n";
-  while (<F>) {
+  open(T, $taxonFile) || die "Can't open taxon file '$taxonFile'\n";
+  while (<T>) {
     my $tax = $_;
     chomp($tax);
     $$taxonHashRef{$tax} = 1;
   }
-  close(F);
+  close(T);
+}
+
+sub usage {
+
+  $0 =~ /([^\/]*)$/;
+
+my $programName = $1;
+
+  print "usage: $programName -xmlFile <filename> { -taxonFile <filename> } -fastaFile <filename> -ecMappingFile <filename>\n";
+  die;
 }
