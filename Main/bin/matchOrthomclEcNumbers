@@ -1,0 +1,69 @@
+#!/usr/bin/perl
+
+# read BLAST results to find high-identity matches,
+# use separate input file of query-protein ID / EC-number pairs
+# to create output of subject-protein ID / EC-number pairs.
+
+# this is used to implement Li Li's technique for assigning EC numbers to OrthoMCL
+# proteins by downloading Uniprot proteins that have EC-number assignments and BLASTing them against the set of OrthoMCL proteins. 
+
+use strict;
+
+# use DBI;
+use Data::Dumper;
+use Getopt::Long;
+
+my ($blastFile, $inputEcMappingFile, $outputEcMappingFile);
+&GetOptions('blastFile=s' => \$blastFile,
+	    'inputEcMappingFile=s' => \$inputEcMappingFile,
+	    'outputEcMappingFile=s' => \$outputEcMappingFile,
+	   );
+
+&usage unless $blastFile && $inputEcMappingFile && $outputEcMappingFile;
+
+open(BLAST, $blastFile) || die "Can't open BLAST file \"$blastFile\"\n";
+open(ECIN, $inputEcMappingFile) || die "Can't open input file \"$inputEcMappingFile\" forEC mappings.";
+open(OUT, ">", $outputEcMappingFile) || die "Can't open output file \"$outputEcMappingFile\".";
+
+my %ecMapping;
+loadEcMappings($inputEcMappingFile, \%ecMapping);
+
+while (<BLAST>) {
+
+  my ($queryId, $subjectId, $queryTaxonId, $subjectTaxonId, $evalueMant, $evalueExp, $percentIdentity, $percentMatch)
+    = split / /;
+
+  if ($percentIdentity >= 98 && $percentMatch >= 98) {
+    # print "id\n";
+    my $ecList = $ecMapping{$queryId};
+    die "Can't find query protein \"$queryId\" in EC mapping file $inputEcMappingFile"
+      unless $ecList;
+    foreach my $ecNum (split(/,/, $ecList)) {
+      print OUT "$subjectId\t$ecNum\n";
+    }
+  }
+}
+
+close(OUT);
+
+
+sub loadEcMappings {
+  my ($inputEcMappingFile, $ecHashRef) = @_;
+
+  while (<ECIN>) {
+    my ($protein, $ec) = split /\t/;
+    chomp($ec);
+    $$ecHashRef{$protein} = $ec;
+  }
+  close(ECIN);
+}
+
+sub usage {
+
+  # dollar-zero is my full pathname, so the program name is the part after the last slash
+  $0 =~ /([^\/]*)$/;
+  my $programName = $1;
+
+  print "usage: $programName -blastFile <filename>  -inputEcMappingFile <filename> -outputEcMappingFile <filename>\n";
+  die;
+}
