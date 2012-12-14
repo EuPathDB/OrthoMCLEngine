@@ -12,16 +12,18 @@ use Data::Dumper;
 use XML::Simple;
 use Getopt::Long;
 
-my ($xmlFile, $taxonFile, $fastaFile, $ecMappingFile);
+my ($xmlFile, $taxonFile, $fastaFile, $ecMappingFile, $suffixTaxonFile);
 &GetOptions('xmlFile=s' => \$xmlFile,
 	    'taxonFile=s' => \$taxonFile,
 	    'fastaFile=s' => \$fastaFile,
 	    'ecMappingFile=s' => \$ecMappingFile,
+	    'suffixTaxonMapFile=s' => \$suffixTaxonFile,
 	   );
 
 &usage unless $xmlFile && $fastaFile && $ecMappingFile;
 
 my %taxonOfInterest;
+my %suffixTaxIdMap;
 
 loadTaxonList($taxonFile, \%taxonOfInterest)
   if $taxonFile;
@@ -40,10 +42,18 @@ while (<XML>) {
   $xmlString .= $_ if $entryInProgress;
 
   if (/<\/entry/) {
-    processEntry($xmlString, \%taxonOfInterest);
+    processEntry($xmlString, \%taxonOfInterest, \%suffixTaxIdMap);
     $xmlString = "";
     $entryInProgress = undef;
   }
+}
+
+if ($suffixTaxonFile) {
+  open(TAXMAP, ">", $suffixTaxonFile) || die "Can't open output file \"$suffixTaxonFile\" forEC mappings.";
+  foreach my $suffix (sort keys %suffixTaxIdMap)  {
+    print TAXMAP "$suffix\t" . $suffixTaxIdMap{$suffix} . "\n";
+  }
+  close(TAXMAP);
 }
 
 close(FASTA);
@@ -51,7 +61,7 @@ close(EC);
 
 sub processEntry {
 
-  my ($xmlString, $taxonHashRef) = @_;
+  my ($xmlString, $taxonHashRef, $suffixTaxMapRef) = @_;
 
   my $entry = $simple->XMLin($xmlString, forcearray => 1, KeyAttr => [] );
 
@@ -65,6 +75,16 @@ sub processEntry {
       unless $entry->{organism}->[0]->{dbReference}->[0]->{type} eq "NCBI Taxonomy";
     my $taxonomyId = $entry->{organism}->[0]->{dbReference}->[0]->{id};
     return unless $$taxonHashRef{$taxonomyId};
+
+    # update (protein ID suffix) -> (NCBI taxonomy ID) mapping (and check that it's a function)
+    my ($whatever, $suffix) = split(/_/, $entryName);
+    # print "taxon \"$taxonomyId\"; suffix \"$suffix\"; current mapping \"" . $$suffixTaxMapRef{$suffix} . "\"\n";
+    if ($$suffixTaxMapRef{$suffix}) {
+      die "ID suffix conflict: \"$suffix\" maps to $taxonomyId in $entryName, but to " . $$suffixTaxMapRef{$suffix} . " elsewhere"
+	if $$suffixTaxMapRef{$suffix} != $taxonomyId;
+    } else {
+      $$suffixTaxMapRef{$suffix} = $taxonomyId;
+    }
   }
 
   my @ecNumbers;
