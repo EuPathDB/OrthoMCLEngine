@@ -5,7 +5,7 @@
 # to create output of subject-protein ID / EC-number pairs.
 
 # this is used to implement Li Li's technique for assigning EC numbers to OrthoMCL
-# proteins by downloading Uniprot proteins that have EC-number assignments and BLASTing them against the set of OrthoMCL proteins. 
+# proteins by downloading Uniprot proteins that have EC-number assignments and BLASTing them against the set of OrthoMCL proteins.
 
 use strict;
 
@@ -28,19 +28,35 @@ open(OUT, ">", $outputEcMappingFile) || die "Can't open output file \"$outputEcM
 my %ecMapping;
 loadEcMappings($inputEcMappingFile, \%ecMapping);
 
+my %uniprotRep; # indexed by OrthoMCL ID, returns equivalent Uniprot ID. For uniqueness check.
+my $lastQueryId;
 while (<BLAST>) {
 
+  chomp;
   my ($queryId, $subjectId, $queryTaxonId, $subjectTaxonId, $evalueMant, $evalueExp, $percentIdentity, $percentMatch)
     = split / /;
 
-  if ($percentIdentity >= 98 && $percentMatch >= 98) {
-    # print "id\n";
-    my $ecList = $ecMapping{$queryId};
-    die "Can't find query protein \"$queryId\" in EC mapping file $inputEcMappingFile"
-      unless $ecList;
-    foreach my $ecNum (split(/,/, $ecList)) {
-      print OUT "$subjectId\t$ecNum\n";
-    }
+  # print "\n\n\n***************\n";
+  # print "input line = \"$_\"\n";
+  # print "\$queryId = \"$queryId\"; \$subjectId = \"$subjectId\"; \$percentMatch = \"$percentMatch\"\n";
+  # the BLAST output list each query sequence's best hit first, so skip subsequent ones
+  next if $queryId eq $lastQueryId;
+  $lastQueryId = $queryId;
+
+  # apply Li's 98% guideline
+  next unless $percentIdentity >= 98 && $percentMatch >= 98;
+
+  # check for multiple UniProt IDs that map to the same OrthoMCL id
+  if ($uniprotRep{$subjectId}) {
+    die "OrthoMCL id \"$subjectId\" maps to both \"" . $uniprotRep{$subjectId} . "\" and \"$queryId\" in UniProt.  ";
+  }
+
+  my $ecList = $ecMapping{$queryId};
+  die "Can't find query protein \"$queryId\" in EC mapping file $inputEcMappingFile"
+    unless $ecList;
+  foreach my $ecNum (split(/,/, $ecList)) {
+    # print "result line: \"$subjectId\t$ecNum\"\n";
+    print OUT "$subjectId\t$ecNum\n";
   }
 }
 
