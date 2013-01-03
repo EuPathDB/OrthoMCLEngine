@@ -51,7 +51,7 @@ We base hardware requirements and time estimates on this benchmark dataset.  The
 ===================================================
 
 (1) UNIX
-  - The OrthoMCL Pairs program has only been tested on UNIX
+  - The OrthoMCL Pairs program has only been tested on UNIX, specifically RedHat 5.8.  Other UNIX variants may work, but we can't support them.
   - The MCL program is UNIX compatible only
 
 (2) BLAST
