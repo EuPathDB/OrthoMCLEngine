@@ -11,13 +11,17 @@ my $idField = $ARGV[2];
 open(IN, $inputfile) || die "Can't open input file '$inputfile'\n";
 open(OUT, ">$taxoncode.fasta") || die "Can't open output file '$taxoncode.fasta'\n";
 
+my %ids;
 while(<IN>) {
   if (/\>/) {
     s/^\>\s*//;
     s/\s+/ /g;
     s/\s*\|\s*/\|/g;
     my @a = split(/[\s\|]/);
-    print OUT ">$taxoncode|$a[$idField-1]\n";
+    my $id = $a[$idField-1];
+    die "Fasta file '$inputFile' contains a duplicate id: $id\n" if $ids{$id};
+    $ids{$id} = 1;
+    print OUT ">$taxoncode|$id\n";
   } else {
     print OUT $_;
   }
