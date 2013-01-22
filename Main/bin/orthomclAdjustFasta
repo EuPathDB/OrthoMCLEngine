@@ -19,7 +19,7 @@ while(<IN>) {
     s/\s*\|\s*/\|/g;
     my @a = split(/[\s\|]/);
     my $id = $a[$idField-1];
-    die "Fasta file '$inputFile' contains a duplicate id: $id\n" if $ids{$id};
+    die "Fasta file '$inputfile' contains a duplicate id: $id\n" if $ids{$id};
     $ids{$id} = 1;
     print OUT ">$taxoncode|$id\n";
   } else {
