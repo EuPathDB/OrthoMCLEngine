@@ -315,6 +315,22 @@ This step loads the BLAST results into the orthomcl database.
 
 Use the orthomclLoadBlast program for this. 
 
+NOTE: You might get the following error when you run this command:
+
+  "The used command is not allowed with this MySQL version."
+
+The SQL that causes this is LOAD DATA LOCAL INFILE.  MySql needs specific configuration to enable this command.  See these two pages:
+
+http://dev.mysql.com/doc/refman/5.1/en/load-data-local.html
+http://dev.mysql.com/doc/refman/5.0/en/loading-tables.html
+
+In sum:
+  1) you need to start the MySql server with the option:  --local_infile=1
+  2) during installation, MySql needs to be have been compiled with:  --enable-local-infile.  
+
+It is possible that your MySql was compiled with that flag.  It is included by default in some distributions of MySql.   The only way we know of to find out what compile flags were used is to try the mysqlbug command.  This command opens an email so you can report a bug.  Apparently at the bottom of the mail is a list of compile flags.  Once you see them you can abort the mail.  If your mysql was not compiled with that flag it will need to be reinstalled.
+
+
 Benchmark time: 4 hours
 
 
