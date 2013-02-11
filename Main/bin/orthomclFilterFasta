@@ -36,10 +36,10 @@ foreach my $file (@files) {
     chomp;
     # handle prev seq
     if (/\>/) {
-      my $defline = $_;
       (/\>([^|]+)|/ && $1 eq $abbrev) ||
 	die "The ID on def line '$_' is missing the prefix '$abbrev|' '$1'\n" unless $1 eq $abbrev;
       if ($currentSeq) {
+	die "Error: zero length sequence in file $file.  Look near line '$_'\n" if $currentLen == 0;
 	$seqCount++;
 	$rejectSeqCount += &handleSeq($currentSeq, $currentLen, $currentStopCnt);
 	$currentSeq = "";
@@ -57,7 +57,6 @@ foreach my $file (@files) {
 
   # add file stats to reject count if it qualifies
   if ($rejectSeqCount) {
-    die "Error: zero length sequence.  See $defline\n" if ($seqCount == 0);
     my $pct = $rejectSeqCount/$seqCount * 100;
     if ($pct > 10) {
       push(@$rejectRates, [$file, $pct]);
