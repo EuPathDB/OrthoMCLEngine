@@ -202,10 +202,10 @@ dbLogin=my_db_login
 dbPassword=my_db_password
 oracleIndexTablespace=
 similarSequencesTable=SimilarSequences
-orthologTable=apidb.Ortholog
-inParalogTable=apidb.InParalog
-coOrthologTable=apidb.CoOrtholog
-interTaxonMatchView=apidb.InterTaxonMatch
+orthologTable=Ortholog
+inParalogTable=InParalog
+coOrthologTable=CoOrtholog
+interTaxonMatchView=InterTaxonMatch
 
 ";
  exit(1);
