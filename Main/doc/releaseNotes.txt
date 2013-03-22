@@ -6,3 +6,6 @@ v2.0.4  1/2/2013
 v2.0.5 1/26/2013
  - update UserGuide with note about MySql error and flags to address it
  - add test in orthomclAdjustFasta to confirm sequence ID uniqueness
+
+v2.0.6 3/22/2013
+ - update UserGuide with corrected links to the OrthoMCL Algorithm Document
