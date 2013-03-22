@@ -12,8 +12,8 @@ UNDER CONSTRUCTION:
 For alternate documentation online, please read Unit 6.12 of the Current Protocols of Bioinformatics available at:
   http://onlinelibrary.wiley.com/doi/10.1002/0471250953.bi0612s35/full
    
-For details on the orthomcl algorithm, please read the OrthoMCL Algorithm Document available at: 
-  http://docs.google.com/Doc?id=dd996jxg_1gsqsp6
+For details on the orthomcl algorithm, please read the OrthoMCL Algorithm Document: 
+  https://docs.google.com/document/d/1RB-SqCjBmcpNq-YbOYdFxotHGuU7RK_wqxqDAMjyP_w/pub
 
 The input to OrthoMCL is a set of proteomes.
 
@@ -24,7 +24,7 @@ The output is a set of files:
      potentialInparalogs.txt
   groups.txt
 
-The files in the pairs/ directory contain pairwise relationships between proteins, and their scores.  They are categorized into potential orthologs, co-orthologs and inparalogs as described in the OrthoMCL Algorithm Document (docs.google.com/Doc?id=dd996jxg_1gsqsp6).  The groups.txt file contains the groups created by clustering the pairs with the MCL program.  
+The files in the pairs/ directory contain pairwise relationships between proteins, and their scores.  They are categorized into potential orthologs, co-orthologs and inparalogs as described in the OrthoMCL Algorithm Document (see link above).  The groups.txt file contains the groups created by clustering the pairs with the MCL program.  
 
 There are three overall stages:
   - all-v-all BLAST
@@ -279,7 +279,7 @@ We expect you to:
   - use NCBI BLAST
   - run with the -m 8 option to provide tab delimited output required by Step 8
   - for IMPORTANT DETAILS about other BLAST arguments, see:
-    the OrthoMCL Algorithm Document (http://docs.google.com/Doc?id=dd996jxg_1gsqsp6)
+    the OrthoMCL Algorithm Document (https://docs.google.com/document/d/1RB-SqCjBmcpNq-YbOYdFxotHGuU7RK_wqxqDAMjyP_w/pub)
 
 If you are a power user you can deviate from this, so long as you can ultimately provide output in exactly the format provided by NCBI BLAST using the -m 8 option, and expected by Step 8.
 
