@@ -1,11 +1,17 @@
 We were remiss in not providing release notes from the start. We will henceforth.
 
-v2.0.4  1/2/2013
- - update documentation to indicate supported OS and provide User Hints file
+v2.0.7 3/26/2013
+ - add missing indexes to CoOrtholog table
+
+v2.0.6 3/22/2013
+ - update UserGuide with corrected links to the OrthoMCL Algorithm Document
 
 v2.0.5 1/26/2013
  - update UserGuide with note about MySql error and flags to address it
  - add test in orthomclAdjustFasta to confirm sequence ID uniqueness
 
-v2.0.6 3/22/2013
- - update UserGuide with corrected links to the OrthoMCL Algorithm Document
+v2.0.4  1/2/2013
+ - update documentation to indicate supported OS and provide User Hints file
+
+
+
