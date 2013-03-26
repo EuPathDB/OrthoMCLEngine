@@ -148,6 +148,17 @@ CREATE TABLE $cot$suffix (
 )
 ";
   runSql($sql);
+$sql = "
+CREATE INDEX coortholog_seq_a_ix$suffix
+ON $cot$suffix(sequence_id_a) $oracleNoLogging $oracleIndexTablespace
+";
+  runSql($sql);
+
+$sql = "
+CREATE INDEX coortholog_seq_b_ix$suffix
+ON $cot$suffix (sequence_id_b) $oracleNoLogging $oracleIndexTablespace
+";
+  runSql($sql);
 }
 
 sub createInterTaxonMatchView {
