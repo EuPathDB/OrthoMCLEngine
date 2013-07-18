@@ -27,6 +27,7 @@ evalue, bits
 =cut
 
 my $prevSubjectId = 'blah';
+my $prevQueryId = 'blah';
 my $subject;  # hash to hold subject info
 my $queryShorter;
 
@@ -34,20 +35,21 @@ while(<F>) {
     chomp;
     my ($queryId, $subjectId, $percentIdentity, $length, $mismatches, $ngaps, $queryStart, $queryEnd, $subjectStart, $subjectEnd, $evalue, $bits) = split;
 
-    if ($subjectId ne $prevSubjectId) {
+    if ($queryId ne $prevQueryId || $subjectId ne $prevSubjectId) {
 
 	# print previous subject
 	printPreviousSubject($subject) if $subject;
 
 	# initialize new one from first HSP
 	$prevSubjectId = $subjectId;
+        $prevQueryId = $queryId;
 
 	$subject = {}; 
 	$subject->{queryId} = $queryId;
 	$subject->{subjectId} = $subjectId;
 	$subject->{queryShorter} = getTaxonAndLength($subject, $genes);
 	
-	($subject->{evalueMant}, $subject->{evalueExp}) 
+	($subject->{evalueMant}, $subject->{evalueExp})
 	    = formatEvalue($evalue); # from first hsp
     }
 
