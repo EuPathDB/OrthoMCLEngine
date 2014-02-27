@@ -307,6 +307,19 @@ Below are some common installation issues and resolutions:
              installation path. 
 
                 
+ (3)
+     ISSUE: Access denied for user 'orthomcl'@'localhost:3307' (using password: YES)
+     
+     RESOLUTION:
+
+      -  Try changing localhost to 127.0.0.1 for the dbConnectString in your configuration.
+         'localhost' has a special meaning to the mysql client/libraries. When mysql 
+         is told to connect to 'localhost' it will connect to a socket file instead 
+         of port 3307. If the Perl DBD module was complied against a different mysql 
+         installation than the one used for OrthoMCL it will default to using the 
+         socket for the other database (which doesn't have an orthomcl account). 
+         If told to use '127.0.0.1' mysql will attempt to connect to the 3307 port 
+         like it was asked to do.
 
 -------------------------------------------------
 -------------------------------------------------
