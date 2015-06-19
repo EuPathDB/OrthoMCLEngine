@@ -19,12 +19,14 @@ die "Input directory $inputDir does not contain any files" unless scalar(@files)
 my $rejectRates = [];
 open(GOOD, ">$goodProteinsFile");
 open(BAD, ">$poorProteinsFile");
+my $fastaFileCnt;
 foreach my $file (@files) {
   next unless $file =~ /\.fasta$/;
   $file =~ /(\w+)\.fasta$/ || die "File '$file' does not have a name in xxxx.fasta format\n";;
   my $abbrev = $1;
   open(F, "$inputDir/$file") || die "Can't open input file '$file'\n";
   print STDERR "processing file $file\n";
+  $fastaFileCnt++;
   my $seqCount;
   my $rejectSeqCount;
   my $currentSeq;
@@ -64,6 +66,8 @@ foreach my $file (@files) {
   }
   close(F);
 }
+
+die "Did not find any fasta files in directory '$inputDir'\n" unless $fastaFileCnt;
 
 if (scalar(@$rejectRates)) {
   print "\nProteomes with > 10% poor proteins:\n";
