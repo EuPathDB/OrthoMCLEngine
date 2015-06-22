@@ -39,7 +39,7 @@ foreach my $file (@files) {
     # handle prev seq
     if (/\>/) {
       (/\>([^|]+)|/ && $1 eq $abbrev) ||
-	die "The ID on def line '$_' is missing the prefix '$abbrev|' '$1'\n" unless $1 eq $abbrev;
+	die "The ID on def line '$_' has prefix '$1|' but, based on the input file name, it should be  '$abbrev|'\n" unless $1 eq $abbrev;
       if ($currentSeq) {
 	die "Error: zero length sequence in file $file.  Look near line '$_'\n" if $currentLen == 0;
 	$seqCount++;
