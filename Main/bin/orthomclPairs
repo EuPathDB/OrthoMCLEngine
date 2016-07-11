@@ -13,6 +13,12 @@ my $configFile = shift(@args);
 my $logFile = shift(@args);
 my $clean = shift(@args);
 
+&usage() unless $configFile;
+&usage() unless $logFile;
+&usage() unless $clean =~ /cleanup=(yes|no|only|all)/;
+
+$clean = $1;
+
 my %allowedOptArgs = ('startAfter'=>1, 'taxonFilter'=>1, 'suffix'=>1); 
 my %optArgs;
 map {
@@ -84,12 +90,6 @@ for (my $i=0; $i<scalar(@steps); $i++) {
     $stepsHash->{$steps[$i]->[0]} = $i+1;
     $cleanHash->{$steps[$i]->[0]} = $steps[$i]->[1] if $steps[$i]->[1];
 }
-
-&usage() unless $configFile;
-&usage() unless $logFile;
-&usage() unless $clean =~ /cleanup=(yes|no|only|all)/;
-
-$clean = $1;
 
 my $skipPast = getSkipPast($optArgs{startAfter}, $logFile);
 
