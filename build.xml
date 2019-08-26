@@ -1,29 +1,13 @@
 <project name="OrthoMCL" default="Installation" basedir=".">
 
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooo  Dependencies  oooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-
-  
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooo    Checkout    oooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-  <target name="OrthoMCLEngine-ChildCheckout">
-  </target>
-
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooo    Update    oooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-  <target name="OrthoMCLEngine-ChildUpdate">
-  </target>
-
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooo  Installation  oooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
-  <target name="OrthoMCLEngine-Installation" depends="OrthoMCLEngine/Main-Installation">
-    <ant target="defaultProjectInstall"/>
-  </target>  
+  <target name="OrthoMCLEngine-Installation"
+          depends="OrthoMCLEngine/Main-Installation">
+    <ant target="defaultProjectInstall" />
+  </target>
 
   <!-- ooooooooooooooooo  Installation Postprocess  ooooooooooooooooooooo -->
 
@@ -35,10 +19,10 @@
 
   <target name="OrthoMCLEngine/Main-Installation" depends="ProjectTree">
     <ant target="defaultComponentInstall">
-      <property name="project" value="OrthoMCLEngine"/>
-      <property name="component" value="Main"/>
+      <property name="project" value="OrthoMCLEngine" />
+      <property name="component" value="Main" />
     </ant>
-  </target>  
+  </target>
 
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooo  Distributable  ooooooooooooooooooooooooo -->
@@ -47,7 +31,7 @@
   <target name="OrthoMCLData-Distributable" depends="ProjectTree">
 
     <copy todir="${targetDir}">
-      <fileset dir="${projectsDir}" >
+      <fileset dir="${projectsDir}">
         <exclude name="**/.svn/*" />
       </fileset>
     </copy>
@@ -58,8 +42,8 @@
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
   <target name="ProjectTree" if="${checkout}">
-    <ant target="projectCheckOut"/>
-  </target>  
+    <ant target="projectCheckOut" />
+  </target>
 
 </project>
 
