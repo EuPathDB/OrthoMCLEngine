@@ -1,0 +1,94 @@
+#!/usr/bin/perl
+
+use strict;
+
+&usage() unless scalar(@ARGV) == 6;
+
+my $fastaDir = $ARGV[0];
+my $fastaFile = $ARGV[1];
+my $goodFastaFile = $ARGV[2];
+my $poorFastaFile = $ARGV[3];
+my $minLength = $ARGV[4];
+my $maxStopPercent = $ARGV[5];
+
+$fastaFile = "$fastaDir/$fastaFile";
+$goodFastaFile = "$fastaDir/$goodFastaFile";
+$poorFastaFile = "$fastaDir/$poorFastaFile";
+
+open(GOOD, ">$goodFastaFile");
+open(BAD, ">$poorFastaFile");
+open(IN, $fastaFile) or die "Cannot open fasta file: $fastaFile\n";
+
+my $seqCount;
+my $rejectSeqCount;
+my $currentSeq;
+my $currentLen;
+my $currentStopCnt;
+
+while (<IN>) {
+    chomp;
+    # handle prev seq
+    if (/\>/) {
+	(/\>([^|]+)|/ && $1 eq $abbrev) ||
+	die "The ID on def line '$_' has prefix '$1|' but, based on the abbreviation, it should be  '$abbrev|'\n" unless $1 eq $abbrev;
+	if ($currentSeq) {
+	    die "Error: zero length sequence in file $file.  Look near line '$_'\n" if $currentLen == 0;
+	    $seqCount++;
+	    $rejectSeqCount += &handleSeq($currentSeq, $currentLen, $currentStopCnt);
+	    $currentSeq = "";
+	    $currentLen = 0;
+	    $currentStopCnt = 0;
+	}
+    } else {
+	$currentLen += length($_);
+	$currentStopCnt += tr/[^A-Za-z]//; # this removes the stop codon from $_
+    }
+    $currentSeq .= "$_\n";
+}
+$rejectSeqCount += &handleSeq($currentSeq, $currentLen, $currentStopCnt);
+$seqCount++;
+    
+close IN;
+close BAD;
+close GOOD;
+
+print "\n$fastaFile contains $rejectSeqCount poor proteins out of $seqCount total proteins.\n";
+
+
+sub handleSeq {
+  my ($seq, $len, $stopCnt) = @_;
+  my $isBad = 0;
+  my $stopPercent = (($len - $stopCnt)/$len)* 100;
+
+  if ($len < $minLength || $stopPercent > $maxStopPercent) {
+    print BAD $seq;
+    $isBad = 1;
+  } else {
+    print GOOD $seq;
+  }
+  return $isBad;
+}
+
+sub usage {
+  print STDERR "
+Create two files: xxxxProteomeGood.fasta which contains all good proteins and xxxxProteomeBad.fasta which contains all rejects. xxxx is the 4-letter organism abbreviation.  The input proteome is derived from the file xxxxProteome.fasta, which contains a set of compliant sequences and id's. 
+
+Usage:
+  orthomclFilterPeripheralFasta fastaDir fastaFile goodFastaFile poorFastaFile minLength maxStopPercent
+
+where:
+  fastaDir:                the directory containing the input and output fasta files
+  fastaFile:               the input fasta file, just the name and not the entire path,
+                           the path will be obtained from fastaDir
+  goodFastaFile:           the output file that will contain good proteins, just the
+                           name and not the entire path, path will be obtained from fastaDir
+  poorFastaFile:           the ouput file that will contain poor proteins, just the
+                           name and not the entire path, path will be obtained from fastaDir
+  minLength:               minimum allowed length of proteins.  (suggested: 10)
+  maxStopPercent:          maximum percent stop codons.  (suggested 20)
+
+EXAMPLE: gus_home/bin/orthomclFilterPeripheralFasta /eupath/data/EuPathDB/workflows/OrthoMCL/markhick2019/data/Peripheral/proteomeDatasets/aaeg_orthomclPeripheralProteome_RSRC aaegProteome.fasta aaegProteomeGood.fasta aaegProteomePoor.fasta 10 20
+
+";
+  exit(1);
+}
