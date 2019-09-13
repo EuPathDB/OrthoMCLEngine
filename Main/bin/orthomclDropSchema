@@ -25,6 +25,8 @@ runSql("drop table " . $base->getConfig("inParalogTable") . $suffix);
 runSql("drop table " . $base->getConfig("orthologTable") . $suffix);
 runSql("drop table " . $base->getConfig("coOrthologTable") . $suffix);
 runSql("drop view " . $base->getConfig("interTaxonMatchView") . $suffix);
+runSql("drop table apidb.SimilarSequencesGroup");
+runSql("drop table apidb.OrthologGroupLayout");
 
 ##############################################################
 
