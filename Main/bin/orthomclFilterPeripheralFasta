@@ -2,7 +2,7 @@
 
 use strict;
 
-&usage() unless scalar(@ARGV) == 6;
+&usage() unless scalar(@ARGV) == 7;
 
 my $fastaDir = $ARGV[0];
 my $fastaFile = $ARGV[1];
@@ -10,6 +10,7 @@ my $goodFastaFile = $ARGV[2];
 my $poorFastaFile = $ARGV[3];
 my $minLength = $ARGV[4];
 my $maxStopPercent = $ARGV[5];
+my $abbrev = $ARGV[6];
 
 $fastaFile = "$fastaDir/$fastaFile";
 $goodFastaFile = "$fastaDir/$goodFastaFile";
@@ -32,7 +33,7 @@ while (<IN>) {
 	(/\>([^|]+)|/ && $1 eq $abbrev) ||
 	die "The ID on def line '$_' has prefix '$1|' but, based on the abbreviation, it should be  '$abbrev|'\n" unless $1 eq $abbrev;
 	if ($currentSeq) {
-	    die "Error: zero length sequence in file $file.  Look near line '$_'\n" if $currentLen == 0;
+	    die "Error: zero length sequence in file $fastaFile.  Look near line '$_'\n" if $currentLen == 0;
 	    $seqCount++;
 	    $rejectSeqCount += &handleSeq($currentSeq, $currentLen, $currentStopCnt);
 	    $currentSeq = "";
