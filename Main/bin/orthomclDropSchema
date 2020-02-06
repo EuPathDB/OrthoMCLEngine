@@ -19,14 +19,30 @@ if ($sqlLog) {
   open (LOGFILE, ">$sqlLog");
 }
 
+my @tables = ($base->getConfig("similarSequencesTable") . $suffix);
+push @tables, $base->getConfig("inParalogTable") . $suffix;
+push @tables, $base->getConfig("orthologTable") . $suffix;
+push @tables, $base->getConfig("coOrthologTable") . $suffix;
+push @tables, $base->getConfig("interTaxonMatchView") . $suffix;
+push @tables, "apidb.SimilarSequencesGroup$suffix";
+push @tables, "apidb.OrthologGroupLayout$suffix";
+push @tables, "apidb.OrthologGroupLayout$suffix";
 
-runSql("drop table " . $base->getConfig("similarSequencesTable") . $suffix);
-runSql("drop table " . $base->getConfig("inParalogTable") . $suffix);
-runSql("drop table " . $base->getConfig("orthologTable") . $suffix);
-runSql("drop table " . $base->getConfig("coOrthologTable") . $suffix);
-runSql("drop view " . $base->getConfig("interTaxonMatchView") . $suffix);
-runSql("drop table apidb.SimilarSequencesGroup");
-runSql("drop table apidb.OrthologGroupLayout");
+foreach my $table (@tables) {
+    my $sql = <<SQL;
+BEGIN
+    EXECUTE IMMEDIATE 'DROP TABLE ' || '$table';
+EXCEPTION
+    WHEN OTHERS THEN
+       IF SQLCODE != -942 THEN
+           RAISE;
+       END IF;
+END;
+SQL
+
+    runSql($sql);
+
+}
 
 ##############################################################
 
