@@ -203,7 +203,9 @@ sub createSimilarSequencesGroupTable {
 CREATE TABLE apidb.SimilarSequencesGroup$suffix (
   ortholog_group_id NUMBER(12) NOT NULL,
   query_id VARCHAR(60) NOT NULL,
+  query_core_peripheral VARCHAR(1),
   subject_id VARCHAR(60) NOT NULL,
+  subject_core_peripheral VARCHAR(1),
   evalue_mant FLOAT,
   evalue_exp NUMBER,
   CONSTRAINT SimilarSequencesGroup_pk_$suffix PRIMARY KEY (ortholog_group_id, query_id, subject_id),
