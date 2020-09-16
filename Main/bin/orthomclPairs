@@ -305,7 +305,7 @@ group by im.query_id, low_exp.evalue_exp
 create unique index bis_uids_ix$suffix on apidb.BestInterTaxonScore$suffix (query_id)
 ";
 
-  runSql($sql, "create bis_uids_ix index on BestQueryTaxonScore", 'bis_uids_ix', '1 min', "BestQueryTaxonScore$suffix");
+  runSql($sql, "create bis_uids_ix index on BestInterTaxonScore", 'bis_uids_ix', '1 min', "BestInterTaxonScore$suffix");
 
   ###########################################################################
 
