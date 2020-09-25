@@ -773,10 +773,11 @@ sub analyzeStats {
 sub clean {
   my ($tag) = @_;
 
+  return if (! exists $cleanHash->{$tag});
   my $cleanSqls = $cleanHash->{$tag};
   foreach my $cleanSql (@$cleanSqls) {
     if ($cleanSql) {
-      $cleanSql =~ /(\w+) table (\w+)/i || die "invalid clean sql '$cleanSql'";
+      $cleanSql =~ /(\w+) table (\S+)/i || die "invalid clean sql '$cleanSql'";
       my $action = $1;
       my $table = $2;
       next if ($action eq 'drop' && &tableAlreadyDropped($table));
@@ -801,13 +802,18 @@ sub tableAlreadyDropped {
   my $sql;
   if ($base->getConfig("dbVendor") eq 'oracle') {
     $table = uc($table);
-    $sql = "select table_name from all_tables where table_name = '$table'";
+    if ($table =~ /([^\.]+)\.([^\.]+)/) {
+        my ($owner,$name) = ($1,$2);
+	$sql = "select table_name from all_tables where table_name = '$name' and owner = '$owner'";
+    } else {
+        $sql = "select table_name from all_tables where table_name = '$table'";
+    }
   } else {
     $sql = "show tables like '$table'";
   }
   my $stmt = $dbh->prepare($sql);
   $stmt->execute();
-  while ($stmt->fetchrow()) { return 0};
+  while ($stmt->fetchrow()) { return 0 };
   return 1;
 }
 
