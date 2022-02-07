@@ -45,26 +45,26 @@ my @steps = ( # Common
              # Ortholog
 	     ['bestHit'],
              ['best_hit_ix'],
-	     ['ortholog', ["drop table BestHit$suffix"]],
+	     ['ortholog', ["drop table apidb.BestHit$suffix"]],
 	     ['orthologTaxon'],
 	     ['orthologAvg'],
 	     ['orthologAvgIndex'],
-	     ['orthologsNormalization', ["drop table OrthologAvgScore$suffix", "drop table OrthologTaxon$suffix", "drop table OrthologTemp$suffix"]],
+	     ['orthologsNormalization', ["drop table apidb.OrthologAvgScore$suffix", "drop table apidb.OrthologTaxon$suffix", "drop table apidb.OrthologTemp$suffix"]],
              # InParalog
-	     ['bestInterTaxonScore', ["drop table BestQueryTaxonScore$suffix"]],
+	     ['bestInterTaxonScore', ["drop table apidb.BestQueryTaxonScore$suffix"]],
              ['bis_uids_ix'],
              ['uniqueSimSeqsQueryId'],
              ['ust_qids_ix'],
-	     ['betterHit', ["drop table BestInterTaxonScore$suffix", "drop table UniqSimSeqsQueryId$suffix"]],
+	     ['betterHit', ["drop table apidb.BestInterTaxonScore$suffix", "drop table apidb.UniqSimSeqsQueryId$suffix"]],
              ['better_hit_ix'],
-	     ['inParalog', ["drop table BetterHit$suffix"]],
+	     ['inParalog', ["drop table apidb.BetterHit$suffix"]],
  	     ['inParalogTaxonAvg'],
              ['orthologUniqueId'],
              ['orthologUniqueIdIndex'],
-             ['inplgOrthTaxonAvg', ["drop table OrthologUniqueId$suffix"]],
-	     ['inParalogAvg',["drop table InParalogTaxonAvg$suffix", "drop table InplgOrthTaxonAvg$suffix"]],
+             ['inplgOrthTaxonAvg', ["drop table apidb.OrthologUniqueId$suffix"]],
+	     ['inParalogAvg',["drop table apidb.InParalogTaxonAvg$suffix", "drop table apidb.InplgOrthTaxonAvg$suffix"]],
 	     ['inParalogAvgIndex'],
-	     ['inParalogsNormalization', ["drop table InParalogAvgScore$suffix", "drop table InParalogTemp$suffix"]],
+	     ['inParalogsNormalization', ["drop table apidb.InParalogAvgScore$suffix", "drop table apidb.InParalogTemp$suffix"]],
              # CoOrtholog
 	     ['inParalog2Way'],
 	     ['in2a_ix'],
@@ -73,14 +73,14 @@ my @steps = ( # Common
 	     ['ortholog2WayIndex'],
              ['inplgOrthoInplg'],
              ['inParalogOrtholog'],
-	     ['coOrthologCandidate', ["drop table Ortholog2Way$suffix", "drop table InParalog2Way$suffix", "drop table InplgOrthoInplg$suffix", "drop table InParalogOrtholog$suffix"]],
-	     ['coOrthologNotOrtholog', ["drop table CoOrthologCandidate$suffix"]],
+	     ['coOrthologCandidate', ["drop table apidb.Ortholog2Way$suffix", "drop table apidb.InParalog2Way$suffix", "drop table apidb.InplgOrthoInplg$suffix", "drop table apidb.InParalogOrtholog$suffix"]],
+	     ['coOrthologNotOrtholog', ["drop table apidb.CoOrthologCandidate$suffix"]],
 	     ['coOrthologNotOrthologIndex'],
-	     ['coOrtholog', ["drop table CoOrthNotOrtholog$suffix"]],
+	     ['coOrtholog', ["drop table apidb.CoOrthNotOrtholog$suffix"]],
 	     ['coOrthologTaxon'],
 	     ['coOrthologAvg'],
 	     ['coOrthologAvgIndex'],
-	     ['coOrthologsNormalization', ["drop table CoOrthologAvgScore$suffix", "drop table CoOrthologTaxon$suffix", "drop table CoOrthologTemp$suffix"]],
+	     ['coOrthologsNormalization', ["drop table apidb.CoOrthologAvgScore$suffix", "drop table apidb.CoOrthologTaxon$suffix", "drop table apidb.CoOrthologTemp$suffix"]],
 	     ['cleanall', ["truncate table $inParalogTable$suffix", "truncate table $orthologTable$suffix", "truncate table $coOrthologTable$suffix"]],
 	    );
 
@@ -170,7 +170,7 @@ where evalue_exp = 0 and evalue_mant = 0
   ##########################################################################
 
   $sql = "
-create table BestQueryTaxonScore$suffix $oracleNoLogging as
+create table apidb.BestQueryTaxonScore$suffix $oracleNoLogging as
 select im.query_id, im.subject_taxon_id, low_exp.evalue_exp, min(im.evalue_mant) as evalue_mant
 from $interTaxonMatch$suffix im,
      (select query_id, subject_taxon_id, min(evalue_exp) as evalue_exp
@@ -184,7 +184,7 @@ group by im.query_id, im.subject_taxon_id, low_exp.evalue_exp
 
   if ($base->getConfig("dbVendor") eq 'oracle') {
       $sql = "
-create table BestQueryTaxonScore$suffix $oracleNoLogging as
+create table apidb.BestQueryTaxonScore$suffix $oracleNoLogging as
 select query_id, subject_taxon_id,
        max(evalue_exp) keep (dense_rank first order by evalue_exp, evalue_mant) as evalue_exp,
        max(evalue_mant) keep (dense_rank first order by evalue_exp, evalue_mant) as evalue_mant
@@ -199,10 +199,10 @@ group by query_id, subject_taxon_id
   ################################################################################
 
   $sql = "
-create unique index qtscore_ix$suffix on BestQueryTaxonScore$suffix(query_id, subject_taxon_id, evalue_exp, evalue_mant)
+create unique index qtscore_ix$suffix on apidb.BestQueryTaxonScore$suffix(query_id, subject_taxon_id, evalue_exp, evalue_mant)
 ";
   
-  runSql($sql, "create qtscore_ix index on BestQueryTaxonScore", 'qtscore_ix', '15 min', "BestQueryTaxonScore$suffix");
+  runSql($sql, "create qtscore_ix index on BestQueryTaxonScore", 'qtscore_ix', '15 min', "apidb.BestQueryTaxonScore$suffix");
 }
 
 
@@ -217,11 +217,11 @@ sub orthologs {
   my $percentMatchThreshold = $base->getConfig("percentMatchCutoff");
 
   my $sql = "
-create table BestHit$suffix $oracleNoLogging as
+create table apidb.BestHit$suffix $oracleNoLogging as
 select s.query_id, s.subject_id,
        s.query_taxon_id, s.subject_taxon_id,
        s.evalue_exp, s.evalue_mant
-from $sst$suffix s, BestQueryTaxonScore$suffix cutoff
+from $sst$suffix s, apidb.BestQueryTaxonScore$suffix cutoff
 where s.query_id = cutoff.query_id
   and s.subject_taxon_id = cutoff.subject_taxon_id
   and s.query_taxon_id != s.subject_taxon_id
@@ -237,15 +237,15 @@ where s.query_id = cutoff.query_id
   ######################################################################
 
   $sql = "
-create unique index best_hit_ix$suffix on BestHit$suffix(query_id,subject_id)
+create unique index best_hit_ix$suffix on apidb.BestHit$suffix(query_id,subject_id)
 ";
 
-  runSql($sql, "create best_hit_ix index on BestHit", 'best_hit_ix', '15 min', "BestHit$suffix");
+  runSql($sql, "create best_hit_ix index on BestHit", 'best_hit_ix', '15 min', "apidb.BestHit$suffix");
 
   ######################################################################
 
   $sql = "
-create table OrthologTemp$suffix $oracleNoLogging as
+create table apidb.OrthologTemp$suffix $oracleNoLogging as
 select bh1.query_id as sequence_id_a, bh1.subject_id as sequence_id_b,
        bh1.query_taxon_id as taxon_id_a, bh1.subject_taxon_id as taxon_id_b,
        case -- don't try to calculate log(0) -- use rigged exponents of SimSeq
@@ -255,13 +255,13 @@ select bh1.query_id as sequence_id_a, bh1.subject_id as sequence_id_b,
            (log(10, bh1.evalue_mant * bh2.evalue_mant)
             + bh1.evalue_exp + bh2.evalue_exp) / -2
        end as unnormalized_score
-from BestHit$suffix bh1, BestHit$suffix bh2
+from apidb.BestHit$suffix bh1, apidb.BestHit$suffix bh2
 where bh1.query_id < bh1.subject_id
   and bh1.query_id = bh2.subject_id
   and bh1.subject_id = bh2.query_id
 ";
     
-  runSql($sql, "create OrthologTemp table", 'ortholog', '5 min', "OrthologTemp$suffix");
+  runSql($sql, "create OrthologTemp table", 'ortholog', '5 min', "apidb.OrthologTemp$suffix");
 
   ######################################################################
 
@@ -286,11 +286,11 @@ sub inparalogs {
   my $percentMatchThreshold = $base->getConfig("percentMatchCutoff");
 
   my $sql = "
-create table BestInterTaxonScore$suffix $oracleNoLogging as
+create table apidb.BestInterTaxonScore$suffix $oracleNoLogging as
 select im.query_id, low_exp.evalue_exp, min(im.evalue_mant) as evalue_mant
-from BestQueryTaxonScore$suffix im,
+from apidb.BestQueryTaxonScore$suffix im,
      (select query_id, min(evalue_exp) as evalue_exp
-      from BestQueryTaxonScore$suffix
+      from apidb.BestQueryTaxonScore$suffix
       group by query_id) low_exp
 where im.query_id = low_exp.query_id
   and im.evalue_exp = low_exp.evalue_exp
@@ -302,15 +302,15 @@ group by im.query_id, low_exp.evalue_exp
   ###########################################################################
 
   $sql = "
-create unique index bis_uids_ix$suffix on BestInterTaxonScore$suffix (query_id)
+create unique index bis_uids_ix$suffix on apidb.BestInterTaxonScore$suffix (query_id)
 ";
 
-  runSql($sql, "create bis_uids_ix index on BestQueryTaxonScore", 'bis_uids_ix', '1 min', "BestQueryTaxonScore$suffix");
+  runSql($sql, "create bis_uids_ix index on BestInterTaxonScore", 'bis_uids_ix', '1 min', "apidb.BestInterTaxonScore$suffix");
 
   ###########################################################################
 
    $sql = "
-create table UniqSimSeqsQueryId$suffix $oracleNoLogging as
+create table apidb.UniqSimSeqsQueryId$suffix $oracleNoLogging as
 select distinct s.query_id from $sst$suffix s $whereTaxonFilter
 ";
 
@@ -319,20 +319,20 @@ select distinct s.query_id from $sst$suffix s $whereTaxonFilter
   ###########################################################################
 
   $sql = "
-create unique index ust_qids_ix$suffix on UniqSimSeqsQueryId$suffix (query_id)
+create unique index ust_qids_ix$suffix on apidb.UniqSimSeqsQueryId$suffix (query_id)
 ";
 
-  runSql($sql, "create ust_qids_ix index on UniqSimSeqsQueryId", 'ust_qids_ix', '1 min', "UniqSimSeqsQueryId$suffix");
+  runSql($sql, "create ust_qids_ix index on UniqSimSeqsQueryId", 'ust_qids_ix', '1 min', "apidb.UniqSimSeqsQueryId$suffix");
 
 
   ###########################################################################
 
   $sql = "
-create table BetterHit$suffix $oracleNoLogging as
+create table apidb.BetterHit$suffix $oracleNoLogging as
 select s.query_id, s.subject_id,
        s.query_taxon_id as taxon_id,
        s.evalue_exp, s.evalue_mant
-from $sst$suffix s, BestInterTaxonScore$suffix bis
+from $sst$suffix s, apidb.BestInterTaxonScore$suffix bis
 where s.query_id != s.subject_id $andTaxonFilter
   and s.query_taxon_id = s.subject_taxon_id
   and s.query_id = bis.query_id
@@ -352,8 +352,8 @@ where s.query_taxon_id = s.subject_taxon_id $andTaxonFilter
   and s.percent_match >= $percentMatchThreshold
   and s.query_id in 
      (SELECT distinct ust.query_id
-      from UniqSimSeqsQueryId$suffix ust
-      LEFT OUTER JOIN BestInterTaxonScore$suffix bis ON bis.query_id = ust.query_id
+      from apidb.UniqSimSeqsQueryId$suffix ust
+      LEFT OUTER JOIN apidb.BestInterTaxonScore$suffix bis ON bis.query_id = ust.query_id
       WHERE bis.query_id IS NULL)
 ";
   
@@ -362,15 +362,15 @@ where s.query_taxon_id = s.subject_taxon_id $andTaxonFilter
   ###########################################################################
   
   $sql = "
-create unique index better_hit_ix$suffix on BetterHit$suffix (query_id,subject_id)
+create unique index better_hit_ix$suffix on apidb.BetterHit$suffix (query_id,subject_id)
 ";
 
-  runSql($sql, "create better_hit_ix index on BetterHit", 'better_hit_ix', '25 min', "BetterHit$suffix");
+  runSql($sql, "create better_hit_ix index on BetterHit", 'better_hit_ix', '25 min', "apidb.BetterHit$suffix");
 
   ###########################################################################
 
   $sql = "
-create table InParalogTemp$suffix $oracleNoLogging as
+create table apidb.InParalogTemp$suffix $oracleNoLogging as
 select bh1.query_id as sequence_id_a, bh1.subject_id as sequence_id_b,
        bh1.taxon_id,
        case -- don't try to calculate log(0) -- use rigged exponents of SimSeq
@@ -380,7 +380,7 @@ select bh1.query_id as sequence_id_a, bh1.subject_id as sequence_id_b,
            (log(10, bh1.evalue_mant * bh2.evalue_mant)
             + bh1.evalue_exp + bh2.evalue_exp) / -2
        end as unnormalized_score
-from BetterHit$suffix bh1, BetterHit$suffix bh2
+from apidb.BetterHit$suffix bh1, apidb.BetterHit$suffix bh2
 where bh1.query_id < bh1.subject_id
   and bh1.query_id = bh2.subject_id
   and bh1.subject_id = bh2.query_id
@@ -391,9 +391,9 @@ where bh1.query_id < bh1.subject_id
   ################################################################
 
   $sql = "
-create table InParalogTaxonAvg$suffix $oracleNoLogging as
+create table apidb.InParalogTaxonAvg$suffix $oracleNoLogging as
 select avg(i.unnormalized_score) average, i.taxon_id
-from InParalogTemp$suffix i
+from apidb.InParalogTemp$suffix i
 group by i.taxon_id
 ";
 
@@ -402,7 +402,7 @@ group by i.taxon_id
   ################################################################
 
   $sql = "
-create table OrthologUniqueId$suffix $oracleNoLogging as
+create table apidb.OrthologUniqueId$suffix $oracleNoLogging as
 select distinct(sequence_id) from (
 select sequence_id_a as sequence_id from $orthologTable$suffix
 union
@@ -413,21 +413,21 @@ select sequence_id_b as sequence_id from $orthologTable$suffix) i
 
   ################################################################
 
-  $sql = "create unique index ortho_uniq_id_ix$suffix on OrthologUniqueId$suffix (sequence_id)";
+  $sql = "create unique index ortho_uniq_id_ix$suffix on apidb.OrthologUniqueId$suffix (sequence_id)";
 
 
-  runSql($sql, "create unique ortho_uniq_id_ix index", 'orthologUniqueIdIndex', '1 min', "OrthologUniqueId$suffix");
+  runSql($sql, "create unique ortho_uniq_id_ix index", 'orthologUniqueIdIndex', '1 min', "apidb.OrthologUniqueId$suffix");
 
   ################################################################
 
   $sql = "
- create table InplgOrthTaxonAvg$suffix $oracleNoLogging as
+ create table apidb.InplgOrthTaxonAvg$suffix $oracleNoLogging as
  select avg(i.unnormalized_score) average, i.taxon_id
-         from InParalogTemp$suffix i
+         from apidb.InParalogTemp$suffix i
          where i.sequence_id_a in
-                 (select sequence_id from OrthologUniqueId$suffix)
+                 (select sequence_id from apidb.OrthologUniqueId$suffix)
             or i.sequence_id_b in
-                 (select sequence_id from OrthologUniqueId$suffix)
+                 (select sequence_id from apidb.OrthologUniqueId$suffix)
          group by i.taxon_id
 ";
 
@@ -436,14 +436,14 @@ select sequence_id_b as sequence_id from $orthologTable$suffix) i
   ################################################################
 
   $sql = "
-create table InParalogAvgScore$suffix $oracleNoLogging as
+create table apidb.InParalogAvgScore$suffix $oracleNoLogging as
      select case
             when orth_i.average is NULL
               then all_i.average
               else orth_i.average
             end as avg_score,
             all_i.taxon_id
-       from InParalogTaxonAvg$suffix all_i LEFT OUTER JOIN InplgOrthTaxonAvg$suffix orth_i
+       from apidb.InParalogTaxonAvg$suffix all_i LEFT OUTER JOIN apidb.InplgOrthTaxonAvg$suffix orth_i
        ON all_i.taxon_id = orth_i.taxon_id
 ";
 
@@ -451,17 +451,17 @@ create table InParalogAvgScore$suffix $oracleNoLogging as
 
   ################################################################
 
-  $sql = "create unique index inparalog_avg_ix$suffix on InParalogAvgScore$suffix(taxon_id,avg_score)";
+  $sql = "create unique index inparalog_avg_ix$suffix on apidb.InParalogAvgScore$suffix(taxon_id,avg_score)";
 
 
-  runSql($sql, "create InParalogAvgScore index", 'inParalogAvgIndex', '1 min', "InParalogAvgScore$suffix");
+  runSql($sql, "create InParalogAvgScore index", 'inParalogAvgIndex', '1 min', "apidb.InParalogAvgScore$suffix");
 
   ################################################################
 
   $sql = "
   insert into $inParalogTable$suffix (sequence_id_a, sequence_id_b, taxon_id, unnormalized_score, normalized_score)
   select it.sequence_id_a, it.sequence_id_b, it.taxon_id, it.unnormalized_score, it.unnormalized_score/a.avg_score
-  from InParalogTemp$suffix it, InParalogAvgScore$suffix a
+  from apidb.InParalogTemp$suffix it, apidb.InParalogAvgScore$suffix a
   where it.taxon_id = a.taxon_id
 ";
 
@@ -484,7 +484,7 @@ sub coorthologs {
   my $percentMatchThreshold = $base->getConfig("percentMatchCutoff");
 
   my $sql = "
-create table InParalog2Way$suffix $oracleNoLogging as
+create table apidb.InParalog2Way$suffix $oracleNoLogging as
 select sequence_id_a, sequence_id_b from $inParalogTable$suffix
 union
 select sequence_id_b as sequence_id_a, sequence_id_a as sequence_id_b from $inParalogTable$suffix
@@ -495,7 +495,7 @@ select sequence_id_b as sequence_id_a, sequence_id_a as sequence_id_b from $inPa
   ######################################################################
 
   $sql = "
-create unique index in2a_ix$suffix on InParalog2Way$suffix(sequence_id_a, sequence_id_b)
+create unique index in2a_ix$suffix on apidb.InParalog2Way$suffix(sequence_id_a, sequence_id_b)
 ";
   
   runSql($sql, "index in2a_ix", 'in2a_ix', '45 min', undef);
@@ -503,15 +503,15 @@ create unique index in2a_ix$suffix on InParalog2Way$suffix(sequence_id_a, sequen
   ######################################################################
 
   $sql = "
-create unique index in2b_ix$suffix on InParalog2Way$suffix(sequence_id_b, sequence_id_a)
+create unique index in2b_ix$suffix on apidb.InParalog2Way$suffix(sequence_id_b, sequence_id_a)
 ";
   
-  runSql($sql, "index in2b_ix", 'in2b_ix', '45 min', "InParalog2Way$suffix");
+  runSql($sql, "index in2b_ix", 'in2b_ix', '45 min', "apidb.InParalog2Way$suffix");
 
   ######################################################################
 
   $sql = "
-create table Ortholog2Way$suffix $oracleNoLogging as
+create table apidb.Ortholog2Way$suffix $oracleNoLogging as
 -- symmetric closure of Ortholog
 select sequence_id_a, sequence_id_b from $orthologTable$suffix
 union
@@ -523,17 +523,17 @@ select sequence_id_b as sequence_id_a, sequence_id_a as sequence_id_b from $orth
   ######################################################################
 
   $sql = "
-create unique index ortholog2way_ix$suffix on Ortholog2Way$suffix(sequence_id_a, sequence_id_b)
+create unique index ortholog2way_ix$suffix on apidb.Ortholog2Way$suffix(sequence_id_a, sequence_id_b)
 ";
 
-  runSql($sql, "index ortholog2way_ix", 'ortholog2WayIndex', '5 min', "Ortholog2Way$suffix");
+  runSql($sql, "index ortholog2way_ix", 'ortholog2WayIndex', '5 min', "apidb.Ortholog2Way$suffix");
 
   ######################################################################
 
   $sql = "
-create table InplgOrthoInplg$suffix $oracleNoLogging as
+create table apidb.InplgOrthoInplg$suffix $oracleNoLogging as
       select ip1.sequence_id_a, ip2.sequence_id_b
-      from  Ortholog2Way$suffix o, InParalog2Way$suffix ip2, InParalog2Way$suffix ip1
+      from apidb.Ortholog2Way$suffix o, apidb.InParalog2Way$suffix ip2, apidb.InParalog2Way$suffix ip1
       where ip1.sequence_id_b = o.sequence_id_a
         and o.sequence_id_b = ip2.sequence_id_a
 ";
@@ -543,9 +543,9 @@ create table InplgOrthoInplg$suffix $oracleNoLogging as
   ##################################################################
 
   $sql = "
-create table InParalogOrtholog$suffix $oracleNoLogging as
+create table apidb.InParalogOrtholog$suffix $oracleNoLogging as
       select ip.sequence_id_a, o.sequence_id_b
-      from InParalog2Way$suffix ip, Ortholog2Way$suffix o
+      from apidb.InParalog2Way$suffix ip, apidb.Ortholog2Way$suffix o
       where ip.sequence_id_b = o.sequence_id_a
 ";
 
@@ -554,13 +554,13 @@ create table InParalogOrtholog$suffix $oracleNoLogging as
   ##################################################################
 
   $sql = "
-create table CoOrthologCandidate$suffix $oracleNoLogging as
+create table apidb.CoOrthologCandidate$suffix $oracleNoLogging as
 select distinct
        least(sequence_id_a, sequence_id_b) as sequence_id_a,
        greatest(sequence_id_a, sequence_id_b) as sequence_id_b
-from (select sequence_id_a, sequence_id_b from InplgOrthoInplg$suffix
+from (select sequence_id_a, sequence_id_b from apidb.InplgOrthoInplg$suffix
       union
-      select sequence_id_a, sequence_id_b from InParalogOrtholog$suffix) t
+      select sequence_id_a, sequence_id_b from apidb.InParalogOrtholog$suffix) t
 ";
 
    runSql($sql, "create CoOrthologCandidate", 'coOrthologCandidate', '1 hour', undef);
@@ -568,9 +568,9 @@ from (select sequence_id_a, sequence_id_b from InplgOrthoInplg$suffix
   ######################################################################
 
   $sql = "
-create table CoOrthNotOrtholog$suffix $oracleNoLogging as
+create table apidb.CoOrthNotOrtholog$suffix $oracleNoLogging as
 SELECT cc.sequence_id_a, cc.sequence_id_b
-      FROM CoOrthologCandidate$suffix cc
+      FROM apidb.CoOrthologCandidate$suffix cc
       LEFT OUTER JOIN $orthologTable$suffix o
       ON cc.sequence_id_a = o.sequence_id_a
       AND cc.sequence_id_b = o.sequence_id_b
@@ -583,10 +583,10 @@ SELECT cc.sequence_id_a, cc.sequence_id_b
   #####################################################################
 
   $sql = "
-create index cno_ix$suffix on CoOrthNotOrtholog$suffix(sequence_id_a,sequence_id_b)
+create index cno_ix$suffix on apidb.CoOrthNotOrtholog$suffix(sequence_id_a,sequence_id_b)
 ";
 
-  runSql($sql, "index cno_ix", 'coOrthologNotOrthologIndex', '1 min', "CoOrthNotOrtholog$suffix");
+  runSql($sql, "index cno_ix", 'coOrthologNotOrthologIndex', '1 min', "apidb.CoOrthNotOrtholog$suffix");
 
 
   ######################################################################
@@ -597,7 +597,7 @@ create index cno_ix$suffix on CoOrthNotOrtholog$suffix(sequence_id_a,sequence_id
   }
 
   $sql = "
-create table CoOrthologTemp$suffix $oracleNoLogging as
+create table apidb.CoOrthologTemp$suffix $oracleNoLogging as
 select candidate.sequence_id_a, candidate.sequence_id_b,
        ab.query_taxon_id as taxon_id_a, ab.subject_taxon_id as taxon_id_b,
        case  -- in case of 0 evalue, use rigged exponent
@@ -607,7 +607,7 @@ select candidate.sequence_id_a, candidate.sequence_id_b,
            (log(10, ab.evalue_mant * ba.evalue_mant)
             + ab.evalue_exp + ba.evalue_exp) / -2
        end as unnormalized_score
-from $sst$suffix ab, $sst$suffix ba, CoOrthNotOrtholog$suffix candidate
+from $sst$suffix ab, $sst$suffix ba, apidb.CoOrthNotOrtholog$suffix candidate
 where ab.query_id = candidate.sequence_id_a $tf
   and ab.subject_id = candidate.sequence_id_b
   and ab.evalue_exp <= $evalueExpThreshold
@@ -636,7 +636,7 @@ sub orthologTaxonSub {
   my $coCaps = $co? "Co" : "";
   $co = $co? "coO" : "o";
 
-my $sql = "create table ${coCaps}OrthologTaxon$suffix $oracleNoLogging as
+my $sql = "create table apidb.${coCaps}OrthologTaxon$suffix $oracleNoLogging as
 select case
          when taxon_id_a < taxon_id_b
          then taxon_id_a
@@ -648,7 +648,7 @@ select case
           else taxon_id_a
         end as bigger_tax_id,
         unnormalized_score
-      from ${coCaps}OrthologTemp$suffix";
+      from apidb.${coCaps}OrthologTemp$suffix";
 
   runSql($sql, "create ${coCaps}OrthologTaxon table", "${co}rthologTaxon", '1 min', undef);
 }
@@ -660,9 +660,9 @@ sub normalizeOrthologsSub {
   $co = $co? "coO" : "o";
 
   my $sql = "
-create table ${coCaps}OrthologAvgScore$suffix $oracleNoLogging as
+create table apidb.${coCaps}OrthologAvgScore$suffix $oracleNoLogging as
 select smaller_tax_id, bigger_tax_id, avg(unnormalized_score) avg_score
-from ${coCaps}OrthologTaxon$suffix
+from apidb.${coCaps}OrthologTaxon$suffix
 group by smaller_tax_id, bigger_tax_id
 "; 
 
@@ -670,16 +670,16 @@ group by smaller_tax_id, bigger_tax_id
 
   ################################################################
   
-  $sql = "create unique index ${co}orthoAvg_ix$suffix on ${coCaps}OrthologAvgScore$suffix(smaller_tax_id,bigger_tax_id,avg_score)";
+  $sql = "create unique index ${co}orthoAvg_ix$suffix on apidb.${coCaps}OrthologAvgScore$suffix(smaller_tax_id,bigger_tax_id,avg_score)";
   
-  runSql($sql, "create ${coCaps}OrthologAvgScore index", "${co}rthologAvgIndex", '1 min', "${coCaps}OrthologAvgScore$suffix");
+  runSql($sql, "create ${coCaps}OrthologAvgScore index", "${co}rthologAvgIndex", '1 min', "apidb.${coCaps}OrthologAvgScore$suffix");
 
   ################################################################
 
   $sql = "
   insert into $orthologTable$suffix (sequence_id_a, sequence_id_b, taxon_id_a, taxon_id_b, unnormalized_score, normalized_score)
   select ot.sequence_id_a, ot.sequence_id_b, ot.taxon_id_a, ot.taxon_id_b, ot.unnormalized_score, ot.unnormalized_score/a.avg_score
-  from ${coCaps}OrthologTemp$suffix ot, ${coCaps}OrthologAvgScore$suffix a
+  from apidb.${coCaps}OrthologTemp$suffix ot, apidb.${coCaps}OrthologAvgScore$suffix a
 where least(ot.taxon_id_a, ot.taxon_id_b) = a.smaller_tax_id
     and greatest(ot.taxon_id_a, ot.taxon_id_b) = a.bigger_tax_id
 ";
@@ -773,10 +773,11 @@ sub analyzeStats {
 sub clean {
   my ($tag) = @_;
 
+  return if (! exists $cleanHash->{$tag});
   my $cleanSqls = $cleanHash->{$tag};
   foreach my $cleanSql (@$cleanSqls) {
     if ($cleanSql) {
-      $cleanSql =~ /(\w+) table (\w+)/i || die "invalid clean sql '$cleanSql'";
+      $cleanSql =~ /(\w+) table (\S+)/i || die "invalid clean sql '$cleanSql'";
       my $action = $1;
       my $table = $2;
       next if ($action eq 'drop' && &tableAlreadyDropped($table));
@@ -801,13 +802,18 @@ sub tableAlreadyDropped {
   my $sql;
   if ($base->getConfig("dbVendor") eq 'oracle') {
     $table = uc($table);
-    $sql = "select table_name from all_tables where table_name = '$table'";
+    if ($table =~ /([^\.]+)\.([^\.]+)/) {
+        my ($owner,$name) = ($1,$2);
+	$sql = "select table_name from all_tables where table_name = '$name' and owner = '$owner'";
+    } else {
+        $sql = "select table_name from all_tables where table_name = '$table'";
+    }
   } else {
     $sql = "show tables like '$table'";
   }
   my $stmt = $dbh->prepare($sql);
   $stmt->execute();
-  while ($stmt->fetchrow()) { return 0};
+  while ($stmt->fetchrow()) { return 0 };
   return 1;
 }
 
