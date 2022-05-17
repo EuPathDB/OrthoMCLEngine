@@ -1,50 +1,22 @@
-<project name="OrthoMCL" default="Installation" basedir=".">
+<project name="OrthoMCLEngine" basedir=".">
 
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooo  Installation  oooooooooooooooooooooooooo -->
   <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
 
-  <target name="OrthoMCLEngine-Installation"
-          depends="OrthoMCLEngine/Main-Installation">
-    <ant target="defaultProjectInstall" />
+  <target name="OrthoMCLEngine-Installation" depends="OrthoMCLEngine/Main-Installation">
+    <ant target="defaultProjectInstall">
+      <property name="project" value="OrthoMCLEngine" />
+    </ant>
   </target>
-
-  <!-- ooooooooooooooooo  Installation Postprocess  ooooooooooooooooooooo -->
-
-  <target name="OrthoMCLEngine-Installation-postprocess">
-  </target>
-
 
   <!-- ooooooooooooooooooooooo  Install Components  ooooooooooooooooooooooo -->
 
-  <target name="OrthoMCLEngine/Main-Installation" depends="ProjectTree">
+  <target name="OrthoMCLEngine/Main-Installation">
     <ant target="defaultComponentInstall">
       <property name="project" value="OrthoMCLEngine" />
       <property name="component" value="Main" />
     </ant>
   </target>
 
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooo  Distributable  ooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-
-  <target name="OrthoMCLData-Distributable" depends="ProjectTree">
-
-    <copy todir="${targetDir}">
-      <fileset dir="${projectsDir}">
-        <exclude name="**/.svn/*" />
-      </fileset>
-    </copy>
-  </target>
-
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooo  ProjectTree  ooooooooooooooooooooooooooo -->
-  <!-- oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo -->
-
-  <target name="ProjectTree" if="${checkout}">
-    <ant target="projectCheckOut" />
-  </target>
-
 </project>
-
-
