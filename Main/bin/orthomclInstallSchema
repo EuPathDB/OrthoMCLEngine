@@ -253,9 +253,9 @@ usage: orthomclInstallSchema config_file sql_log_file table_suffix
 where:
   config_file : see below
   sql_log_file : optional log of sql executed
-  table_suffix : optional string to append to database object names
+  table_suffix : optional string to append to database object names <core, residual, selfblast>
 
-EXAMPLE: orthomclSoftware/bin/orthomclInstallSchema my_orthomcl_dir/orthomcl.config my_orthomcl_dir/install_schema.log
+EXAMPLE: orthomclSoftware/bin/orthomclInstallSchema my_orthomcl_dir/orthomcl.config my_orthomcl_dir/install_schema.log core
 
 NOTE: the database login in the config file must have the required database privileges on the tables specified in the config file.
 
@@ -265,7 +265,7 @@ dbVendor=oracle  (or mysql)
 dbConnectString=dbi:Oracle:orthomcl
 dbLogin=my_db_login
 dbPassword=my_db_password
-oracleIndexTablespace=
+oracleIndexTablespace=indx
 similarSequencesTable=SimilarSequences
 orthologTable=Ortholog
 inParalogTable=InParalog
