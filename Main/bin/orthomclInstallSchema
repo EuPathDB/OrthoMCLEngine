@@ -74,6 +74,11 @@ ON $sst$suffix(query_id, subject_id,
 evalue_exp, evalue_mant, percent_match) $oracleNoLogging $oracleIndexTablespace
 ";
   runSql($sql);
+
+  $sql = "
+GRANT SELECT ON $sst$suffix TO GUS_R
+";
+  runSql($sql);
 }
 
 
