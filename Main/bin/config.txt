@@ -1,0 +1,10 @@
+dbVendor=oracle                                                                                                                                                                             
+dbConnectString=dbi:Oracle:rm49814                                                                                                                                                                        
+dbLogin=rdemko
+dbPassword=iT4DrdeMsqU4vOknOtE9Ho 
+oracleIndexTablespace=indx
+similarSequencesTable=SimilarSequences
+orthologTable=Ortholog
+inParalogTable=InParalog
+coOrthologTable=CoOrtholog
+interTaxonMatchView=InterTaxonMatch
