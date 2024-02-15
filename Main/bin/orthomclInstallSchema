@@ -97,6 +97,11 @@ CREATE TABLE $ipt$suffix (
   runSql($sql);
 
 $sql = "
+GRANT SELECT ON $ipt$suffix TO gus_r
+";
+  runSql($sql);
+
+$sql = "
 CREATE INDEX inparalog_seqa_ix$suffix
 ON $ipt$suffix(sequence_id_a) $oracleNoLogging $oracleIndexTablespace
 ";
