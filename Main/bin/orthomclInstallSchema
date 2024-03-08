@@ -143,6 +143,11 @@ CREATE INDEX ortholog_seq_b_ix$suffix
 ON $olt$suffix (sequence_id_b) $oracleNoLogging $oracleIndexTablespace
 ";
   runSql($sql);
+  $sql = "
+
+GRANT SELECT ON $old$suffix TO GUS_R
+";
+  runSql($sql);
 }
 
 
@@ -169,6 +174,10 @@ ON $cot$suffix(sequence_id_a) $oracleNoLogging $oracleIndexTablespace
 $sql = "
 CREATE INDEX coortholog_seq_b_ix$suffix
 ON $cot$suffix (sequence_id_b) $oracleNoLogging $oracleIndexTablespace
+";
+  runSql($sql);
+
+GRANT SELECT ON $cot$suffix TO GUS_R
 ";
   runSql($sql);
 }
